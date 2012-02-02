@@ -1,0 +1,3 @@
+"""
+schedcat.util: misc. helpers
+"""
