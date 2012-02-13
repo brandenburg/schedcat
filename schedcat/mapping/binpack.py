@@ -103,8 +103,29 @@ def worst_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
         c = weight(x)
         # pick the bin where the item will leave the most space
         # after placing it, aka the bin with the least sum
-        i = sums.index(min(sums))
-        if sums[i] + c <= capacity:
+        candidates = [s for s in sums if s + c <= capacity]
+        if candidates:
+            # fits somewhere
+            i = sums.index(min(candidates))
+            sets[i] += [x]
+            sums[i] += c
+        else:
+            misfit(x)
+    return sets
+
+def almost_worst_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
+              empty_bin=list):
+    sets = [empty_bin() for _ in xrange(0, bins)]
+    sums = [0.0 for _ in xrange(0, bins)]
+    for x in items:
+        c = weight(x)
+        # pick the bin where the item will leave almost the most space
+        # after placing it, aka the bin with the second to least sum
+        candidates = [s for s in sums if s + c <= capacity]
+        if candidates:
+            # fits somewhere
+            candidates.sort()
+            i = sums.index(candidates[1] if len(candidates) > 1 else candidates[0])
             sets[i] += [x]
             sums[i] += c
         else:
@@ -129,6 +150,19 @@ def best_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
             misfit(x)
     return sets
 
+def any_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
+             empty_bin=list):
+    for h in [next_fit, first_fit, worst_fit, almost_worst_fit, best_fit]:
+        try:
+            sets = h(items, bins, capacity, weight, report_failure, empty_bin)
+            return sets
+        except DidNotFit as dnf:
+            pass
+    # if we get here, none of the heuristics worked
+    misfit(dnf.item)
+    # if we get here, misfit did not raise an exception => return something
+    return next_fit(items, bins, capacity, weight, misfit, empty_bin)
+
 def decreasing(algorithm):
     def alg_decreasing(items, bins, capacity=1.0, weight=id, *args, **kargs):
         # don't clobber original items
@@ -141,4 +175,6 @@ next_fit_decreasing  = decreasing(next_fit)
 first_fit_decreasing = decreasing(first_fit)
 worst_fit_decreasing = decreasing(worst_fit)
 best_fit_decreasing  = decreasing(best_fit)
+almost_worst_fit_decreasing = decreasing(almost_worst_fit)
+any_fit_decreasing   = decreasing(any_fit)
 
