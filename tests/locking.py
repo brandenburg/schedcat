@@ -5,6 +5,7 @@ import random
 
 import schedcat.locking.bounds as lb
 import schedcat.locking.native as cpp
+import schedcat.locking.partition as lp
 import schedcat.model.tasks as tasks
 import schedcat.model.resources as r
 
@@ -14,7 +15,7 @@ class Locking(unittest.TestCase):
                 tasks.SporadicTask(1,  4),
                 tasks.SporadicTask(1,  5),
                 tasks.SporadicTask(3,  9),
-                tasks.SporadicTask(3, 18),                
+                tasks.SporadicTask(3, 18),
             ])
         r.initialize_resource_model(self.ts)
         for i, t in enumerate(self.ts):
@@ -56,7 +57,7 @@ class ApplyBounds(unittest.TestCase):
                 tasks.SporadicTask(1,  4),
                 tasks.SporadicTask(1,  5),
                 tasks.SporadicTask(3,  9),
-                tasks.SporadicTask(3, 18),                
+                tasks.SporadicTask(3, 18),
             ])
         self.ts_ = self.ts.copy()
         r.initialize_resource_model(self.ts)
@@ -109,7 +110,7 @@ class ApplyBounds(unittest.TestCase):
     def test_global_omlp(self):
         lb.apply_global_omlp_bounds(self.ts, 2)
         self.sob_non_zero_blocking()
-        
+
     def test_clustered_omlp(self):
         lb.apply_clustered_omlp_bounds(self.ts, 2)
         self.sob_non_zero_blocking()
@@ -485,3 +486,72 @@ class Test_part_fmlp_terms(unittest.TestCase):
         self.assertEqual(2, res.get_blocking_count(2))
         self.assertEqual(3 + 5, res.get_blocking_term(2))
 
+
+class Test_partition(unittest.TestCase):
+    def setUp(self):
+        self.ts = tasks.TaskSystem([
+                tasks.SporadicTask(1,  4),
+                tasks.SporadicTask(1,  5),
+                tasks.SporadicTask(3,  9),
+                tasks.SporadicTask(3, 18),
+            ])
+        r.initialize_resource_model(self.ts)
+
+
+    def test_singleton(self):
+        by_task, by_res = lp.find_connected_components(self.ts)
+        self.assertEqual(len(by_res), 0)
+        self.assertEqual(len(by_task), len(self.ts))
+        for t in self.ts:
+            self.assertEqual(len(by_task[t]), 1)
+            self.assertTrue(t in by_task[t])
+
+    def test_singleton2(self):
+        for i, t in enumerate(self.ts):
+            t.resmodel[i].add_request(1)
+        by_task, by_res = lp.find_connected_components(self.ts)
+        self.assertEqual(len(by_res), 4)
+        self.assertEqual(len(by_task), len(self.ts))
+        for t in self.ts:
+            self.assertEqual(len(by_task[t]), 1)
+            self.assertTrue(t in by_task[t])
+
+    def test_merge(self):
+        self.ts[0].resmodel[0].add_request(1)
+        self.ts[0].resmodel[1].add_request(1)
+        self.ts[1].resmodel[1].add_request(1)
+        self.ts[1].resmodel[2].add_request(1)
+        self.ts[2].resmodel[2].add_request(1)
+        self.ts[2].resmodel[3].add_request(1)
+        self.ts[3].resmodel[3].add_request(1)
+
+        by_task, by_res = lp.find_connected_components(self.ts)
+        self.assertEqual(len(by_res), 4)
+        self.assertIs(by_res[0], by_res[1])
+        self.assertIs(by_res[1], by_res[2])
+        self.assertIs(by_res[2], by_res[3])
+        self.assertIs(by_res[3], by_res[0])
+        self.assertEqual(len(by_task), len(self.ts))
+        for t in self.ts:
+            self.assertEqual(len(by_task[t]), 4)
+            self.assertTrue(t in by_task[t])
+
+    def test_merge2(self):
+        self.ts[0].resmodel[0].add_request(1)
+        self.ts[0].resmodel[1].add_request(1)
+        self.ts[1].resmodel[1].add_request(1)
+
+        self.ts[2].resmodel[2].add_request(1)
+        self.ts[2].resmodel[3].add_request(1)
+        self.ts[3].resmodel[3].add_request(1)
+
+        by_task, by_res = lp.find_connected_components(self.ts)
+        self.assertEqual(len(by_res), 4)
+        self.assertIs(by_res[0], by_res[1])
+        self.assertNotEqual(by_res[1], by_res[2])
+        self.assertIs(by_res[2], by_res[3])
+        self.assertNotEqual(by_res[3], by_res[0])
+        self.assertEqual(len(by_task), len(self.ts))
+        for t in self.ts:
+            self.assertEqual(len(by_task[t]), 2)
+            self.assertTrue(t in by_task[t])
