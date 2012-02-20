@@ -25,7 +25,7 @@ def get_cpp_model_rw(all_tasks, use_task_period=False):
             if req.max_writes > 0:
                 rsi.add_request_rw(req.res_id, req.max_writes, req.max_write_length, cpp.WRITE)
             if req.max_reads > 0:
-                rsi.add_request_rw(req.res_id, req.max_reads, req.max_read_length, cpp.READ)            
+                rsi.add_request_rw(req.res_id, req.max_reads, req.max_read_length, cpp.READ)
     return rsi
 
 def assign_edf_locking_prios(all_tasks):
@@ -131,6 +131,17 @@ def apply_clustered_rw_omlp_bounds(all_tasks, procs_per_cluster,
                                    dedicated_irq=cpp.NO_CPU):
     model = get_cpp_model_rw(all_tasks)
     res = cpp.clustered_rw_omlp_bounds(model, procs_per_cluster, dedicated_irq)
+    apply_suspension_oblivious(all_tasks, res)
+
+def apply_clustered_kx_omlp_bounds(all_tasks, procs_per_cluster,
+                                   replication_degrees = {},
+                                   dedicated_irq=cpp.NO_CPU):
+    model = get_cpp_model(all_tasks)
+    replica_info = cpp.ReplicaInfo()
+    for res_id in replication_degrees:
+        replica_info.set_replicas(res_id, replication_degrees[res_id])
+    res = cpp.clustered_kx_omlp_bounds(model, replica_info, procs_per_cluster,
+                                       dedicated_irq)
     apply_suspension_oblivious(all_tasks, res)
 
 # spinlocks are charged similarly to s-oblivious analysis

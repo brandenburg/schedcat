@@ -119,6 +119,35 @@ class ApplyBounds(unittest.TestCase):
         lb.apply_clustered_rw_omlp_bounds(self.ts, 2)
         self.sob_non_zero_blocking()
 
+    def test_clustered_kx_omlp(self):
+        lb.apply_clustered_kx_omlp_bounds(self.ts, 2)
+        self.sob_non_zero_blocking()
+
+    def test_clustered_kx_omlp_no_replication(self):
+        ts = self.ts.copy()
+        lb.apply_clustered_kx_omlp_bounds(self.ts, 2)
+        lb.apply_clustered_omlp_bounds(ts, 2)
+        self.assertEqual(self.ts[0].cost, ts[0].cost)
+        self.assertEqual(self.ts[1].cost, ts[1].cost)
+        self.assertEqual(self.ts[2].cost, ts[2].cost)
+        self.assertEqual(self.ts[3].cost, ts[3].cost)
+
+    def test_clustered_kx_omlp_bounds(self):
+        replicas = {0:2, 1:4}
+        lb.apply_clustered_kx_omlp_bounds(self.ts, 2, replicas)
+        self.assertEqual(self.ts[0].cost, 1 + 1 + 0 + 2)
+        self.assertEqual(self.ts[1].cost, 1 + 1 + 0 + 2)
+        self.assertEqual(self.ts[2].cost, 3 + 1 + 0)
+        self.assertEqual(self.ts[3].cost, 3 + 1 + 0)
+
+    def test_clustered_kx_omlp_donation_blocking(self):
+        replicas = {0:4, 1:4}
+        lb.apply_clustered_kx_omlp_bounds(self.ts, 2, replicas)
+        self.assertEqual(self.ts[0].cost, 1 + 0 + 0 + 1)
+        self.assertEqual(self.ts[1].cost, 1 + 0 + 0 + 1)
+        self.assertEqual(self.ts[2].cost, 3 + 0)
+        self.assertEqual(self.ts[3].cost, 3 + 0)
+
     def test_tfmtx(self):
         lb.apply_task_fair_mutex_bounds(self.ts, 2)
         self.sob_non_zero_blocking()

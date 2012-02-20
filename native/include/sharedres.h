@@ -202,6 +202,30 @@ public:
 
 };
 
+class ReplicaInfo
+{
+private:
+	std::vector<unsigned int> num_replicas;
+
+public:
+	void set_replicas(unsigned int res_id, unsigned int replicas)
+	{
+		assert(replicas >= 1);
+
+		while (num_replicas.size() <= res_id)
+			num_replicas.push_back(1); // default: not replicated
+
+		num_replicas[res_id] = replicas;
+	}
+
+	const unsigned int operator[](unsigned int res_id) const
+	{
+		if (num_replicas.size() <= res_id)
+			return 1; // default: not replicated
+		else
+			return num_replicas[res_id];
+	}
+};
 
 struct Interference
 {
@@ -390,6 +414,11 @@ BlockingBounds* clustered_omlp_bounds(const ResourceSharingInfo& info,
 BlockingBounds* clustered_rw_omlp_bounds(const ResourceSharingInfo& info,
 					 unsigned int procs_per_cluster,
 					 int dedicated_irq = NO_CPU);
+
+BlockingBounds* clustered_kx_omlp_bounds(const ResourceSharingInfo& info,
+					 const ReplicaInfo& replicaInfo,
+					 unsigned int procs_per_cluster,
+					 int dedicated_irq);
 
 BlockingBounds* part_omlp_bounds(const ResourceSharingInfo& info);
 
