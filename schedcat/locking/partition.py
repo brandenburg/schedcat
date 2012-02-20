@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from schedcat.model.tasks import TaskSystem
+
 def find_connected_components(taskset):
     """Determine sets of tasks that do not share any resources."""
     by_res = defaultdict(set)
@@ -25,3 +27,15 @@ def find_connected_components(taskset):
             by_task[t] = c
 
     return by_task, by_res
+
+def find_independent_tasksubsets(taskset):
+    by_task, by_res = find_connected_components(taskset)
+    done = set()
+    subsets = []
+
+    for t in by_task:
+        if not t in done:
+            subsets.append(TaskSystem(by_task[t]))
+            done.update(by_task[t])
+
+    return subsets

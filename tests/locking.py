@@ -534,7 +534,7 @@ class Test_partition(unittest.TestCase):
         self.assertEqual(len(by_task), len(self.ts))
         for t in self.ts:
             self.assertEqual(len(by_task[t]), 4)
-            self.assertTrue(t in by_task[t])
+            self.assertIn(t, by_task[t])
 
     def test_merge2(self):
         self.ts[0].resmodel[0].add_request(1)
@@ -554,4 +554,21 @@ class Test_partition(unittest.TestCase):
         self.assertEqual(len(by_task), len(self.ts))
         for t in self.ts:
             self.assertEqual(len(by_task[t]), 2)
-            self.assertTrue(t in by_task[t])
+            self.assertIn(t, by_task[t])
+
+    def test_subsets(self):
+        self.ts[0].resmodel[0].add_request(1)
+        self.ts[0].resmodel[1].add_request(1)
+        self.ts[1].resmodel[1].add_request(1)
+
+        self.ts[2].resmodel[2].add_request(1)
+        self.ts[2].resmodel[3].add_request(1)
+        self.ts[3].resmodel[3].add_request(1)
+
+        subsets = lp.find_independent_tasksubsets(self.ts)
+        self.assertEqual(len(subsets), 2)
+        subsets.sort(key=lambda x: x.utilization())
+        self.assertIn(self.ts[0], subsets[0])
+        self.assertIn(self.ts[1], subsets[0])
+        self.assertIn(self.ts[2], subsets[1])
+        self.assertIn(self.ts[3], subsets[1])
