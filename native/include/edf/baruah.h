@@ -23,7 +23,7 @@ public:
 
     bool is_schedulable(const TaskSet &ts, bool check_preconditions = true);
 
-    static const float MINIMUM_SLACK;
+    static const double MAX_RUNTIME;
 };
 
 #endif

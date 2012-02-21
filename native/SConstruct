@@ -110,6 +110,7 @@ swig.Append(
 )
 
 EDF_SRC = [
+    'src/cpu_time.cpp',
     'src/edf/baker.cpp',
     'src/edf/baruah.cpp',
     'src/edf/gfb.cpp',

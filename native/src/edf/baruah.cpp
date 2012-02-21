@@ -10,9 +10,12 @@
 #include <iostream>
 #include "task_io.h"
 
+#include "cpu_time.h"
+
 using namespace std;
 
-const float BaruahGedf::MINIMUM_SLACK = 0.01;
+const double BaruahGedf::MAX_RUNTIME = 5.0; /* seconds */
+
 
 static void demand_bound_function(const Task &tsk,
                                   const mpz_class &t,
@@ -253,21 +256,12 @@ bool BaruahGedf::is_schedulable(const TaskSet &ts,
             return true;
     }
 
-    /* Always check for too-small rest utilizations, as they
-     * create unmanagably-large testing intervals. We'll just
-     * enforce a minimum slack threshold here. */
+    double start_time = get_cpu_usage();
+
     mpq_class m_minus_u;
     ts.get_utilization(m_minus_u);
     m_minus_u *= -1;
     m_minus_u += m;
-
-    /*
-    if (m_minus_u < MINIMUM_SLACK) {
-        cerr << "# BaruahGedf: skipping task test; slack = " << m_minus_u
-             << endl;
-        return false;
-    }
-    */
 
     mpz_class i1, sum;
     mpz_class *max_test_point, *idiff;
@@ -292,9 +286,17 @@ bool BaruahGedf::is_schedulable(const TaskSet &ts,
         all_pts[k].init(ts, k, max_test_point + k);
 
     // for every task for which point <= max_ak
+    unsigned long iter_count = 0;
     while (point_in_range && schedulable)
     {
         point_in_range = false;
+        // check for excessive run time every 10 iterations
+        if (++iter_count % 10 == 0 && get_cpu_usage() > start_time + MAX_RUNTIME)
+        {
+             // This is taking too long. Give up.
+             schedulable = false;
+             break;
+        }
         for (unsigned int k = 0; k < ts.get_task_count() && schedulable; k++)
             if (all_pts[k].get_next(ilen))
             {
