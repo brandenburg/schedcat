@@ -256,12 +256,19 @@ bool BaruahGedf::is_schedulable(const TaskSet &ts,
             return true;
     }
 
-    double start_time = get_cpu_usage();
-
     mpq_class m_minus_u;
     ts.get_utilization(m_minus_u);
     m_minus_u *= -1;
     m_minus_u += m;
+
+    if (m_minus_u <= 0) {
+        // Baruah's G-EDF test requires strictly positive slack.
+        // In the case of zero slack the testing interval becomes
+        // infinite. Therefore, we can't do anything but bail out.
+        return false;
+    }
+
+    double start_time = get_cpu_usage();
 
     mpz_class i1, sum;
     mpz_class *max_test_point, *idiff;
