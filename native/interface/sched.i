@@ -21,6 +21,8 @@
 %ignore Task::bound_load const;
 %ignore Task::approx_demand const;
 
+%ignore TaskSet::operator[](int);
+%ignore TaskSet::operator[](int) const;
 %ignore TaskSet::get_utilization const;
 %ignore TaskSet::get_density const;
 %ignore TaskSet::get_max_density const;
