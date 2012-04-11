@@ -192,7 +192,7 @@ public:
 		mapping[res_id] = processor;
 	}
 
-	const int operator[](unsigned int res_id) const
+	int operator[](unsigned int res_id) const
 	{
 		if (mapping.size() <= res_id)
 			return NO_CPU;
@@ -218,7 +218,7 @@ public:
 		num_replicas[res_id] = replicas;
 	}
 
-	const unsigned int operator[](unsigned int res_id) const
+	unsigned int operator[](unsigned int res_id) const
 	{
 		if (num_replicas.size() <= res_id)
 			return 1; // default: not replicated
@@ -304,7 +304,7 @@ public:
 		return request_span[idx];
 	}
 
-	const size_t size() const
+	size_t size() const
 	{
 		return blocking.size();
 	}
