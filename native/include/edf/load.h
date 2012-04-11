@@ -5,7 +5,7 @@ class LoadGedf : public SchedulabilityTest
 {
  private:
     unsigned int m;
-    mpq_class epsilon;
+    fractional_t epsilon;
 
  public:
     LoadGedf(unsigned int num_processors,

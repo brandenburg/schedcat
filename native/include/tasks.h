@@ -6,9 +6,9 @@
 #include <vector>
 #include <algorithm>
 
-#include <gmpxx.h>
-
 #include <math.h>
+
+#include "time-types.h"
 
 #endif
 
@@ -43,8 +43,8 @@ class Task
     bool is_feasible() const;
 
 
-    void get_utilization(mpq_class &util) const;
-    void get_density(mpq_class &density) const;
+    void get_utilization(fractional_t &util) const;
+    void get_density(fractional_t &density) const;
 
     // Demand bound function (DBF) and LOAD support.
     // This implements Fisher, Baker, and Baruah's PTAS
@@ -64,7 +64,7 @@ class Task
         }
     }
 
-    void bound_demand(const mpz_class &time, mpz_class &demand) const
+    void bound_demand(const integral_t &time, integral_t &demand) const
     {
         if (time <= deadline)
             demand = 0;
@@ -79,9 +79,9 @@ class Task
         }
     }
 
-    void bound_load(const mpz_class &time, mpq_class &load) const
+    void bound_load(const integral_t &time, fractional_t &load) const
     {
-        mpz_class demand;
+        integral_t demand;
 
         if (time > 0)
         {
@@ -107,14 +107,14 @@ class Task
         }
     }
 
-    void approx_demand(const mpz_class &time, mpz_class &demand,
+    void approx_demand(const integral_t &time, integral_t &demand,
                        unsigned int k) const
     {
         if (time < k * period + deadline)
             bound_demand(time, demand);
         else
         {
-            mpz_class approx;
+            integral_t approx;
 
             approx = time;
             approx -= deadline;
@@ -126,10 +126,10 @@ class Task
         }
     }
 
-    void approx_load(const mpz_class &time, mpq_class &load,
+    void approx_load(const integral_t &time, fractional_t &load,
                      unsigned int k) const
     {
-        mpz_class demand;
+        integral_t demand;
 
         if (time > 0)
         {
@@ -148,8 +148,8 @@ class TaskSet
 {
   private:
     Tasks tasks;
-  
-    unsigned long k_for_epsilon(unsigned int idx, const mpq_class &epsilon) const;
+
+    unsigned long k_for_epsilon(unsigned int idx, const fractional_t &epsilon) const;
 
   public:
     TaskSet();
@@ -172,11 +172,11 @@ class TaskSet
     bool has_only_feasible_tasks() const;
     bool is_not_overutilized(unsigned int num_processors) const;
 
-    void get_utilization(mpq_class &util) const;
-    void get_density(mpq_class &density) const;
-    void get_max_density(mpq_class &max_density) const;
+    void get_utilization(fractional_t &util) const;
+    void get_density(fractional_t &density) const;
+    void get_max_density(fractional_t &max_density) const;
 
-    void approx_load(mpq_class &load, const mpq_class &epsilon = 0.1) const;
+    void approx_load(fractional_t &load, const fractional_t &epsilon = 0.1) const;
 
     /* wrapper for Python access */
     unsigned long get_period(unsigned int idx) const

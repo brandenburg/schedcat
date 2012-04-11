@@ -9,7 +9,7 @@ class BCLGedf : public SchedulabilityTest
 
  private:
     unsigned long max_jobs_contained(const Task &t_i, const Task &t_k);
-    void beta(const Task &t_i, const Task &t_k, mpq_class &beta_i);
+    void beta(const Task &t_i, const Task &t_k, fractional_t &beta_i);
     bool is_task_schedulable(unsigned int k, const TaskSet &ts);
 
  public:

@@ -499,7 +499,7 @@ int xxxmain(int argc, char** argv)
 {
     cout << "GMP C++ test." << endl;
 
-    mpz_class a, b;
+    integral_t a, b;
 
     a = "123123123123";
     b = "456456456456";
@@ -508,12 +508,12 @@ int xxxmain(int argc, char** argv)
     cout << "b     : " << b << endl;
     cout << "a*b*10: " << a * b * 10 << endl;
 
-    mpq_class q = a;
+    fractional_t q = a;
 
     q /= b;
     cout << "a/b   :" << q << endl;
 
-    mpz_class fact;
+    integral_t fact;
     fact = 1;
     for (int n = 2; n < 101; n++) {
 	fact *= n;
@@ -529,7 +529,7 @@ int xxxmain(int argc, char** argv)
 	 << " deadline: " << t.get_deadline() << endl;
 
 
-    mpq_class lambda, bound;
+    fractional_t lambda, bound;
     unsigned int m = 10;
 
     lambda = 3;
@@ -654,8 +654,8 @@ int yymain(int argc, char** argv)
 
 int main4(int argc, char** argv)
 {
-    mpq_class a, b;
-    mpz_class c;
+    fractional_t a, b;
+    integral_t c;
 
     a = 20;
     a /= 3;
@@ -668,7 +668,7 @@ int main4(int argc, char** argv)
 
     cout << c << endl;
 
-    mpq_truncate(b);
+    truncate_fraction(b);
     cout << b << endl;
 
     return 0;

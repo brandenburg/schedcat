@@ -15,8 +15,8 @@ using namespace std;
 static void rta_interfering_workload(const Task &t_i,
                                      unsigned long response_time,
                                      unsigned long slack_i,
-                                     mpz_class &inf,
-                                     mpz_class &interval)
+                                     integral_t &inf,
+                                     integral_t &interval)
 {
     interval = response_time;
     interval += t_i.get_deadline() - t_i.get_wcet();
@@ -36,7 +36,7 @@ static void rta_interfering_workload(const Task &t_i,
 static void edf_interfering_workload(const Task &t_i,
                                      const Task &t_k,
                                      unsigned long slack_i,
-                                     mpz_class &inf)
+                                     integral_t &inf)
 {
     /* implicit floor in integer division */
     unsigned long njobs = t_k.get_deadline() / t_i.get_period();
@@ -56,11 +56,11 @@ bool RTAGedf::response_estimate(unsigned int k,
                                 unsigned long response,
                                 unsigned long &new_response)
 {
-    mpz_class other_work = 0;
-    mpz_class inf_edf;
-    mpz_class inf_rta;
-    mpz_class inf_bound = response - ts[k].get_wcet() + 1;
-    mpz_class tmp;
+    integral_t other_work = 0;
+    integral_t inf_edf;
+    integral_t inf_rta;
+    integral_t inf_bound = response - ts[k].get_wcet() + 1;
+    integral_t tmp;
 
     for (unsigned int i = 0; i < ts.get_task_count(); i++)
         if (k != i)

@@ -26,7 +26,7 @@ bool GlobalEDF::is_schedulable(const TaskSet &ts,
     // density bound on a uniprocessor.
     if (m == 1)
     {
-        mpq_class density;
+        fractional_t density;
         ts.get_density(density);
         if (density <= 1)
             return true;

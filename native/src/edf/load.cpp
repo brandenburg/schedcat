@@ -22,8 +22,8 @@ bool LoadGedf::is_schedulable(const TaskSet &ts, bool check_preconditions)
             return false;
     }
 
-    mpq_class load, max_density, mu, bound, cond1, cond2;
-    mpz_class mu_ceil;
+    fractional_t load, max_density, mu, bound, cond1, cond2;
+    integral_t mu_ceil;
 
     // get the load of the task set
     ts.approx_load(load, epsilon);

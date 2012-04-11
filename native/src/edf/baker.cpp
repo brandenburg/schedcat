@@ -8,10 +8,10 @@
 using namespace std;
 
 void BakerGedf::beta(const Task &t_i, const Task &t_k,
-                     const mpq_class &lambda_k,
-                     mpq_class &beta_i)
+                     const fractional_t &lambda_k,
+                     fractional_t &beta_i)
 {
-    mpq_class u_i;
+    fractional_t u_i;
 
     // XXX: possible improvement would be to pre-compute u_i
     //      instead of incurring quadratic u_i computations.
@@ -24,7 +24,7 @@ void BakerGedf::beta(const Task &t_i, const Task &t_k,
 
     if (lambda_k < u_i)
     {
-        mpq_class tmp = t_i.get_wcet();
+        fractional_t tmp = t_i.get_wcet();
         tmp -= lambda_k * t_i.get_period();
         tmp /= t_k.get_deadline();
         beta_i += tmp;
@@ -33,8 +33,8 @@ void BakerGedf::beta(const Task &t_i, const Task &t_k,
 
 bool BakerGedf::is_task_schedulable(unsigned int k, const TaskSet &ts)
 {
-    mpq_class lambda, bound, beta_i, beta_sum = 0;
-    mpq_class one = 1;
+    fractional_t lambda, bound, beta_i, beta_sum = 0;
+    fractional_t one = 1;
 
     ts[k].get_density(lambda);
 

@@ -5,9 +5,9 @@
 #include "edf/sim.h"
 %}
 
-%ignore Task::get_utilization(mpq_class &util) const;
-%ignore Task::get_density(mpq_class &density) const;
-%ignore Task::bound_demand(const mpz_class &time, mpz_class &demand) const;
+%ignore Task::get_utilization(fractional_t &util) const;
+%ignore Task::get_density(fractional_t &density) const;
+%ignore Task::bound_demand(const integral_t &time, integral_t &demand) const;
 %ignore Task::bound_load const;
 %ignore Task::approx_demand const;
 

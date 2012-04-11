@@ -18,8 +18,8 @@ const double BaruahGedf::MAX_RUNTIME = 5.0; /* seconds */
 
 
 static void demand_bound_function(const Task &tsk,
-                                  const mpz_class &t,
-                                  mpz_class &db)
+                                  const integral_t &t,
+                                  integral_t &db)
 {
     db = t;
     db -= tsk.get_deadline();
@@ -36,7 +36,7 @@ static void demand_bound_function(const Task &tsk,
 class DBFPointsOfChange
 {
 private:
-    mpz_class     cur;
+    integral_t     cur;
     unsigned long pi; // period
 
 public:
@@ -56,7 +56,7 @@ public:
             next();
     }
 
-    const mpz_class& get_cur() const
+    const integral_t& get_cur() const
     {
         return cur;
     }
@@ -84,11 +84,11 @@ class AllDBFPointsOfChange
 private:
     DBFPointsOfChange *dbf;
     DBFQueue           queue;
-    mpz_class          last;
-    mpz_class         *upper_bound;
+    integral_t          last;
+    integral_t         *upper_bound;
 
 public:
-    void init(const TaskSet &ts, int k, mpz_class* bound)
+    void init(const TaskSet &ts, int k, integral_t* bound)
     {
         last = -1;
         dbf = new DBFPointsOfChange[ts.get_task_count()];
@@ -105,7 +105,7 @@ public:
         delete[] dbf;
     }
 
-    bool get_next(mpz_class &t)
+    bool get_next(integral_t &t)
     {
         if (last > *upper_bound)
             return false;
@@ -127,49 +127,49 @@ public:
 
 static
 void interval1(unsigned int i, unsigned int k, const TaskSet &ts,
-               const mpz_class &ilen, mpz_class &i1)
+               const integral_t &ilen, integral_t &i1)
 {
-    mpz_class dbf, tmp;
+    integral_t dbf, tmp;
     tmp = ilen + ts[k].get_deadline();
     demand_bound_function(ts[i], tmp, dbf);
     if (i == k)
-        i1 = min(mpz_class(dbf - ts[k].get_wcet()), ilen);
+        i1 = min(integral_t(dbf - ts[k].get_wcet()), ilen);
     else
         i1 = min(dbf,
-                 mpz_class(ilen + ts[k].get_deadline() -
+                 integral_t(ilen + ts[k].get_deadline() -
                            (ts[k].get_wcet() - 1)));
 }
 
 
 static void demand_bound_function_prime(const Task &tsk,
-                                        const mpz_class &t,
-                                        mpz_class &db)
+                                        const integral_t &t,
+                                        integral_t &db)
 // carry-in scenario
 {
     db = t;
     db /= tsk.get_period();
     db *= tsk.get_wcet();
-    db += min(mpz_class(tsk.get_wcet()), mpz_class(t % tsk.get_period()));
+    db += min(integral_t(tsk.get_wcet()), integral_t(t % tsk.get_period()));
 }
 
 static void interval2(unsigned int i, unsigned int k, const TaskSet &ts,
-                       const mpz_class &ilen, mpz_class &i2)
+                       const integral_t &ilen, integral_t &i2)
 {
-    mpz_class dbf, tmp;
+    integral_t dbf, tmp;
 
     tmp = ilen + ts[k].get_deadline();
     demand_bound_function_prime(ts[i], tmp, dbf);
     if (i == k)
-        i2 = min(mpz_class(dbf - ts[k].get_wcet()), ilen);
+        i2 = min(integral_t(dbf - ts[k].get_wcet()), ilen);
     else
         i2 = min(dbf,
-                 mpz_class(ilen + ts[k].get_deadline() -
+                 integral_t(ilen + ts[k].get_deadline() -
                            (ts[k].get_wcet() - 1)));
 }
 
 class MPZComparator {
 public:
-    bool operator() (mpz_class *a, mpz_class *b)
+    bool operator() (integral_t *a, integral_t *b)
     {
         return *b < *a;
     }
@@ -177,13 +177,13 @@ public:
 
 bool BaruahGedf::is_task_schedulable(unsigned int k,
                                      const TaskSet &ts,
-                                     const mpz_class &ilen,
-                                     mpz_class &i1,
-                                     mpz_class &sum,
-                                     mpz_class *idiff,
-                                     mpz_class **ptr)
+                                     const integral_t &ilen,
+                                     integral_t &i1,
+                                     integral_t &sum,
+                                     integral_t *idiff,
+                                     integral_t **ptr)
 {
-    mpz_class bound;
+    integral_t bound;
     sum = 0;
 
     for (unsigned int i = 0; i < ts.get_task_count(); i++)
@@ -206,8 +206,8 @@ bool BaruahGedf::is_task_schedulable(unsigned int k,
 }
 
 void BaruahGedf::get_max_test_points(const TaskSet &ts,
-                                     mpq_class &m_minus_u,
-                                     mpz_class* maxp)
+                                     fractional_t &m_minus_u,
+                                     integral_t* maxp)
 {
     unsigned long* wcet = new unsigned long[ts.get_task_count()];
 
@@ -216,8 +216,8 @@ void BaruahGedf::get_max_test_points(const TaskSet &ts,
 
     sort(wcet, wcet + ts.get_task_count(), greater<unsigned long>());
 
-    mpq_class u, tdu_sum;
-    mpz_class csigma, mc;
+    fractional_t u, tdu_sum;
+    integral_t csigma, mc;
 
     csigma = 0;
     for (unsigned int i = 0; i < m - 1 && i < ts.get_task_count(); i++)
@@ -256,7 +256,7 @@ bool BaruahGedf::is_schedulable(const TaskSet &ts,
             return true;
     }
 
-    mpq_class m_minus_u;
+    fractional_t m_minus_u;
     ts.get_utilization(m_minus_u);
     m_minus_u *= -1;
     m_minus_u += m;
@@ -270,19 +270,19 @@ bool BaruahGedf::is_schedulable(const TaskSet &ts,
 
     double start_time = get_cpu_usage();
 
-    mpz_class i1, sum;
-    mpz_class *max_test_point, *idiff;
-    mpz_class** ptr; // indirect access to idiff
+    integral_t i1, sum;
+    integral_t *max_test_point, *idiff;
+    integral_t** ptr; // indirect access to idiff
 
-    idiff          = new mpz_class[ts.get_task_count()];
-    max_test_point = new mpz_class[ts.get_task_count()];
-    ptr            = new mpz_class*[ts.get_task_count()];
+    idiff          = new integral_t[ts.get_task_count()];
+    max_test_point = new integral_t[ts.get_task_count()];
+    ptr            = new integral_t*[ts.get_task_count()];
     for (unsigned int i = 0; i < ts.get_task_count(); i++)
         ptr[i] = idiff + i;
 
     get_max_test_points(ts, m_minus_u, max_test_point);
 
-    mpz_class ilen;
+    integral_t ilen;
     bool point_in_range = true;
     bool schedulable = true;
 

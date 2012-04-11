@@ -8,8 +8,8 @@ class BakerGedf : public SchedulabilityTest
     unsigned int m;
 
  private:
-    void beta(const Task &t_i, const Task &t_k, const mpq_class &lambda_k,
-              mpq_class &beta_i);
+    void beta(const Task &t_i, const Task &t_k, const fractional_t &lambda_k,
+              fractional_t &beta_i);
     bool is_task_schedulable(unsigned int k, const TaskSet &ts);
 
  public:

@@ -6,12 +6,12 @@ class FFDBFGedf : public SchedulabilityTest
   private:
     const unsigned int m;
     const unsigned long epsilon_denom;
-    const mpq_class sigma_step;
+    const fractional_t sigma_step;
 
   private:
     bool witness_condition(const TaskSet &ts,
-                           const mpz_class q[], const mpq_class r[],
-                           const mpq_class &time, const mpq_class &speed);
+                           const integral_t q[], const fractional_t r[],
+                           const fractional_t &time, const fractional_t &speed);
 
   public:
     FFDBFGedf(unsigned int num_processors,

@@ -13,7 +13,7 @@ bool GFBGedf::is_schedulable(const TaskSet &ts, bool check_preconditions)
             return false;
     }
 
-    mpq_class total_density, max_density, bound;
+    fractional_t total_density, max_density, bound;
 
     ts.get_density(total_density);
     ts.get_max_density(max_density);

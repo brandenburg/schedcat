@@ -11,7 +11,7 @@ using namespace std;
 static void interfering_workload(const Task &t_i,
                                  const Task &t_k,
                                  unsigned long slack,
-                                 mpz_class &inf)
+                                 integral_t &inf)
 {
     unsigned long njobs = t_k.get_deadline() / t_i.get_period();
 
@@ -30,9 +30,9 @@ bool BCLIterativeGedf::slack_update(unsigned int k,
                                     unsigned long *slack,
                                     bool &has_slack)
 {
-    mpz_class other_work = 0;
-    mpz_class inf;
-    mpz_class inf_bound = ts[k].get_deadline() - ts[k].get_wcet() + 1;
+    integral_t other_work = 0;
+    integral_t inf;
+    integral_t inf_bound = ts[k].get_deadline() - ts[k].get_wcet() + 1;
 
     for (unsigned int i = 0; i < ts.get_task_count(); i++)
         if (k != i)

@@ -9,14 +9,14 @@ private:
 
     bool is_task_schedulable(unsigned int k,
                              const TaskSet &ts,
-                             const mpz_class &ilen,
-                             mpz_class &i1,
-                             mpz_class &sum,
-                             mpz_class *idiff,
-                             mpz_class **ptr);
+                             const integral_t &ilen,
+                             integral_t &i1,
+                             integral_t &sum,
+                             integral_t *idiff,
+                             integral_t **ptr);
 
-    void get_max_test_points(const TaskSet &ts, mpq_class& m_minus_u,
-                             mpz_class* maxp);
+    void get_max_test_points(const TaskSet &ts, fractional_t& m_minus_u,
+                             integral_t* maxp);
 
 public:
     BaruahGedf(unsigned int num_processors) : m(num_processors) {};

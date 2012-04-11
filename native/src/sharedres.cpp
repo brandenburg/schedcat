@@ -7,7 +7,7 @@
 #include "sharedres.h"
 #include "res_io.h"
 
-#include <gmpxx.h>
+#include "time-types.h"
 #include "math-helper.h"
 
 #include "stl-helper.h"

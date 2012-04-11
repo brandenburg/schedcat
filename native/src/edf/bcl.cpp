@@ -15,11 +15,11 @@ unsigned long BCLGedf::max_jobs_contained(const Task &t_i, const Task &t_k)
         return 1 + (t_k.get_deadline() - t_i.get_deadline()) / t_i.get_period();
 }
 
-void BCLGedf::beta(const Task &t_i, const Task &t_k, mpq_class &beta_i)
+void BCLGedf::beta(const Task &t_i, const Task &t_k, fractional_t &beta_i)
 {
     unsigned long n = max_jobs_contained(t_i, t_k);
 
-    mpz_class c_i, tmp;
+    integral_t c_i, tmp;
 
     c_i  = t_i.get_wcet();
     tmp  = t_i.get_period();
@@ -38,8 +38,8 @@ void BCLGedf::beta(const Task &t_i, const Task &t_k, mpq_class &beta_i)
 
 bool BCLGedf::is_task_schedulable(unsigned int k, const TaskSet &ts)
 {
-    mpq_class beta_i, beta_sum = 0;
-    mpq_class lambda_term;
+    fractional_t beta_i, beta_sum = 0;
+    fractional_t lambda_term;
     bool small_beta_exists = false;
 
     ts[k].get_density(lambda_term);

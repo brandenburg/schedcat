@@ -37,14 +37,14 @@ bool Task::is_feasible() const
         && get_wcet() > 0;
 }
 
-void Task::get_utilization(mpq_class &util) const
+void Task::get_utilization(fractional_t &util) const
 {
     // assumes period != 0
     util  = get_wcet();
     util /= get_period();
 }
 
-void Task::get_density(mpq_class &density) const
+void Task::get_density(fractional_t &density) const
 {
     // assumes deadline != 0
     density  = get_wcet();
@@ -95,9 +95,9 @@ bool TaskSet::has_only_feasible_tasks() const
     FORALL(i, tasks[i].is_feasible());
 }
 
-void TaskSet::get_utilization(mpq_class &util) const
+void TaskSet::get_utilization(fractional_t &util) const
 {
-    mpq_class tmp;
+    fractional_t tmp;
     util = 0;
     for (unsigned int i = 0; i < tasks.size(); i++)
     {
@@ -106,9 +106,9 @@ void TaskSet::get_utilization(mpq_class &util) const
     }
 }
 
-void TaskSet::get_density(mpq_class &density) const
+void TaskSet::get_density(fractional_t &density) const
 {
-    mpq_class tmp;
+    fractional_t tmp;
     density = 0;
     for (unsigned int i = 0; i < tasks.size(); i++)
     {
@@ -117,9 +117,9 @@ void TaskSet::get_density(mpq_class &density) const
     }
 }
 
-void TaskSet::get_max_density(mpq_class &max_density) const
+void TaskSet::get_max_density(fractional_t &max_density) const
 {
-    mpq_class tmp;
+    fractional_t tmp;
     max_density = 0;
 
     for (unsigned int i = 0; i < tasks.size(); i++)
@@ -131,17 +131,17 @@ void TaskSet::get_max_density(mpq_class &max_density) const
 
 bool TaskSet::is_not_overutilized(unsigned int num_processors) const
 {
-    mpq_class util;
+    fractional_t util;
     get_utilization(util);
     return util <= num_processors;
 }
 
 // Lemma 7 in FBB:06.
 unsigned long TaskSet::k_for_epsilon(unsigned int idx,
-                                     const mpq_class &epsilon) const
+                                     const fractional_t &epsilon) const
 {
-    mpq_class bound;
-    mpq_class dp_ratio(tasks[idx].get_deadline(),
+    fractional_t bound;
+    fractional_t dp_ratio(tasks[idx].get_deadline(),
                        tasks[idx].get_period());
 
     tasks[idx].get_utilization(bound);
@@ -152,9 +152,9 @@ unsigned long TaskSet::k_for_epsilon(unsigned int idx,
     return (unsigned long) ceil(std::max(0.0, bound.get_d()));
 }
 
-void TaskSet::approx_load(mpq_class &load, const mpq_class &epsilon) const
+void TaskSet::approx_load(fractional_t &load, const fractional_t &epsilon) const
 {
-    mpq_class density;
+    fractional_t density;
 
     get_density(density);
     get_utilization(load);
@@ -177,13 +177,13 @@ void TaskSet::approx_load(mpq_class &load, const mpq_class &epsilon) const
 
         std::cout << "total_times = " << total_times << std::endl;
 
-        std::vector<mpz_class> times;
+        std::vector<integral_t> times;
         times.reserve(total_times);
 
         // determine all test points
         for (unsigned int i = 0; i < tasks.size(); i++)
         {
-            mpz_class time = tasks[i].get_deadline();
+            integral_t time = tasks[i].get_deadline();
 
             for (unsigned long j = 0; j <= k[i]; j++)
             {
@@ -196,15 +196,15 @@ void TaskSet::approx_load(mpq_class &load, const mpq_class &epsilon) const
         std::sort(times.begin(), times.end());
 
         // iterate through test points
-        mpz_class last = 0;
+        integral_t last = 0;
 
         for (unsigned int t = 0; t < total_times; t++)
         {
             // avoid redundant check
             if (times[t] > last)
             {
-                mpq_class load_at_point = 0;
-                mpq_class tmp;
+                fractional_t load_at_point = 0;
+                fractional_t tmp;
 
                 // compute approximate load at point
                 for (unsigned int i = 0; i < tasks.size(); i++)

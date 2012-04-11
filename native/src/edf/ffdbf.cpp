@@ -13,8 +13,8 @@
 
 using namespace std;
 
-static void get_q_r(const Task &t_i, const mpq_class &time,
-                    mpz_class &q_i, mpq_class &r_i)
+static void get_q_r(const Task &t_i, const fractional_t &time,
+                    integral_t &q_i, fractional_t &r_i)
 {
     // compute q_i -- floor(time / period)
     //         r_i -- time % period
@@ -26,18 +26,18 @@ static void get_q_r(const Task &t_i, const mpq_class &time,
     r_i -= q_i * t_i.get_period();
 }
 
-static void compute_q_r(const TaskSet &ts, const mpq_class &time,
-                        mpz_class q[], mpq_class r[])
+static void compute_q_r(const TaskSet &ts, const fractional_t &time,
+                        integral_t q[], fractional_t r[])
 {
     for (unsigned int i = 0; i < ts.get_task_count(); i++)
         get_q_r(ts[i], time, q[i], r[i]);
 }
 
 static void ffdbf(const Task &t_i,
-                  const mpq_class &time, const mpq_class &speed,
-                  const mpz_class &q_i, const mpq_class &r_i,
-                  mpq_class &demand,
-                  mpq_class &tmp)
+                  const fractional_t &time, const fractional_t &speed,
+                  const integral_t &q_i, const fractional_t &r_i,
+                  fractional_t &demand,
+                  fractional_t &tmp)
 {
     /* this is the cost in all three cases */
     demand += q_i * t_i.get_wcet();
@@ -64,9 +64,9 @@ static void ffdbf(const Task &t_i,
 }
 
 static void ffdbf_ts(const TaskSet &ts,
-                     const mpz_class q[], const mpq_class r[],
-                     const mpq_class &time, const mpq_class &speed,
-                     mpq_class &demand, mpq_class &tmp)
+                     const integral_t q[], const fractional_t r[],
+                     const fractional_t &time, const fractional_t &speed,
+                     fractional_t &demand, fractional_t &tmp)
 {
     demand = 0;
     for (unsigned int i = 0; i < ts.get_task_count(); i++)
@@ -77,15 +77,15 @@ static void ffdbf_ts(const TaskSet &ts,
 class TestPoints
 {
 private:
-    mpq_class     time;
-    mpq_class     with_offset;
+    fractional_t     time;
+    fractional_t     with_offset;
     unsigned long period;
     bool          first_point;
 
 public:
     void init(const Task& t_i,
-              const mpq_class& speed,
-              const mpq_class& min_time)
+              const fractional_t& speed,
+              const fractional_t& min_time)
     {
         period = t_i.get_period();
         with_offset = t_i.get_wcet() / speed;
@@ -96,7 +96,7 @@ public:
         time = min_time;
         time /= period;
         // round down, i.e., floor()
-        mpq_truncate(time);
+        truncate_fraction(time);
         time *= period;
         time += t_i.get_deadline();
 
@@ -107,7 +107,7 @@ public:
             next();
     }
 
-    const mpq_class& get_cur() const
+    const fractional_t& get_cur() const
     {
         if (first_point)
             return with_offset;
@@ -145,7 +145,7 @@ class AllTestPoints
 private:
     TestPoints *pts;
     TimeQueue   queue;
-    mpq_class   last;
+    fractional_t   last;
     TaskSet const &ts;
 
 public:
@@ -155,8 +155,8 @@ public:
         pts = new TestPoints[ts.get_task_count()];
     }
 
-    void init(const mpq_class &speed,
-              const mpq_class &min_time)
+    void init(const fractional_t &speed,
+              const fractional_t &min_time)
     {
         last = -1;
         // clean out queue
@@ -175,7 +175,7 @@ public:
         delete[] pts;
     }
 
-    void get_next(mpq_class &t)
+    void get_next(fractional_t &t)
     {
         TestPoints* pt;
         do // avoid duplicates
@@ -191,11 +191,11 @@ public:
 };
 
 bool FFDBFGedf::witness_condition(const TaskSet &ts,
-                                  const mpz_class q[], const mpq_class r[],
-                                  const mpq_class &time,
-                                  const mpq_class &speed)
+                                  const integral_t q[], const fractional_t r[],
+                                  const fractional_t &time,
+                                  const fractional_t &speed)
 {
-    mpq_class demand, bound;
+    fractional_t demand, bound;
 
     ffdbf_ts(ts, q, r, time, speed, demand, bound);
 
@@ -223,12 +223,12 @@ bool FFDBFGedf::is_schedulable(const TaskSet &ts,
 
     // allocate helpers
     AllTestPoints testing_set(ts);
-    mpz_class *q = new mpz_class[ts.get_task_count()];
-    mpq_class *r = new mpq_class[ts.get_task_count()];
+    integral_t *q = new integral_t[ts.get_task_count()];
+    fractional_t *r = new fractional_t[ts.get_task_count()];
 
-    mpq_class sigma_bound;
-    mpq_class time_bound;
-    mpq_class tmp(1, epsilon_denom);
+    fractional_t sigma_bound;
+    fractional_t time_bound;
+    fractional_t tmp(1, epsilon_denom);
 
     // compute sigma bound
     tmp = 1;
@@ -237,7 +237,7 @@ bool FFDBFGedf::is_schedulable(const TaskSet &ts,
     sigma_bound -= m;
     sigma_bound /= - ((int) (m - 1)); // neg. to flip sign
     sigma_bound -= tmp; // epsilon
-    sigma_bound = min(sigma_bound, mpq_class(1));
+    sigma_bound = min(sigma_bound, fractional_t(1));
 
     // compute time bound
     time_bound = 0;
@@ -245,8 +245,8 @@ bool FFDBFGedf::is_schedulable(const TaskSet &ts,
         time_bound += ts[i].get_wcet();
     time_bound /= tmp; // epsilon
 
-    mpq_class t_cur;
-    mpq_class sigma_cur, sigma_nxt;
+    fractional_t t_cur;
+    fractional_t sigma_cur, sigma_nxt;
     bool schedulable;
 
     t_cur = 0;
@@ -258,7 +258,7 @@ bool FFDBFGedf::is_schedulable(const TaskSet &ts,
 
     // setup brute force sigma value range
     sigma_nxt = sigma_cur / sigma_step;
-    mpq_truncate(sigma_nxt);
+    truncate_fraction(sigma_nxt);
     sigma_nxt += 1;
     sigma_nxt *= sigma_step;
 
