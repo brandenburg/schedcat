@@ -14,7 +14,8 @@ GMP_PATH ?= /usr
 
 # #### Flags ####
 
-DISABLED_WARNINGS = -Wno-unused-parameter -Wno-deprecated
+DISABLED_WARNINGS  = -Wno-unused-parameter # Too much noise.
+DISABLED_WARNINGS += -Wno-deprecated       # We still use ext::hash_map<>.
 
 INCLUDES = -Iinclude -I${GMP_PATH}/include
 LIBS     = -L${GMP_PATH}/lib -lgmp -lgmpxx
@@ -35,7 +36,7 @@ PYTHON_LIB ?=
 SOFLAGS     = -shared
 endif
 
-CXXFLAGS  = -Wall -Wextra -fPIC $(DISABLED_WARNINGS) $(INCLUDES)
+CXXFLAGS  = -Wall -Wextra $(DISABLED_WARNINGS) -fPIC $(INCLUDES)
 LDFLAGS   = $(LIBS)
 SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude
 
@@ -76,7 +77,7 @@ interface/%_wrap.cc: interface/%.i
 	$(SWIG) $(SWIGFLAGS) -o $@ $<
 
 interface/%_wrap.o: interface/%_wrap.cc
-	$(CXX) $(CXXFLAGS) $(PYTHON_INC) -c -o $@ $+
+	$(CXX) -fPIC $(INCLUDES) $(PYTHON_INC) -c -o $@ $+
 
 _sched.so: ${CORE_OBJ} ${EDF_OBJ} interface/sched_wrap.o
 	$(CXX) $(LDFLAGS) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+
