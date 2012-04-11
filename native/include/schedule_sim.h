@@ -84,9 +84,10 @@ class PeriodicJobSequence : public SimJob
 {
   public:
     PeriodicJobSequence(Task& tsk) : SimJob(tsk) {};
+    virtual ~PeriodicJobSequence() {};
 
     // simulator callback
-    void completed(simtime_t when, int proc);
+    virtual void completed(simtime_t when, int proc);
 };
 
 
