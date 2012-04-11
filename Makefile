@@ -11,7 +11,7 @@ all: links
 NCPUS := $(shell getconf _NPROCESSORS_ONLN)
 
 cpp:
-	(cd native; $(SCONS) -j $(NCPUS) )
+	$(MAKE) -C native -j $(NCPUS)
 
 links: clean-links cpp
 	cd schedcat/sched; ln -s ../../native/_sched.so; ln -s ../../native/sched.py native.py
@@ -26,7 +26,7 @@ clean-links:
 clean: clean-links
 	find . -iname '*.py[oc]' -exec rm '{}' ';'
 	rm -rf TAGS tags native/config.log
-	(cd native; $(SCONS) -c)
+	$(MAKE) -C native clean
 
 # run unit test suite
 test:
