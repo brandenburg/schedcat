@@ -1,5 +1,5 @@
 # SchedCAT
-Schedcat: the **sched**ulability test **c**collection **a**nd **t**oolkit.
+Schedcat: the **sched**ulability test **c**ollection **a**nd **t**oolkit.
 
 ## About
 
@@ -11,14 +11,30 @@ This code is a refactored and cleaned-up version of the schedulability experimen
 
 ## Quick Start
 
-	# get the library 
-	$ git clone ...
-	[...]
-	$ cd schedcat
+To get started, first clone the repository from Github.
 
-	# compile (works out of the box on most Linux distributions)
+	# get the library 
+	$ git clone https://brandenburg@github.com/brandenburg/schedcat.git
+	[...]
+
+Next, compile the C++ part of schedcat. There is a top-level `Makefile` that will take care of it. Compilation works out of the box on most Linux distributions (if not, have a look at the dependencies below).
+
+	$ cd schedcat
 	$ make
 	[...]
+
+After compilation,  execute the unit test suite with `make test` or, equivalently, with `python -m tests` to check if everything works as expected.
+
+
+    $ make test
+    [...]
+    Ran 172 tests in 2.890s
+
+    OK
+
+
+Schedcat is a Python library with a C++ core. The best way to explore the library is to play with it in the Python shell and to read the source code.
+
 	$ python
 	
 	# load task model
@@ -53,18 +69,49 @@ This code is a refactored and cleaned-up version of the schedulability experimen
 	>>> ts[2].tardiness()
 	2
 
-To check if everything works as expected, you can execute the unit test suite with `make test` or, equivalently, with `python -m tests`.
+## Next Steps
 
+Schedcat provides reusable components for schedulability experiments, but does not itself provide a specific schedulability experiment setup. That is, how task sets are generated and tested is left to the user since there is no single right way to do it.
 
-## Dependencies
+To use schedcat as a library in your schedulability experiments, 
+simply add the `schedcat` directory that is part of the repository to the `PYTHONPATH` environment variable.
 
-Python 2.7 is required. Schedcat further requires the [GNU arbitrary precision library GMP](http://gmplib.org/) (most recent versions, including 5.0.4, work just fine) and the GMP C++ wrapper.
+For example, under `bash`, assuming that you cloned this repository to `${HOME}/work/schedcat`, add the following line to your environment: 
+
+    export PYTHONPATH=${HOME}/work/schedcat/schedcat:$PYTHONPATH
+
+(Note that "schedcat" occurs twice in the path, once for the repository and once for the module.)
+
+Alternatively, you can simply create a symlink from your experiment directory to the checked-out repository.
+
+## Dependencies & Compilation
+
+Python 2.7 is required. Schedcat further depends on the [GNU arbitrary precision library GMP](http://gmplib.org/) (most recent versions, including 4.3.2 and 5.0.4, work just fine) and the GMP C++ wrapper. During compilation, [Swig](http://www.swig.org/) is needed to generate a Python API for the C++ core (Swig 2.0.4 and Swig 1.3.40 are known to work).
+
+### Linux
 
 Schedcat is known to work on both GNU/Linux and Mac OS X (both Snow Leopard and Lion). On Linux, it should compile "out of the box" if the GMP library is installed in `/usr/lib`, where most package managers place it by default.
 
-On Mac OS X, depending on where the GMP library is installed, you may have to provide a `.config` file in `schedcat/native` to provide the path to the GMP library in `GMP_PATH` (have a look at the `Makefile` in `schedcat/native` for details).
+Schedcat has been tested with `g++ 4.4.5` on Debian "Squeeze" with the  `libgmp3c2`, `libgmp3-dev`, `libgmpxx4ldbl`, `swig`, and `g++-4.4`  packages installed.
 
-The [Homebrew package manager](http://mxcl.github.com/homebrew/) provides the easiest way to install GNU GMP under Mac OS X.
+### Mac OS X
+
+The [Homebrew package manager](http://mxcl.github.com/homebrew/) provides the easiest way to install GNU GMP and Swig under Mac OS X.
+
+Depending on where the GMP library is installed, you may have to provide a `.config` file in `schedcat/native` to provide the path to the GMP library in `GMP_PATH`. The `.config` file is read by the `Makefile` to override the default settings, which use the system Python and assume that the GMP library can be found in `/usr/lib`.
+
+For example, suppose the Homebrew installation is located at `/brew` and Python 2.7.2 from Homebrew is used. A corresponding `.config` file would look as follows.
+
+    GMP_PATH = /brew
+
+    PYTHON_INC = -I /brew/Cellar/python/2.7.2/Frameworks/Python.framework/Versions/2.7/include/python2.7
+    PYTHON_LIB = -F/brew/Cellar/python/2.7.2/Frameworks -framework Python
+
+
+Have a look at the `Makefile` in `schedcat/native` for further details.
+
+Schedcat has been tested on Mac OS X 10.7 with both Apple's LLVM-based g++ 4.2.1 and the new clang++ 2.1, using Swig 2.0.4 and GMP 5.0.4 from Homebrew.
+
 
 ## Limitations
 
@@ -72,6 +119,10 @@ At this point, the library is largely undocumented. However, the library consist
 
 The unit test suite could use a lot more tests.
 
+There is currently no `setup.py`, and hence also no support `virtualenv`.
+
+Python 3 is not supported at the moment.
+
 ## Contributions
 
-Improvements, bugfixes, additional unit tests are very welcome! Please send pull requests or patches to [Björn Brandenburg](http://www.mpi-sws.org/~bbb).
+Any improvements, bugfixes, or additional unit tests are very welcome! Please send pull requests or patches to [Björn Brandenburg](http://www.mpi-sws.org/~bbb).
