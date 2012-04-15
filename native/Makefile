@@ -69,7 +69,7 @@ clean:
 	rm -f *.o ${ALL}
 
 testmain: testmain.o ${CORE_OBJ} ${SYNC_OBJ} ${EDF_OBJ} ${SCHED_OBJ}
-	$(CXX) $(LDFLAGS) -o $@ $+
+	$(CXX) -o $@ $+ $(LDFLAGS) 
 
 # #### Python libraries ####
 
@@ -77,13 +77,13 @@ interface/%_wrap.cc: interface/%.i
 	$(SWIG) $(SWIGFLAGS) -o $@ $<
 
 interface/%_wrap.o: interface/%_wrap.cc
-	$(CXX) -fPIC $(INCLUDES) $(PYTHON_INC) -c -o $@ $+
+	$(CXX) -fPIC $(PYTHON_INC) -c -o $@ $+ $(INCLUDES) 
 
 _sched.so: ${CORE_OBJ} ${EDF_OBJ} interface/sched_wrap.o
-	$(CXX) $(LDFLAGS) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+
+	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS) 
 
 _locking.so: ${SYNC_OBJ} interface/locking_wrap.o
-	$(CXX) $(LDFLAGS) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+
+	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS) 
 
 _sim.so: ${CORE_OBJ} ${SCHED_OBJ} interface/sim_wrap.o
-	$(CXX) $(LDFLAGS) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+
+	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS) 
