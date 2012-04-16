@@ -10,6 +10,7 @@ Implementation of Bertogna and Cirinei's response time analysis test.
 """
 
 from __future__ import division
+from math import floor
 
 
 def rta_interfering_workload(length, ti):
