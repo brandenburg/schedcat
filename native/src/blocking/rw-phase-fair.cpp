@@ -1,5 +1,6 @@
 #include "sharedres.h"
 #include "blocking.h"
+#include "rw-blocking.h"
 
 #include "stl-helper.h"
 

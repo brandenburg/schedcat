@@ -428,6 +428,8 @@ Interference np_fifo_per_resource(
 					  &tsk);
 }
 
+#include "rw-blocking.h"
+
 void merge_rw_requests(const TaskInfo &tsk, RWCounts &counts)
 {
 	foreach(tsk.get_requests(), req)
