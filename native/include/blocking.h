@@ -50,6 +50,24 @@ Interference np_fifo_per_resource(
 void charge_arrival_blocking(const ResourceSharingInfo& info,
 			     BlockingBounds& bounds);
 
+
+struct ClusterLimit
+{
+	unsigned int max_total_requests;
+	unsigned int max_requests_per_source;
+
+	ClusterLimit(unsigned int total, unsigned int src) :
+		max_total_requests(total), max_requests_per_source(src) {}
+};
+
+typedef std::vector<ClusterLimit> ClusterLimits;
+
+ClusterLimits np_fifo_limits(
+	const TaskInfo& tsk, const ClusterResources& clusters,
+	unsigned int procs_per_cluster,
+	const unsigned int issued,
+	int dedicated_irq);
+
 extern const unsigned int UNLIMITED;
 
 #endif
