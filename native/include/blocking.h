@@ -30,7 +30,16 @@ typedef std::vector<Cluster> Clusters;
 
 void split_by_cluster(const ResourceSharingInfo& info, Clusters& clusters);
 void split_by_resource(const ResourceSharingInfo& info, Resources& resources);
+void split_by_resource(const Cluster& cluster, Resources& resources);
+void split_by_resource(const Clusters& clusters, ClusterResources& resources);
 
+
+Interference bound_blocking(const ContentionSet& cont,
+			    unsigned long interval,
+			    unsigned int max_total_requests,
+			    unsigned int max_requests_per_source,
+			    const TaskInfo* exclude_tsk,
+			    unsigned int min_priority = 0);
 
 
 extern const unsigned int UNLIMITED;
