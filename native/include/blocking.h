@@ -41,6 +41,14 @@ Interference bound_blocking(const ContentionSet& cont,
 			    const TaskInfo* exclude_tsk,
 			    unsigned int min_priority = 0);
 
+Interference np_fifo_per_resource(
+	const TaskInfo& tsk, const ClusterResources& clusters,
+	unsigned int procs_per_cluster,
+	unsigned int res_id, unsigned int issued,
+	int dedicated_irq = NO_CPU);
+
+void charge_arrival_blocking(const ResourceSharingInfo& info,
+			     BlockingBounds& bounds);
 
 extern const unsigned int UNLIMITED;
 
