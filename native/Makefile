@@ -57,6 +57,7 @@ CORE_OBJ  = tasks.o
 SYNC_OBJ  = sharedres.o dpcp.o mpcp.o
 SYNC_OBJ += fmlp_plus.o  global-fmlp.o
 SYNC_OBJ += global-omlp.o part-omlp.o clust-omlp.o
+SYNC_OBJ += rw-phase-fair.o
 
 # #### Targets ####
 

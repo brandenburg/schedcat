@@ -41,6 +41,13 @@ Interference bound_blocking(const ContentionSet& cont,
 			    const TaskInfo* exclude_tsk,
 			    unsigned int min_priority = 0);
 
+Interference bound_blocking(const ContentionSet& cont,
+			    unsigned long interval,
+			    unsigned int max_total_requests,
+			    unsigned int max_requests_per_source,
+			    bool exclude_whole_cluster,
+			    const TaskInfo* exclude_tsk);
+
 Interference np_fifo_per_resource(
 	const TaskInfo& tsk, const ClusterResources& clusters,
 	unsigned int procs_per_cluster,
@@ -67,6 +74,44 @@ ClusterLimits np_fifo_limits(
 	unsigned int procs_per_cluster,
 	const unsigned int issued,
 	int dedicated_irq);
+
+Interference bound_blocking_all_clusters(
+	const ClusterResources& clusters,
+	const ClusterLimits& limits,
+	unsigned int res_id,
+	unsigned long interval,
+	const TaskInfo* exclude_tsk);
+
+void split_by_type(const ContentionSet& requests,
+		   ContentionSet& reads,
+		   ContentionSet& writes);
+void split_by_type(const Resources& resources,
+		   Resources &reads,
+		   Resources &writes);
+void split_by_type(const ClusterResources& per_cluster,
+		   ClusterResources &reads);
+void split_by_type(const ClusterResources& per_cluster,
+		   ClusterResources &reads,
+		   ClusterResources &writes);
+
+struct RWCount {
+	unsigned int res_id;
+	unsigned int num_reads;
+	unsigned int num_writes;
+	unsigned int rlength;
+	unsigned int wlength;
+
+	RWCount(unsigned int id) : res_id(id),
+				   num_reads(0),
+				   num_writes(0),
+				   rlength(0),
+				   wlength(0)
+	{}
+};
+
+typedef std::vector<RWCount> RWCounts;
+
+void merge_rw_requests(const TaskInfo &tsk, RWCounts &counts);
 
 extern const unsigned int UNLIMITED;
 
