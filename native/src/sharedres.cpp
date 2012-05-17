@@ -471,27 +471,3 @@ void merge_rw_requests(const TaskInfo &tsk, RWCounts &counts)
 		}
 	}
 }
-
-
-
-
-BlockingBounds* task_fair_mutex_bounds(const ResourceSharingInfo& info,
-				       unsigned int procs_per_cluster,
-				       int dedicated_irq)
-{
-	// These are structurally equivalent. Therefore, no need to reimplement
-	// everything from scratch.
-	return clustered_omlp_bounds(info, procs_per_cluster, dedicated_irq);
-}
-
-
-BlockingBounds* phase_fair_rw_bounds(const ResourceSharingInfo& info,
-				     unsigned int procs_per_cluster,
-				     int dedicated_irq)
-{
-	// These are structurally equivalent. Therefore, no need to reimplement
-	// everything from scratch.
-	return clustered_rw_omlp_bounds(info, procs_per_cluster, dedicated_irq);
-}
-
-

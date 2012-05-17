@@ -74,6 +74,15 @@ BlockingBounds* clustered_omlp_bounds(const ResourceSharingInfo& info,
 	return _results;
 }
 
+BlockingBounds* task_fair_mutex_bounds(const ResourceSharingInfo& info,
+				       unsigned int procs_per_cluster,
+				       int dedicated_irq)
+{
+	// These are structurally equivalent. Therefore, no need to reimplement
+	// everything from scratch.
+	return clustered_omlp_bounds(info, procs_per_cluster, dedicated_irq);
+}
+
 static void add_blocking(LimitedContentionSet &lcs,
 			 const ContentionSet& cont,
 			 unsigned long interval,
