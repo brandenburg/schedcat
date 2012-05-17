@@ -440,6 +440,42 @@ class Test_dpcp_terms(unittest.TestCase):
         self.assertEqual(6 + 3, res.get_remote_count(2))
         self.assertEqual(6 * 3 + 3 * 5, res.get_remote_blocking(2))
 
+    def test_priority_ceiling(self):
+        self.rsi = cpp.ResourceSharingInfo(4)
+
+        self.rsi.add_task(10, 10, 2, 100)
+        self.rsi.add_request(0, 1, 3)
+
+        self.rsi.add_task(25, 25, 3, 200)
+        self.rsi.add_request(0, 1, 5)
+
+        self.rsi.add_task(50, 50, 4, 300)
+        self.rsi.add_request(1, 1, 7)
+
+        self.rsi.add_task(100, 100, 1, 400)
+        self.rsi.add_request(1, 1, 9)
+
+        self.loc = cpp.ResourceLocality()
+        self.loc.assign_resource(0, 1)
+        self.loc.assign_resource(1, 1)
+
+        res = cpp.dpcp_bounds(self.rsi, self.loc)
+
+        self.assertEqual(1, res.get_remote_count(0))
+        self.assertEqual(5, res.get_remote_blocking(0))
+
+        self.assertEqual(4, res.get_remote_count(1))
+        self.assertEqual(4 * 3, res.get_remote_blocking(1))
+
+        self.assertEqual(6 + 3 + 1, res.get_remote_count(2))
+        self.assertEqual(6 * 3 + 3 * 5 + 1 * 9, res.get_remote_blocking(2))
+
+        self.assertEqual(0, res.get_remote_count(3))
+        self.assertEqual(0, res.get_remote_blocking(3))
+
+        self.assertEqual(11 + 5 + 3, res.get_local_count(3))
+        self.assertEqual(11 * 3 + 5 * 5 + 3 * 7, res.get_local_blocking(3))
+
 
 class Test_mpcp_terms(unittest.TestCase):
 

@@ -65,6 +65,7 @@ static unsigned int count_requests_to_cpu(
 static Interference bound_blocking_dpcp(
 	const TaskInfo* tsk,
 	const ContentionSet& cont,
+	const PriorityCeilings& prio_ceiling,
 	unsigned int max_lower_prio)
 {
 	Interference inter;
@@ -86,7 +87,8 @@ static Interference bound_blocking_dpcp(
 				inter.count += num;
 				inter.total_length += num * req->get_request_length();
 			}
-			else if (max_lower_prio)
+			else if (max_lower_prio &&
+			         prio_ceiling[req->get_resource_id()] <= tsk->get_priority())
 			{
 				// lower prio => only remaining
 				num = std::min(req->get_max_num_requests(interval), max_lower_prio);
@@ -103,6 +105,7 @@ static Interference bound_blocking_dpcp(
 static Interference dpcp_remote_bound(
 	const TaskInfo& tsk,
 	const ResourceLocality& locality,
+	const PriorityCeilings& prio_ceilings,
 	const AllPerCluster& per_cpu)
 {
 	Interference blocking;
@@ -118,7 +121,7 @@ static Interference dpcp_remote_bound(
 			reqs = count_requests_to_cpu(tsk, locality, cpu);
 
 			if (reqs > 0)
-				blocking += bound_blocking_dpcp(&tsk, cs, reqs);
+				blocking += bound_blocking_dpcp(&tsk, cs, prio_ceilings, reqs);
 		}
 		cpu++;
 	}
@@ -150,6 +153,17 @@ static Interference dpcp_local_bound(
 }
 
 
+static PriorityCeilings get_priority_ceilings(const ResourceSharingInfo& info)
+{
+	Resources resources;
+	PriorityCeilings ceilings;
+
+	split_by_resource(info, resources);
+	determine_priority_ceilings(resources, ceilings);
+
+	return ceilings;
+}
+
 BlockingBounds* dpcp_bounds(const ResourceSharingInfo& info,
 			    const ResourceLocality& locality)
 {
@@ -157,6 +171,8 @@ BlockingBounds* dpcp_bounds(const ResourceSharingInfo& info,
 
 	split_by_locality(info, locality, per_cpu);
 	sort_by_request_length(per_cpu);
+
+	PriorityCeilings prio_ceilings = get_priority_ceilings(info);
 
 	BlockingBounds* _results = new BlockingBounds(info);
 	BlockingBounds& results = *_results;
@@ -166,7 +182,7 @@ BlockingBounds* dpcp_bounds(const ResourceSharingInfo& info,
 		const TaskInfo& tsk  = info.get_tasks()[i];
 		Interference remote, local;
 
-		remote = dpcp_remote_bound(tsk, locality, per_cpu);
+		remote = dpcp_remote_bound(tsk, locality, prio_ceilings, per_cpu);
 		local = dpcp_local_bound(&tsk, per_cpu[tsk.get_cluster()]);
 
 		results[i] = remote + local;

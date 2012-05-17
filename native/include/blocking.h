@@ -82,6 +82,11 @@ Interference bound_blocking_all_clusters(
 	unsigned long interval,
 	const TaskInfo* exclude_tsk);
 
+typedef std::vector<unsigned int> PriorityCeilings;
+
+void determine_priority_ceilings(const Resources& resources,
+				 PriorityCeilings& ceilings);
+
 extern const unsigned int UNLIMITED;
 
 #endif

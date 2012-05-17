@@ -225,6 +225,26 @@ void sort_by_request_length(ClusterResources& resources)
 	apply_foreach(resources, sort_by_request_length);
 }
 
+void determine_priority_ceilings(const Resources& resources,
+					PriorityCeilings& ceilings)
+{
+	ceilings.reserve(resources.size());
+
+	foreach(resources, it)
+	{
+		unsigned int ceiling = UINT_MAX;
+		const ContentionSet& cs = *it;
+
+		foreach(cs, jt)
+		{
+			const RequestBound* req = *jt;
+			ceiling = std::min(ceiling, req->get_task()->get_priority());
+		}
+
+		ceilings.push_back(ceiling);
+	}
+}
+
 typedef std::vector<TaskContention> ClusterContention;
 
 typedef std::vector<ContentionSet> TaskContention;

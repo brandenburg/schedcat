@@ -7,28 +7,6 @@
 // ***************************  MPCP ******************************************
 
 
-typedef std::vector<unsigned int> PriorityCeilings;
-
-static void determine_priority_ceilings(const Resources& resources,
-					PriorityCeilings& ceilings)
-{
-	ceilings.reserve(resources.size());
-
-	foreach(resources, it)
-	{
-		unsigned int ceiling = UINT_MAX;
-		const ContentionSet& cs = *it;
-
-		foreach(cs, jt)
-		{
-			const RequestBound* req = *jt;
-			ceiling = std::min(ceiling, req->get_task()->get_priority());
-		}
-
-		ceilings.push_back(ceiling);
-	}
-}
-
 typedef std::vector<unsigned long> ResponseTimes;
 typedef std::vector<ResponseTimes> TaskResponseTimes;
 typedef std::vector<TaskResponseTimes> ClusterResponseTimes;
