@@ -32,4 +32,4 @@ typedef std::vector<RWCount> RWCounts;
 
 void merge_rw_requests(const TaskInfo &tsk, RWCounts &counts);
 
-#endif RW_BLOCKING_H
+#endif
