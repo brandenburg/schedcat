@@ -153,17 +153,6 @@ static Interference dpcp_local_bound(
 }
 
 
-static PriorityCeilings get_priority_ceilings(const ResourceSharingInfo& info)
-{
-	Resources resources;
-	PriorityCeilings ceilings;
-
-	split_by_resource(info, resources);
-	determine_priority_ceilings(resources, ceilings);
-
-	return ceilings;
-}
-
 BlockingBounds* dpcp_bounds(const ResourceSharingInfo& info,
 			    const ResourceLocality& locality)
 {

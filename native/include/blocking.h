@@ -87,6 +87,8 @@ typedef std::vector<unsigned int> PriorityCeilings;
 void determine_priority_ceilings(const Resources& resources,
 				 PriorityCeilings& ceilings);
 
+PriorityCeilings get_priority_ceilings(const ResourceSharingInfo& info);
+
 extern const unsigned int UNLIMITED;
 
 #endif

@@ -245,6 +245,17 @@ void determine_priority_ceilings(const Resources& resources,
 	}
 }
 
+PriorityCeilings get_priority_ceilings(const ResourceSharingInfo& info)
+{
+	Resources resources;
+	PriorityCeilings ceilings;
+
+	split_by_resource(info, resources);
+	determine_priority_ceilings(resources, ceilings);
+
+	return ceilings;
+}
+
 typedef std::vector<TaskContention> ClusterContention;
 
 typedef std::vector<ContentionSet> TaskContention;
