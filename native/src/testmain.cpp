@@ -15,6 +15,8 @@
 #include "edf/gedf.h"
 #include "edf/sim.h"
 
+#include "lp_analysis.h"
+
 #include "event.h"
 #include "schedule_sim.h"
 
@@ -906,5 +908,73 @@ int main(int argc, char** argv)
 		     << endl;
 
 	delete results;
+
+	ResourceLocality loc;
+
+	loc.assign_resource(0, 4);
+	loc.assign_resource(1, 4);
+	loc.assign_resource(2, 4);
+	loc.assign_resource(3, 4);
+
+	results = dpcp_bounds(rsi, loc);
+
+	cout << endl << endl  << "DPCP" << endl;
+	for (i = 0; i < results->size(); i++)
+		cout << "T" << i
+		     << " y=" << rsi.get_tasks()[i].get_priority()
+		     << " c=" << rsi.get_tasks()[i].get_cluster()
+		     << ": total=" << (*results)[i].total_length
+		     << "  remote=" << results->get_remote_blocking(i)
+		     << "  local=" << results->get_local_blocking(i)
+		     << endl;
+
+	delete results;
+
+#if defined(CONFIG_HAVE_CPLEX)
+
+	results = lp_dpcp_bounds(rsi, loc, false);
+
+	cout << endl << endl  << "DPCP(LP)" << endl;
+	for (i = 0; i < results->size(); i++)
+		cout << "T" << i
+		     << " y=" << rsi.get_tasks()[i].get_priority()
+		     << " c=" << rsi.get_tasks()[i].get_cluster()
+		     << ": total=" << (*results)[i].total_length
+		     << "  remote=" << results->get_remote_blocking(i)
+		     << "  local=" << results->get_local_blocking(i)
+		     << endl;
+
+	delete results;
+
+	results = lp_dpcp_bounds(rsi, loc, true);
+
+	cout << endl << endl  << "DPCP(LP+RTA)" << endl;
+	for (i = 0; i < results->size(); i++)
+		cout << "T" << i
+		     << " y=" << rsi.get_tasks()[i].get_priority()
+		     << " c=" << rsi.get_tasks()[i].get_cluster()
+		     << ": total=" << (*results)[i].total_length
+		     << "  remote=" << results->get_remote_blocking(i)
+		     << "  local=" << results->get_local_blocking(i)
+		     << endl;
+
+	delete results;
+
+	results = lp_dflp_bounds(rsi, loc);
+
+	cout << endl << endl  << "DFLP" << endl;
+	for (i = 0; i < results->size(); i++)
+		cout << "T" << i
+		     << " y=" << rsi.get_tasks()[i].get_priority()
+		     << " c=" << rsi.get_tasks()[i].get_cluster()
+		     << ": total=" << (*results)[i].total_length
+		     << "  remote=" << results->get_remote_blocking(i)
+		     << "  local=" << results->get_local_blocking(i)
+		     << endl;
+
+	delete results;
+
+#endif
+
 	return 0;
 }
