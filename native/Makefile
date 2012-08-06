@@ -36,6 +36,11 @@ PYTHON_LIB ?=
 SOFLAGS     = -shared
 endif
 
+# Support for clock_gettime()
+ifeq ($(OS),Linux)
+LIBS += -lrt
+endif
+
 CXXFLAGS  = -Wall -Wextra $(DISABLED_WARNINGS) -fPIC $(INCLUDES)
 LDFLAGS   = $(LIBS)
 SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude
