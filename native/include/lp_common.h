@@ -22,10 +22,13 @@ enum blocking_type
 class VarMapper {
 private:
 	hashmap<uint64_t, unsigned int> map;
+	unsigned int next_var;
 
 	void insert(uint64_t key)
 	{
-		unsigned int idx = map.size();
+		assert(next_var < UINT_MAX);
+
+		unsigned int idx = next_var++;
 		map[key] = idx;
 	}
 
@@ -41,6 +44,9 @@ private:
 	}
 
 public:
+	VarMapper(unsigned int start_var = 0)
+		: next_var(start_var)
+	{}
 
 	unsigned int lookup(unsigned int task_id, unsigned int res_id, unsigned int req_id,
 	                    blocking_type type)
@@ -56,9 +62,14 @@ public:
 		map.clear();
 	}
 
-	unsigned int get_num_vars()
+	unsigned int get_num_vars() const
 	{
 		return map.size();
+	}
+
+	unsigned int get_next_var() const
+	{
+		return next_var;
 	}
 };
 
