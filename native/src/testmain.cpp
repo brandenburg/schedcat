@@ -974,6 +974,17 @@ int main(int argc, char** argv)
 
 	delete results;
 
+	bool check_for_memory_leaks = false;
+
+	// Run the LP code in a loop to see if memory footprint increases
+	// significantly.
+	while (check_for_memory_leaks) {
+		results = lp_dflp_bounds(rsi, loc);
+		delete results;
+		results = lp_dpcp_bounds(rsi, loc);
+		delete results;
+	}
+
 #endif
 
 	return 0;
