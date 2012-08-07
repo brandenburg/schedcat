@@ -55,13 +55,31 @@ ifneq ($(CPLEX),)
 # The CPLEX variable now contains the canonicalized path to the cplex
 # binary. From this, we can extract the include and library paths.
 CPLEX_DIR := ${realpath ${dir $(CPLEX)}/../..}
+CPLEX_PATH ?= $(CPLEX_DIR)
+endif
 
-${info Found CPLEX installation in $(CPLEX_DIR).}
-
+ifneq ($(CPLEX_PATH),)
+${info Linking with CPLEX installation in $(CPLEX_DIR).}
 # Add headers, libraries, and definitions.
-INCLUDES += -I$(CPLEX_DIR)/include/
+INCLUDES += -I$(CPLEX_PATH)/include/
 LIBS     += -lilocplex -lcplex -lconcert
 DEFS     += -DCONFIG_HAVE_CPLEX
+endif
+
+
+# #### GLPK Support ####
+
+GLPK := ${realpath ${shell which glpsol}}
+ifneq ($(GLPK),)
+GLPK_DIR :=${realpath ${dir $(GLPK)}/..}
+GLPK_PATH ?= $(GLPK_DIR)
+endif
+
+ifneq ($(GLPK_PATH),)
+${info Linking with GLPK installed at prefix=$(GLPK_DIR).}
+INCLUDES += -I$(GLPK_PATH)/include
+LIBS     += -L$(GLPK_PATH)/lib -lglpk
+DEFS     += -DCONFIG_HAVE_GLPK
 endif
 
 # #### Debug support ####
@@ -99,9 +117,16 @@ SYNC_OBJ += rw-phase-fair.o rw-task-fair.o
 ALL = testmain _sched.so _locking.so _sim.so
 
 # Compile LP-based code only if we have a solver.
-ifneq ($(CPLEX),)
-LP_OBJ    = lp_common.o lp_dflp.o lp_dpcp.o
-LP_OBJ   += cplex.o io.o
+ifneq ($(CPLEX_PATH)$(GLPK_PATH),)
+LP_OBJ    = lp_common.o io.o lp_dflp.o lp_dpcp.o
+
+ifneq ($(CPLEX_PATH),)
+LP_OBJ   += cplex.o
+endif
+
+ifneq ($(GLPK_PATH),)
+LP_OBJ   += glpk.o
+endif
 
 ALL += _lp_analysis.so
 endif

@@ -10,7 +10,7 @@
 #include "stl-hashmap.h"
 
 #include "linprog/model.h"
-#include "linprog/cplex.h"
+#include "linprog/solver.h"
 
 enum blocking_type
 {

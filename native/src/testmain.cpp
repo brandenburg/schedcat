@@ -930,7 +930,8 @@ int main(int argc, char** argv)
 
 	delete results;
 
-#if defined(CONFIG_HAVE_CPLEX)
+
+#if defined(CONFIG_HAVE_CPLEX) || defined(CONFIG_HAVE_GLPK)
 
 	results = lp_dpcp_bounds(rsi, loc, false);
 

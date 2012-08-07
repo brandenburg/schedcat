@@ -371,7 +371,7 @@ static BlockingBounds* _lp_dpcp_bounds(const ResourceSharingInfo& info,
 #endif
 
 	// Solve the big, combined LP.
-	Solution *sol = cplex_solve(lp, var_idx);
+	Solution *sol = linprog_solve(lp, var_idx);
 
 	assert(sol != NULL);
 
@@ -445,7 +445,7 @@ static void apply_dpcp_bounds_for_task(
 	solver_cost.start();
 #endif
 
-	Solution *sol = cplex_solve(lp, vars.get_num_vars());
+	Solution *sol = linprog_solve(lp, vars.get_num_vars());
 
 #if DEBUG_LP_OVERHEADS >= 2
 	solver_cost.stop();
