@@ -7,6 +7,8 @@
 
 #include <vector>
 #include <algorithm>
+
+#include "stl-helper.h"
 #endif
 
 typedef enum {
@@ -101,10 +103,7 @@ public:
 	unsigned int get_total_num_requests() const
 	{
 		unsigned int count = 0;
-		Requests::const_iterator it;
-		for (it = requests.begin();
-		     it != requests.end();
-		     it++)
+		foreach(requests, it)
 			count += it->get_num_requests();
 		return count;
 	}
@@ -112,10 +111,7 @@ public:
 	unsigned int get_max_request_length() const
 	{
 		unsigned int len = 0;
-		Requests::const_iterator it;
-		for (it = requests.begin();
-		     it != requests.end();
-		     it++)
+		foreach(requests, it)
 			len = std::max(len, it->get_request_length());
 		return len;
 	}
