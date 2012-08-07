@@ -19,6 +19,7 @@ DISABLED_WARNINGS += -Wno-deprecated       # We still use ext::hash_map<>.
 
 INCLUDES = -Iinclude -I${GMP_PATH}/include
 LIBS     = -L${GMP_PATH}/lib -lgmp -lgmpxx
+DEFS    ?=
 
 OS := $(shell uname)
 
@@ -41,16 +42,17 @@ ifeq ($(OS),Linux)
 LIBS += -lrt
 endif
 
-CXXFLAGS  = -Wall -Wextra $(DISABLED_WARNINGS) -fPIC $(INCLUDES)
-LDFLAGS   = $(LIBS)
-SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude
 
+# #### Debug support ####
 ifeq ($(DEBUG),y)
-CXXFLAGS += -g -DDEBUG
+DEFS += -g -DDEBUG
 else
-CXXFLAGS += -O2 -DNDEBUG
+DEFS += -O2 -DNDEBUG
 endif
 
+CXXFLAGS  = -Wall -Wextra -Werror $(DISABLED_WARNINGS) -fPIC $(INCLUDES) $(DEFS)
+LDFLAGS   = $(LIBS)
+SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude
 vpath %.cc interface
 vpath %.cpp src src/edf src/blocking
 
@@ -85,13 +87,13 @@ interface/%_wrap.cc: interface/%.i
 	$(SWIG) $(SWIGFLAGS) -o $@ $<
 
 interface/%_wrap.o: interface/%_wrap.cc
-	$(CXX) -fPIC $(PYTHON_INC) -c -o $@ $+ $(INCLUDES) 
+	$(CXX) -fPIC $(PYTHON_INC) -c -o $@ $+ $(INCLUDES)
 
 _sched.so: ${CORE_OBJ} ${EDF_OBJ} interface/sched_wrap.o
-	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS) 
+	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
 
 _locking.so: ${SYNC_OBJ} interface/locking_wrap.o
-	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS) 
+	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
 
 _sim.so: ${CORE_OBJ} ${SCHED_OBJ} interface/sim_wrap.o
-	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS) 
+	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
