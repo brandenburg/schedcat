@@ -722,7 +722,7 @@ int main6(int argc, char** argv)
 
 int main6(int argc, char** argv)
 {
-	TaskInfo ti(100, 100, 0, 0);
+	TaskInfo ti(100, 100, 0, 0, 0);
 
 	ti.add_request(123, 3, 3);
 	ti.add_request(103, 1, 2);
