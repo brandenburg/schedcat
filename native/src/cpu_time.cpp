@@ -3,6 +3,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <cstring>
+
 #include "cpu_time.h"
 
 
@@ -47,3 +49,31 @@ double get_cpu_usage(void)
 }
 
 #endif
+
+
+std::ostream& operator<<(std::ostream &os, const CPUClock &clock)
+{
+	if (clock.get_function())
+		os << clock.get_function() << "::";
+	os << clock.get_name()
+	   << ": total=" << clock.get_total() * 1000 << "ms "
+	   << "last="    << clock.get_last()  * 1000 << "ms "
+	   << "average=" << clock.get_average() * 1000 << "ms "
+	   << "count="   << clock.get_count();
+	return os;
+}
+
+char *strip_types(const char* pretty_func)
+{
+	char *copy = strdup(pretty_func);
+
+	char *start = strchr(copy, ' ');
+	char *end = strchr(copy, '(');
+
+	if (start)
+		copy = start + 1;
+	if (end)
+		*end = '\0';
+
+	return copy;
+}
