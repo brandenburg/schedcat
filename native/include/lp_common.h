@@ -1,0 +1,159 @@
+#ifndef LP_COMMON_H_
+#define LP_COMMON_H_
+
+#include <stdint.h>
+
+#include "sharedres_types.h"
+#include "blocking.h"
+
+#include "stl-helper.h"
+#include "stl-hashmap.h"
+
+#include "linprog/model.h"
+#include "linprog/cplex.h"
+
+enum blocking_type
+{
+	BLOCKING_DIRECT,
+	BLOCKING_INDIRECT,
+	BLOCKING_PREEMPT
+};
+
+class VarMapper {
+private:
+	hashmap<uint64_t, unsigned int> map;
+
+	void insert(uint64_t key)
+	{
+		unsigned int idx = map.size();
+		map[key] = idx;
+	}
+
+	static uint64_t encode_request(uint64_t task_id, uint64_t res_id, uint64_t req_id,
+		                       uint64_t blocking_type)
+	{
+		assert(task_id < (1 << 30));
+		assert(res_id < (1 << 10));
+		assert(req_id < (1 << 22));
+		assert(blocking_type < (1 << 2));
+
+		return (blocking_type << 62) | (task_id << 30) | (req_id << 10) | res_id;
+	}
+
+public:
+
+	unsigned int lookup(unsigned int task_id, unsigned int res_id, unsigned int req_id,
+	                    blocking_type type)
+	{
+		uint64_t key = encode_request(task_id, res_id, req_id, type);
+		if (!map.count(key))
+			insert(key);
+		return map[key];
+	}
+
+	void clear()
+	{
+		map.clear();
+	}
+
+	unsigned int get_num_vars()
+	{
+		return map.size();
+	}
+};
+
+void set_blocking_objective(
+	VarMapper& vars,
+	const ResourceSharingInfo& info, const ResourceLocality&,
+	const TaskInfo& ti,
+	LinearProgram& lp,
+	LinearExpression *local_obj = 0,
+	LinearExpression *remote_obj = 0);
+
+void add_mutex_constraints(VarMapper& vars,
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,  LinearProgram& lp);
+
+void add_topology_constraints(VarMapper& vars,
+		const ResourceSharingInfo& info, const ResourceLocality& locality,
+		const TaskInfo& ti, LinearProgram& lp);
+
+void add_local_lower_priority_constraints(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const ResourceLocality& locality,
+	const TaskInfo& ti,
+	LinearProgram& lp);
+
+// A generic for loop that iterates 'request_index_variable' from 0 to the
+// maximum number of requests issued by task tx while ti is pending. 'tx_request'
+// should be of type RequestBound&.
+#define foreach_request_instance(tx_request, task_ti, request_index_variable) \
+	for (								\
+		unsigned int __max_num_requests = (tx_request).get_max_num_requests((task_ti).get_response()), \
+				 request_index_variable = 0;		\
+		request_index_variable < __max_num_requests;		\
+		request_index_variable++				\
+		)
+
+// iterate over each task using 'task_iter', skipping 'excluded_task'
+#define foreach_task_except(tasks, excluded_task, task_iter)	\
+	foreach(tasks, task_iter)				\
+	if (task_iter->get_id() != (excluded_task).get_id())
+
+// iterate only over tasks with equal or lower priority
+#define foreach_lowereq_priority_task(tasks, reference_task, task_iter) \
+	foreach(tasks, task_iter)				      \
+	if (task_iter->get_priority() >= (reference_task).get_priority())
+
+// iterate only over tasks with equal or lower priority, excluding 'reference_task'
+#define foreach_lowereq_priority_task_except(tasks, reference_task, task_iter) \
+	foreach(tasks, task_iter)				      \
+	if (task_iter->get_priority() >= (reference_task).get_priority() &&    \
+		task_iter->get_id() != (reference_task).get_id())
+
+
+// iterate only over tasks with higher priority
+#define foreach_higher_priority_task(tasks, reference_task, task_iter) \
+	foreach(tasks, task_iter)				       \
+	if (task_iter->get_priority() < (reference_task).get_priority())
+
+// iterate over requests not in the local cluster
+#define foreach_remote_request(requests, locality, task_ti, request_iter) \
+	foreach(requests, request_iter)					\
+	if ((locality)[request_iter->get_resource_id()]			\
+	    != (int) (task_ti).get_cluster())
+
+// iterate over requests for resources in a specific cluster
+#define foreach_request_in_cluster(requests, locality, cluster, request_iter) \
+	foreach(requests, request_iter)					\
+	if ((locality)[request_iter->get_resource_id()]			\
+	    == (int) (cluster))
+
+// iterate over each task using 'task_iter', skipping tasks in the same
+// cluster as 'local_task'
+#define foreach_remote_task(tasks, local_task, task_iter)	\
+	foreach(tasks, task_iter)				\
+	if (task_iter->get_cluster() != (local_task).get_cluster())
+
+#define foreach_local_task(tasks, local_task, task_iter)	\
+	foreach(tasks, task_iter)				\
+	if (task_iter->get_cluster() == (local_task).get_cluster())
+
+#define foreach_local_task_except(tasks, local_task, task_iter)	\
+	foreach(tasks, task_iter)				\
+	if (task_iter->get_cluster() == (local_task).get_cluster() && \
+	    task_iter->get_id() != (local_task).get_id())
+
+#define foreach_local_lowereq_priority_task_except(tasks, local_task, task_iter)	\
+	foreach(tasks, task_iter)				\
+	if (task_iter->get_cluster() == (local_task).get_cluster() && \
+	    task_iter->get_id() != (local_task).get_id() && \
+	    task_iter->get_priority() >= (local_task).get_priority())
+
+#define foreach_request_for(requests, res_id, req_iter)	\
+	foreach(requests, req_iter)				\
+	if (req_iter->get_resource_id() == res_id)
+
+
+#endif /* LP_COMMON_H_ */

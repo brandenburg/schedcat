@@ -81,7 +81,7 @@ LDFLAGS   = $(LIBS)
 SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude
 
 vpath %.cc interface
-vpath %.cpp src src/edf src/blocking src/linprog
+vpath %.cpp src src/edf src/blocking src/blocking/linprog src/linprog
 
 # #### Common C++ source files ####
 
@@ -100,7 +100,8 @@ ALL = testmain _sched.so _locking.so _sim.so
 
 # Compile LP-based code only if we have a solver.
 ifneq ($(CPLEX),)
-LP_OBJ    = cplex.o io.o
+LP_OBJ    = lp_common.o lp_dflp.o lp_dpcp.o
+LP_OBJ   += cplex.o io.o
 endif
 
 .PHONY: all clean

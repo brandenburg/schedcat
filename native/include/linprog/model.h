@@ -53,7 +53,7 @@ class LinearProgram
 	Constraints inequalities;
 
 public:
-	LinearProgram() : objective(0) {};
+	LinearProgram() : objective(new LinearExpression()) {};
 
 	~LinearProgram()
 	{
@@ -87,6 +87,11 @@ public:
 	}
 
 	const LinearExpression *get_objective() const
+	{
+		return objective;
+	}
+
+	LinearExpression *get_objective()
 	{
 		return objective;
 	}
