@@ -102,6 +102,8 @@ ALL = testmain _sched.so _locking.so _sim.so
 ifneq ($(CPLEX),)
 LP_OBJ    = lp_common.o lp_dflp.o lp_dpcp.o
 LP_OBJ   += cplex.o io.o
+
+ALL += _lp_analysis.so
 endif
 
 .PHONY: all clean
@@ -130,4 +132,7 @@ _locking.so: ${SYNC_OBJ} interface/locking_wrap.o
 	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
 
 _sim.so: ${CORE_OBJ} ${SCHED_OBJ} interface/sim_wrap.o
+	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
+
+_lp_analysis.so: ${LP_OBJ} sharedres.o cpu_time.o interface/lp_analysis_wrap.o
 	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
