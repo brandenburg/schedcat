@@ -3,17 +3,7 @@
 #include "rw-blocking.h"
 
 #include "stl-helper.h"
-
-
-#ifdef CONFIG_USE_0X
-#include <unordered_map>
-#define hashmap std::unordered_map
-#else
-#include <ext/hash_map>
-#define hashmap __gnu_cxx::hash_map
-#endif
-
-
+#include "stl-hashmap.h"
 
 static Interference bound_blocking_all(
 	const TaskInfo* tsk,
