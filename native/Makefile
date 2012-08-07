@@ -45,6 +45,24 @@ ifeq ($(OS),Linux)
 LIBS += -lrt
 endif
 
+# #### CPLEX Support ####
+
+# See if we can find a CPLEX installation.
+CPLEX := ${realpath ${shell which cplex}}
+ifneq ($(CPLEX),)
+# Yes, we seem to have something that looks like cplex.
+
+# The CPLEX variable now contains the canonicalized path to the cplex
+# binary. From this, we can extract the include and library paths.
+CPLEX_DIR := ${realpath ${dir $(CPLEX)}/../..}
+
+${info Found CPLEX installation in $(CPLEX_DIR).}
+
+# Add headers, libraries, and definitions.
+INCLUDES += -I$(CPLEX_DIR)/include/
+LIBS     += -lilocplex -lcplex -lconcert
+DEFS     += -DCONFIG_HAVE_CPLEX
+endif
 
 # #### Debug support ####
 ifeq ($(DEBUG),y)
@@ -61,8 +79,9 @@ endif
 CXXFLAGS  = -Wall -Wextra -Werror $(DISABLED_WARNINGS) -fPIC $(INCLUDES) $(DEFS)
 LDFLAGS   = $(LIBS)
 SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude
+
 vpath %.cc interface
-vpath %.cpp src src/edf src/blocking
+vpath %.cpp src src/edf src/blocking src/linprog
 
 # #### Common C++ source files ####
 
@@ -79,6 +98,11 @@ SYNC_OBJ += rw-phase-fair.o rw-task-fair.o
 
 ALL = testmain _sched.so _locking.so _sim.so
 
+# Compile LP-based code only if we have a solver.
+ifneq ($(CPLEX),)
+LP_OBJ    = cplex.o io.o
+endif
+
 .PHONY: all clean
 
 all: ${ALL}
@@ -87,8 +111,8 @@ clean:
 	rm -f interface/*.cc interface/*.o *.py
 	rm -f *.o ${ALL}
 
-testmain: testmain.o ${CORE_OBJ} ${SYNC_OBJ} ${EDF_OBJ} ${SCHED_OBJ}
-	$(CXX) -o $@ $+ $(LDFLAGS) 
+testmain: testmain.o ${CORE_OBJ} ${SYNC_OBJ} ${EDF_OBJ} ${SCHED_OBJ} ${LP_OBJ}
+	$(CXX) -o $@ $+ $(LDFLAGS)
 
 # #### Python libraries ####
 
