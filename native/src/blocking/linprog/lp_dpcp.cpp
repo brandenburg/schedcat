@@ -321,6 +321,64 @@ void add_dpcp_constraints(
 		add_independent_cluster_constraints(vars, info, locality, ti, lp);
 }
 
+#ifdef CONFIG_MERGED_LINPROGS
+
+BlockingBounds* lp_dpcp_bounds(const ResourceSharingInfo& info,
+			       const ResourceLocality& locality,
+			       bool use_rta)
+{
+	BlockingBounds *results = new BlockingBounds(info);
+	const unsigned int num_tasks = info.get_tasks().size();
+	LinearExpression *local_obj = new LinearExpression[num_tasks];
+	LinearExpression *remote_obj = new LinearExpression[num_tasks];
+
+	PriorityCeilings prio_ceilings = get_priority_ceilings(info);
+
+	LinearProgram lp;
+	unsigned int var_idx = 0;
+
+	// Generate a "merged" LP.
+	for (unsigned int i = 0; i < num_tasks; i++)
+	{
+		const TaskInfo &ti = info.get_tasks()[i];
+		VarMapper vars = VarMapper(var_idx);
+
+		set_blocking_objective(vars, info, locality, ti, lp,
+				       local_obj + i, remote_obj + i);
+		add_dpcp_constraints(vars, info, locality, ti,
+				     prio_ceilings, lp, use_rta);
+
+		var_idx = vars.get_next_var();
+	}
+
+	// Solve the big, combined LP.
+	Solution *sol = cplex_solve(lp, var_idx);
+
+	assert(sol != NULL);
+
+	// Extract each task's solution.
+	for (unsigned int i = 0; i < num_tasks; i++)
+	{
+		Interference total, remote, local;
+
+		local.total_length = sol->evaluate(local_obj[i]);
+		remote.total_length = sol->evaluate(remote_obj[i]);
+		total.total_length = local.total_length + remote.total_length;
+
+		(*results)[i] = total;
+		results->set_remote_blocking(i, remote);
+		results->set_local_blocking(i, local);
+	}
+
+	delete sol;
+	delete[] local_obj;
+	delete[] remote_obj;
+
+	return results;
+}
+
+#else // per-task LPs
+
 static void apply_dpcp_bounds_for_task(
 	unsigned int i,
 	BlockingBounds& bounds,
@@ -372,3 +430,5 @@ BlockingBounds* lp_dpcp_bounds(const ResourceSharingInfo& info,
 
 	return results;
 }
+
+#endif
