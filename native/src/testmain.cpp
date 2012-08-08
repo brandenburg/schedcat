@@ -974,7 +974,7 @@ int main(int argc, char** argv)
 
 	delete results;
 
-	bool check_for_memory_leaks = false;
+	bool check_for_memory_leaks = true;
 
 	// Run the LP code in a loop to see if memory footprint increases
 	// significantly.

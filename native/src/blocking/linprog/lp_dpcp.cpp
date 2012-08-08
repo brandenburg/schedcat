@@ -6,6 +6,8 @@
 #include "blocking.h"
 #include "stl-hashmap.h"
 
+#include "cpu_time.h"
+
 #define NO_WAIT_TIME_BOUND (-1)
 
 class MaxWaitTimes
@@ -323,9 +325,9 @@ void add_dpcp_constraints(
 
 #ifdef CONFIG_MERGED_LINPROGS
 
-BlockingBounds* lp_dpcp_bounds(const ResourceSharingInfo& info,
-			       const ResourceLocality& locality,
-			       bool use_rta)
+static BlockingBounds* _lp_dpcp_bounds(const ResourceSharingInfo& info,
+				       const ResourceLocality& locality,
+				       bool use_rta)
 {
 	BlockingBounds *results = new BlockingBounds(info);
 	const unsigned int num_tasks = info.get_tasks().size();
@@ -336,6 +338,18 @@ BlockingBounds* lp_dpcp_bounds(const ResourceSharingInfo& info,
 
 	LinearProgram lp;
 	unsigned int var_idx = 0;
+
+#if DEBUG_LP_OVERHEADS >= 2
+	static DEFINE_CPU_CLOCK(model_gen_cost);
+	static DEFINE_CPU_CLOCK(solver_cost);
+	static DEFINE_CPU_CLOCK(extract_cost);
+	static DEFINE_CPU_CLOCK(total_cost);
+
+	std::cout << "---- " << __FUNCTION__ << " ----" << std::endl;
+
+	model_gen_cost.start();
+	total_cost.start();
+#endif
 
 	// Generate a "merged" LP.
 	for (unsigned int i = 0; i < num_tasks; i++)
@@ -351,10 +365,20 @@ BlockingBounds* lp_dpcp_bounds(const ResourceSharingInfo& info,
 		var_idx = vars.get_next_var();
 	}
 
+#if DEBUG_LP_OVERHEADS >= 2
+	model_gen_cost.stop();
+	solver_cost.start();
+#endif
+
 	// Solve the big, combined LP.
 	Solution *sol = cplex_solve(lp, var_idx);
 
 	assert(sol != NULL);
+
+#if DEBUG_LP_OVERHEADS >= 2
+	solver_cost.stop();
+	extract_cost.start();
+#endif
 
 	// Extract each task's solution.
 	for (unsigned int i = 0; i < num_tasks; i++)
@@ -369,6 +393,15 @@ BlockingBounds* lp_dpcp_bounds(const ResourceSharingInfo& info,
 		results->set_remote_blocking(i, remote);
 		results->set_local_blocking(i, local);
 	}
+
+#if DEBUG_LP_OVERHEADS >= 2
+	extract_cost.stop();
+	total_cost.stop();
+	std::cout << model_gen_cost << std::endl;
+	std::cout << solver_cost << std::endl;
+	std::cout << extract_cost << std::endl;
+	std::cout << total_cost << std::endl;
+#endif
 
 	delete sol;
 	delete[] local_obj;
@@ -392,13 +425,32 @@ static void apply_dpcp_bounds_for_task(
 	const TaskInfo& ti = info.get_tasks()[i];
 	LinearExpression *local_obj = new LinearExpression();
 
+#if DEBUG_LP_OVERHEADS >= 2
+	static DEFINE_CPU_CLOCK(model_gen_cost);
+	static DEFINE_CPU_CLOCK(solver_cost);
+
+	std::cout << "---- " << __FUNCTION__ << " ----" << std::endl;
+
+	model_gen_cost.start();
+#endif
+
 	set_blocking_objective(vars, info, locality, ti, lp, local_obj);
 
 	add_dpcp_constraints(vars, info, locality, ti,
 			     prio_ceilings, lp, use_rta);
 
+#if DEBUG_LP_OVERHEADS >= 2
+	model_gen_cost.stop();
+	std::cout << model_gen_cost << std::endl;
+	solver_cost.start();
+#endif
+
 	Solution *sol = cplex_solve(lp, vars.get_num_vars());
 
+#if DEBUG_LP_OVERHEADS >= 2
+	solver_cost.stop();
+	std::cout << solver_cost << std::endl;
+#endif
 	assert(sol != NULL);
 
 	Interference total, remote, local;
@@ -416,9 +468,9 @@ static void apply_dpcp_bounds_for_task(
 }
 
 
-BlockingBounds* lp_dpcp_bounds(const ResourceSharingInfo& info,
-			       const ResourceLocality& locality,
-			       bool use_rta)
+static BlockingBounds* _lp_dpcp_bounds(const ResourceSharingInfo& info,
+				       const ResourceLocality& locality,
+				       bool use_rta)
 {
 	BlockingBounds* results = new BlockingBounds(info);
 
@@ -432,3 +484,23 @@ BlockingBounds* lp_dpcp_bounds(const ResourceSharingInfo& info,
 }
 
 #endif
+
+BlockingBounds* lp_dpcp_bounds(const ResourceSharingInfo& info,
+			       const ResourceLocality& locality,
+			       bool use_rta)
+{
+#if DEBUG_LP_OVERHEADS >= 1
+	static DEFINE_CPU_CLOCK(cpu_costs);
+
+	cpu_costs.start();
+#endif
+
+	BlockingBounds *results = _lp_dpcp_bounds(info, locality, use_rta);
+
+#if DEBUG_LP_OVERHEADS >= 1
+	cpu_costs.stop();
+	std::cout << cpu_costs << std::endl;
+#endif
+
+	return results;
+}

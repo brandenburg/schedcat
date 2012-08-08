@@ -70,6 +70,13 @@ void CPLEXSolution::solve_model(unsigned int max_num_vars,
 {
 	try
 	{
+#if DEBUG_LP_OVERHEADS >= 3
+		static DEFINE_CPU_CLOCK(model_costs);
+		static DEFINE_CPU_CLOCK(solver_costs);
+		static DEFINE_CPU_CLOCK(extract_costs);
+
+		model_costs.start();
+#endif
 		IloNumVarArray cplex_vars = IloNumVarArray(get_env(), max_num_vars,
 							   var_lb, var_ub);
 
@@ -84,10 +91,28 @@ void CPLEXSolution::solve_model(unsigned int max_num_vars,
 
 		IloCplex cplex = IloCplex(model);
 
+#if DEBUG_LP_OVERHEADS >= 3
+		model_costs.stop();
+		solver_costs.start();
+#endif
+
 		cplex.solve();
+
+#if DEBUG_LP_OVERHEADS >= 3
+		solver_costs.stop();
+		extract_costs.start();
+#endif
 
 		cplex.getValues(cplex_vars, cplex_values);
 		solved = true;
+
+#if DEBUG_LP_OVERHEADS >= 3
+		extract_costs.stop();
+
+		std::cout << model_costs << std::endl
+			  << solver_costs << std::endl
+			  << extract_costs << std::endl;
+#endif
 
 	} catch (IloException &ex)
 	{
