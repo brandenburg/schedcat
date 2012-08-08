@@ -8,10 +8,8 @@ ETAGS  ?= etags
 
 all: links
 
-NCPUS := $(shell getconf _NPROCESSORS_ONLN)
-
 cpp:
-	$(MAKE) -C native -j $(NCPUS)
+	$(MAKE) -C native -j
 
 links: clean-links cpp
 	cd schedcat/sched; ln -s ../../native/_sched.so; ln -s ../../native/sched.py native.py
