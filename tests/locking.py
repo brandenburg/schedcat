@@ -9,6 +9,8 @@ import schedcat.locking.partition as lp
 import schedcat.model.tasks as tasks
 import schedcat.model.resources as r
 
+import schedcat.util.linprog
+
 class Locking(unittest.TestCase):
     def setUp(self):
         self.ts = tasks.TaskSystem([
@@ -637,3 +639,85 @@ class Test_partition(unittest.TestCase):
         self.assertIn(self.ts[1], subsets[0])
         self.assertIn(self.ts[2], subsets[1])
         self.assertIn(self.ts[3], subsets[1])
+
+
+class Test_linprog(unittest.TestCase):
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(25, 200)
+        self.t3 = tasks.SporadicTask(33, 33)
+        self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3])
+
+        self.ts.assign_ids()
+        lb.assign_fp_locking_prios(self.ts)
+
+        for t in self.ts:
+            t.response_time = t.period
+            t.partition =  t.id % 2
+
+        self.ts_no_req = self.ts.copy()
+
+        r.initialize_resource_model(self.ts)
+        r.initialize_resource_model(self.ts_no_req)
+
+        self.t1.resmodel[0].add_request(1)
+        self.t2.resmodel[0].add_request(2)
+        self.t3.resmodel[0].add_request(3)
+
+        # only one resource, assigned to the first processor
+        self.resource_locality = { 0: 0 }
+
+    def test_dpcp_cpp(self):
+        lb.apply_lp_dpcp_bounds(self.ts, self.resource_locality, use_py=False)
+
+    @unittest.skipIf(not schedcat.util.linprog.cplex_available, "no LP solver available")
+    def test_dpcp_py(self):
+        lb.apply_lp_dpcp_bounds(self.ts, self.resource_locality, use_py=True)
+
+    def test_dflp_cpp(self):
+        lb.apply_lp_dflp_bounds(self.ts, self.resource_locality, use_py=False)
+
+    @unittest.skipIf(not schedcat.util.linprog.cplex_available, "no LP solver available")
+    def test_dflp_py(self):
+        lb.apply_lp_dflp_bounds(self.ts, self.resource_locality, use_py=True)
+
+
+
+    def test_dpcp_cpp_no_req(self):
+        lb.apply_lp_dpcp_bounds(self.ts_no_req, {}, use_py=False)
+        self.assertEqual(self.ts_no_req[0].blocked, 0)
+        self.assertEqual(self.ts_no_req[0].suspended, 0)
+        self.assertEqual(self.ts_no_req[1].blocked, 0)
+        self.assertEqual(self.ts_no_req[1].suspended, 0)
+        self.assertEqual(self.ts_no_req[2].blocked, 0)
+        self.assertEqual(self.ts_no_req[2].suspended, 0)
+
+    @unittest.skipIf(not schedcat.util.linprog.cplex_available, "no LP solver available")
+    def test_dpcp_py_no_req(self):
+        lb.apply_lp_dpcp_bounds(self.ts_no_req, {}, use_py=True)
+        self.assertEqual(self.ts_no_req[0].blocked, 0)
+        self.assertEqual(self.ts_no_req[0].suspended, 0)
+        self.assertEqual(self.ts_no_req[1].blocked, 0)
+        self.assertEqual(self.ts_no_req[1].suspended, 0)
+        self.assertEqual(self.ts_no_req[2].blocked, 0)
+        self.assertEqual(self.ts_no_req[2].suspended, 0)
+
+    def test_dflp_cpp_no_req(self):
+        lb.apply_lp_dflp_bounds(self.ts_no_req, {}, use_py=False)
+        self.assertEqual(self.ts_no_req[0].blocked, 0)
+        self.assertEqual(self.ts_no_req[0].suspended, 0)
+        self.assertEqual(self.ts_no_req[1].blocked, 0)
+        self.assertEqual(self.ts_no_req[1].suspended, 0)
+        self.assertEqual(self.ts_no_req[2].blocked, 0)
+        self.assertEqual(self.ts_no_req[2].suspended, 0)
+
+    @unittest.skipIf(not schedcat.util.linprog.cplex_available, "no LP solver available")
+    def test_dflp_py_no_req(self):
+        lb.apply_lp_dflp_bounds(self.ts_no_req, {}, use_py=True)
+        self.assertEqual(self.ts_no_req[0].blocked, 0)
+        self.assertEqual(self.ts_no_req[0].suspended, 0)
+        self.assertEqual(self.ts_no_req[1].blocked, 0)
+        self.assertEqual(self.ts_no_req[1].suspended, 0)
+        self.assertEqual(self.ts_no_req[2].blocked, 0)
+        self.assertEqual(self.ts_no_req[2].suspended, 0)
+

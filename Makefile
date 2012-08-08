@@ -14,11 +14,13 @@ cpp:
 links: clean-links cpp
 	cd schedcat/sched; ln -s ../../native/_sched.so; ln -s ../../native/sched.py native.py
 	cd schedcat/locking; ln -s ../../native/_locking.so; ln -s ../../native/locking.py native.py
+	cd schedcat/locking/linprog; ln -s ../../../native/_lp_analysis.so; ln -s ../../../native/lp_analysis.py native.py
 	cd schedcat/sim; ln -s ../../native/_sim.so; ln -s ../../native/sim.py native.py
 
 clean-links:
 	cd schedcat/sched; rm -f _sched.so native.py
 	cd schedcat/locking;  rm -f _locking.so native.py
+	cd schedcat/locking/linprog;  rm -f  _lp_analysis.so native.py
 	cd schedcat/sim;  rm -f _sim.so native.py;
 
 clean: clean-links

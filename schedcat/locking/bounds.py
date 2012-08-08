@@ -66,20 +66,26 @@ def apply_mpcp_bounds(all_tasks, use_virtual_spin=False):
 def get_round_robin_resource_mapping(num_resources, num_cpus,
                                      dedicated_irq=cpp.NO_CPU):
     "Default resource assignment: just assign resources to CPUs in index order."
-    loc   = cpp.ResourceLocality()
+    loc   = {}
     for res_id in xrange(num_resources):
         cpu = res_id % num_cpus
         if cpu == dedicated_irq:
             cpu = (cpu + 1) % num_cpus
-        loc.assign_resource(res_id, cpu)
+        loc[res_id] = cpu
     return loc
 
-# default resource assignment: round robin
+def get_cpp_topology(res_mapping):
+    map = cpp.ResourceLocality()
+    for res_id in res_mapping:
+        map.assign_resource(res_id, res_mapping[res_id])
+    return map
+
 def apply_dpcp_bounds(all_tasks, resource_mapping):
     # The DPCP bounds are expressed in terms of task periods,
     # not response time.
     model = get_cpp_model(all_tasks)
-    res = cpp.dpcp_bounds(model, resource_mapping)
+    topo  = get_cpp_topology(resource_mapping)
+    res = cpp.dpcp_bounds(model, topo)
 
     for i,t in enumerate(all_tasks):
         # remote blocking <=> suspension time
@@ -166,4 +172,53 @@ def apply_phase_fair_rw_bounds(all_tasks, procs_per_cluster,
     res = cpp.phase_fair_rw_bounds(model, procs_per_cluster, dedicated_irq)
     apply_suspension_oblivious(all_tasks, res)
 
+
+
+### S-aware LP-based analysis of distributed locking protocols
+
+try:
+    import schedcat.locking.linprog.native as lp_cpp
+
+    lp_cpp_available = True
+except ImportError:
+    lp_cpp_available = False
+
+import schedcat.locking.linprog.dflp as dflp
+import schedcat.locking.linprog.dpcp as dpcp
+
+def apply_py_lp_bounds(bounds, all_tasks, resource_mapping, *args):
+    for t in all_tasks:
+        lp = bounds.get_lp_for_task(resource_mapping,
+                                    all_tasks, t, *args)
+
+        lp.kill_non_positive_vars()
+        solution = lp.solve()
+
+        # total blocking
+        t.blocked   = int(solution(lp.objective_function))
+        t.suspended = int(solution(lp.remote_objective))
+
+def apply_lp_dflp_bounds(all_tasks, resource_mapping,
+                         use_py=False):
+    if use_py or not lp_cpp_available:
+        apply_py_lp_bounds(dflp, all_tasks, resource_mapping)
+    else:
+        model = get_cpp_model(all_tasks)
+        topo  = get_cpp_topology(resource_mapping)
+        res = lp_cpp.lp_dflp_bounds(model, topo)
+        for i, t in enumerate(all_tasks):
+            t.suspended = res.get_remote_blocking(i)
+            t.blocked   = res.get_blocking_term(i)
+
+def apply_lp_dpcp_bounds(all_tasks, resource_mapping,
+                         use_rta = True, use_py=False):
+    if use_py or not lp_cpp_available:
+        apply_py_lp_bounds(dpcp, all_tasks, resource_mapping, use_rta)
+    else:
+        model = get_cpp_model(all_tasks)
+        topo  = get_cpp_topology(resource_mapping)
+        res = lp_cpp.lp_dpcp_bounds(model, topo, use_rta)
+        for i, t in enumerate(all_tasks):
+            t.suspended = res.get_remote_blocking(i)
+            t.blocked   = res.get_blocking_term(i)
 

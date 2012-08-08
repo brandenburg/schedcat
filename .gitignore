@@ -23,3 +23,5 @@ schedcat/sim/_sim.so
 schedcat/sim/native.py
 tmp/
 TAGS
+schedcat/locking/linprog/_lp_analysis.so
+schedcat/locking/linprog/native.py
