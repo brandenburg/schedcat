@@ -145,3 +145,26 @@ class TaskSystem(list):
     def copy(self):
         ts = TaskSystem((copy.deepcopy(t) for t in self))
         return ts
+
+    def without(self, excluded_tasks):
+        "Iterate over contained tasks, skipping over excluded"
+        if isinstance(excluded_tasks, SporadicTask):
+            # special case: single argument is a task => singleton set
+            return (task for task in self if task != excluded_tasks)
+        else:
+            # general case: caller provided set of tasks to be excluded
+            return (task for task in self if not task in excluded_tasks)
+
+    def with_higher_priority_than(self, lower):
+        """Iterate over contained tasks, skipping over tasks with priority
+        lower than lower.id (i.e., over tasks with larger indices.).
+        """
+         # assumption: lower id == higher priority
+        return (task for task in self if task.id < lower.id)
+
+    def with_lower_priority_than(self, upper):
+        """Iterate over contained tasks, skipping over tasks with priority
+        higher than upper.id (i.e., over tasks with smaller indices.).
+        """
+         # assumption: lower id == higher priority
+        return (task for task in self if task.id > upper.id)
