@@ -80,10 +80,11 @@ def get_cpp_topology(res_mapping):
         map.assign_resource(res_id, res_mapping[res_id])
     return map
 
-def apply_dpcp_bounds(all_tasks, resource_mapping):
+def apply_dpcp_bounds(all_tasks, resource_mapping,
+                      use_text_book_definition=False):
     # The DPCP bounds are expressed in terms of task periods,
-    # not response time.
-    model = get_cpp_model(all_tasks)
+    # not response time, in the original definition.
+    model = get_cpp_model(all_tasks, use_text_book_definition)
     topo  = get_cpp_topology(resource_mapping)
     res = cpp.dpcp_bounds(model, topo)
 
