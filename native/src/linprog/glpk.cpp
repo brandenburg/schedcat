@@ -91,7 +91,14 @@ void GLPKSolution::solve(double var_lb, double var_ub)
 
 	glp_init_smcp(&glpk_params);
 
+	/* Set solver options. The presolver is essential. The other two
+	 * options seem to make the solver slightly faster.
+	 *
+	 * Tested with GLPK 4.43 on wks-50-12.
+	 */
 	glpk_params.presolve = GLP_ON;
+	glpk_params.pricing  = GLP_PT_STD;
+	glpk_params.r_test   = GLP_RT_STD;
 
 	solved = glp_simplex(glpk, &glpk_params) == 0 &&
 		glp_get_status(glpk) == GLP_OPT;
