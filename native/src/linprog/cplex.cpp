@@ -96,6 +96,9 @@ void CPLEXSolution::solve_model(unsigned int max_num_vars,
 		solver_costs.start();
 #endif
 
+		// The primal solver seems to be slightly faster.
+		cplex.setParam(IloCplex::RootAlg, IloCplex::Primal);
+		cplex.setParam(IloCplex::PreDual, -1);
 		cplex.solve();
 
 #if DEBUG_LP_OVERHEADS >= 3
