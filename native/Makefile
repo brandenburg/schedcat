@@ -121,7 +121,7 @@ ifneq ($(CPLEX_PATH)$(GLPK_PATH),)
 LP_OBJ    = lp_common.o io.o lp_dflp.o lp_dpcp.o
 
 ifneq ($(CPLEX_PATH),)
-LP_OBJ   += cplex.o
+LP_OBJ   += cplex.o cpx.o
 endif
 
 ifneq ($(GLPK_PATH),)
