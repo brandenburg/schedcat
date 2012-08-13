@@ -24,15 +24,15 @@ public:
 	}
 };
 
-#if defined(CONFIG_HAVE_GLPK)
+#if defined(CONFIG_HAVE_CPLEX)
+
+#include "linprog/cplex.h"
+#define linprog_solve(lp, vars) cpx_solve((lp), (vars))
+
+#elif defined(CONFIG_HAVE_GLPK)
 
 #include "linprog/glpk.h"
 #define linprog_solve(lp, vars) glpk_solve((lp), (vars))
-
-#elif defined(CONFIG_HAVE_CPLEX)
-
-#include "linprog/cplex.h"
-#define linprog_solve(lp, vars) cplex_solve((lp), (vars))
 
 #else
 
