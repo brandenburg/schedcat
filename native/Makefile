@@ -51,7 +51,7 @@ vpath %.cpp src src/edf src/blocking
 
 # #### Common C++ source files ####
 
-EDF_OBJ   = baker.o baruah.o gfb.o bcl.o bcl_iterative.o rta.o ffdbf.o gedf.o load.o cpu_time.o
+EDF_OBJ   = baker.o baruah.o gfb.o bcl.o bcl_iterative.o rta.o ffdbf.o gedf.o gel_pl.o load.o cpu_time.o
 SCHED_OBJ = sim.o schedule_sim.o
 CORE_OBJ  = tasks.o
 SYNC_OBJ  = sharedres.o dpcp.o mpcp.o
