@@ -34,7 +34,9 @@ def charge_scheduling_overheads(oheads, num_cpus, dedicated_irq, taskset):
         release_delay += oheads.ipi_latency(taskset)
 
     for t in taskset:
-        t.jitter = release_delay
+        if not 'jitter' in t.__dict__:
+            t.jitter = 0
+        t.jitter += release_delay
 
     # account for scheduling cost and CPMD
     sched  = oheads.schedule(taskset)
@@ -49,7 +51,7 @@ def charge_scheduling_overheads(oheads, num_cpus, dedicated_irq, taskset):
 def quantize_params(taskset):
     """After applying overheads, use this function to make
         task parameters integral again."""
-        
+
     for t in taskset:
         t.cost     = int(ceil(t.cost))
         t.period   = int(floor(t.period))
