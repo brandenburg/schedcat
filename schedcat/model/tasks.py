@@ -143,5 +143,5 @@ class TaskSystem(list):
         return max([t.wss for t in self])
 
     def copy(self):
-        ts = TaskSystem([copy.copy(t) for t in self])
+        ts = TaskSystem((copy.deepcopy(t) for t in self))
         return ts

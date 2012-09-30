@@ -18,7 +18,7 @@ class Tasks(unittest.TestCase):
         self.assertTrue(self.t1.implicit_deadline())
         self.assertFalse(self.t2.implicit_deadline())
         self.assertFalse(self.t3.implicit_deadline())
-        
+
         self.assertTrue(self.t1.constrained_deadline())
         self.assertTrue(self.t2.constrained_deadline())
         self.assertFalse(self.t3.implicit_deadline())
@@ -79,6 +79,22 @@ class Tasks(unittest.TestCase):
         self.assertEqual(req.max_write_length, 10)
         self.assertEqual(req.max_read_length,   4)
         self.assertEqual(req.max_length,       10)
+
+    def test_copy(self):
+        ts = m.TaskSystem([
+            m.SporadicTask(10, 100),
+        ])
+        r.initialize_resource_model(ts)
+        ts[0].resmodel[0].add_request(10)
+
+        ts2 = ts.copy()
+        ts[0].resmodel[0].add_request(30)
+
+        self.assertEqual(ts[0].resmodel[0].max_length, 30)
+        self.assertEqual(ts[0].resmodel[0].max_requests, 2)
+
+        self.assertEqual(ts2[0].resmodel[0].max_length, 10)
+        self.assertEqual(ts2[0].resmodel[0].max_requests, 1)
 
 
 class Serialization(unittest.TestCase):
