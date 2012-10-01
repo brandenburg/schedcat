@@ -47,7 +47,12 @@ endif
 ifeq ($(DEBUG),y)
 DEFS += -g -DDEBUG
 else
-DEFS += -O2 -DNDEBUG
+DEFS += -O2
+endif
+
+# disable assertions only if explicitly requested
+ifeq ($(DEBUG),n)
+DEFS += -DNDEBUG
 endif
 
 CXXFLAGS  = -Wall -Wextra -Werror $(DISABLED_WARNINGS) -fPIC $(INCLUDES) $(DEFS)
