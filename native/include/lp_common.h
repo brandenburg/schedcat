@@ -23,10 +23,12 @@ class VarMapper {
 private:
 	hashmap<uint64_t, unsigned int> map;
 	unsigned int next_var;
+	bool sealed;
 
 	void insert(uint64_t key)
 	{
 		assert(next_var < UINT_MAX);
+		assert(!sealed);
 
 		unsigned int idx = next_var++;
 		map[key] = idx;
@@ -45,7 +47,7 @@ private:
 
 public:
 	VarMapper(unsigned int start_var = 0)
-		: next_var(start_var)
+		: next_var(start_var), sealed(false)
 	{}
 
 	unsigned int lookup(unsigned int task_id, unsigned int res_id, unsigned int req_id,
@@ -55,6 +57,12 @@ public:
 		if (!map.count(key))
 			insert(key);
 		return map[key];
+	}
+
+	// stop new IDs from being generated
+	void seal()
+	{
+		sealed = true;
 	}
 
 	void clear()

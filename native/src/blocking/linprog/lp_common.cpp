@@ -59,6 +59,11 @@ void set_blocking_objective(
 			}
 		}
 	}
+#ifndef CONFIG_MERGED_LINPROGS
+	// We have enumerated all relevant variables. Do not allow any more to
+	// be created.
+	vars.seal();
+#endif
 }
 
 // Constraint 1 in [Brandenburg 2013]
