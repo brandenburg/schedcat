@@ -89,6 +89,14 @@ void set_blocking_objective(
 	LinearExpression *local_obj = 0,
 	LinearExpression *remote_obj = 0);
 
+void set_blocking_objective_part_shm(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp,
+	LinearExpression *local_obj = 0,
+	LinearExpression *remote_obj = 0);
+
 void add_mutex_constraints(VarMapper& vars,
 		const ResourceSharingInfo& info,
 		const TaskInfo& ti,  LinearProgram& lp);
@@ -101,6 +109,12 @@ void add_local_lower_priority_constraints(
 	VarMapper& vars,
 	const ResourceSharingInfo& info,
 	const ResourceLocality& locality,
+	const TaskInfo& ti,
+	LinearProgram& lp);
+
+void add_topology_constraints_shm(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
 	const TaskInfo& ti,
 	LinearProgram& lp);
 

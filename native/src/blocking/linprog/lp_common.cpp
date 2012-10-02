@@ -66,6 +66,59 @@ void set_blocking_objective(
 #endif
 }
 
+// This version is for partitioned shared-memory protocols where each
+// task executes its critical section on its assigned processor.
+void set_blocking_objective_part_shm(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp,
+	LinearExpression *local_obj,
+	LinearExpression *remote_obj)
+{
+        LinearExpression *obj;
+
+	obj = lp.get_objective();
+
+	foreach_task_except(info.get_tasks(), ti, tx)
+	{
+		unsigned int t = tx->get_id();
+		bool local = tx->get_cluster() == ti.get_cluster();
+
+		foreach(tx->get_requests(), request)
+		{
+			unsigned int q = request->get_resource_id();
+			double length = request->get_request_length();;
+
+			foreach_request_instance(*request, ti, v)
+			{
+				unsigned int var_id;
+
+				var_id = vars.lookup(t, q, v, BLOCKING_DIRECT);
+				obj->add_term(length, var_id);
+				if (local && local_obj)
+					local_obj->add_term(length, var_id);
+				else if (!local && remote_obj)
+					remote_obj->add_term(length, var_id);
+
+				var_id = vars.lookup(t, q, v, BLOCKING_INDIRECT);
+				obj->add_term(length, var_id);
+				if (local && local_obj)
+					local_obj->add_term(length, var_id);
+				else if (!local && remote_obj)
+					remote_obj->add_term(length, var_id);
+
+				var_id = vars.lookup(t, q, v, BLOCKING_PREEMPT);
+				obj->add_term(length, var_id);
+				if (local && local_obj)
+					local_obj->add_term(length, var_id);
+				else if (!local && remote_obj)
+					remote_obj->add_term(length, var_id);
+			}
+		}
+	}
+}
+
 // Constraint 1 in [Brandenburg 2013]
 void add_mutex_constraints(
 	VarMapper& vars,
@@ -180,3 +233,31 @@ void add_local_lower_priority_constraints(
 	}
 }
 
+
+// For shared-memory protocols.
+// Remote tasks cannot preempt Ti since they are not scheduled
+// on Ti's assigned task; therefore force BLOCKING_PREEMPT to zero.
+void add_topology_constraints_shm(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp)
+{
+	LinearExpression *exp = new LinearExpression();
+
+	foreach_remote_task(info.get_tasks(), ti, tx)
+	{
+		unsigned int t = tx->get_id();
+		foreach(tx->get_requests(), request)
+		{
+			unsigned int q = request->get_resource_id();
+			foreach_request_instance(*request, ti, v)
+			{
+				unsigned int var_id;
+				var_id = vars.lookup(t, q, v, BLOCKING_PREEMPT);
+				exp->add_var(var_id);
+			}
+		}
+	}
+	lp.add_equality(exp, 0);
+}
