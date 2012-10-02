@@ -20,7 +20,7 @@ static unsigned long get_max_gcs_length(const TaskInfo* tsk,
 	foreach(tsk->get_requests(), it)
 	{
 		unsigned int prio  = ceilings[it->get_resource_id()];
-		if (prio < preempted_ceiling)
+		if (prio <= preempted_ceiling)
 			gcs_length = std::max(gcs_length,
 					      (unsigned long) it->get_request_length());
 	}
