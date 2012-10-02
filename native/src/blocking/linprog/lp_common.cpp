@@ -234,6 +234,7 @@ void add_local_lower_priority_constraints(
 }
 
 
+// Constraint 10 in [Brandenburg 2013]
 // For shared-memory protocols.
 // Remote tasks cannot preempt Ti since they are not scheduled
 // on Ti's assigned task; therefore force BLOCKING_PREEMPT to zero.
@@ -260,4 +261,111 @@ void add_topology_constraints_shm(
 		}
 	}
 	lp.add_equality(exp, 0);
+}
+
+// Constraint 9 in [Brandenburg 2013]
+// local higher-priority tasks never cause blocking under SHM protocols
+void add_local_higher_priority_constraints_shm(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp)
+{
+	LinearExpression *exp = new LinearExpression();
+
+	foreach_local_task(info.get_tasks(), ti, tx)
+	{
+		if (tx->get_priority() < ti.get_priority())
+		{
+			unsigned int t = tx->get_id();
+			foreach(tx->get_requests(), request)
+			{
+				unsigned int q = request->get_resource_id();
+				foreach_request_instance(*request, ti, v)
+				{
+					unsigned int var_id;
+					var_id = vars.lookup(t, q, v,
+					                     BLOCKING_PREEMPT);
+					exp->add_var(var_id);
+
+					var_id = vars.lookup(t, q, v,
+					                     BLOCKING_INDIRECT);
+					exp->add_var(var_id);
+
+					var_id = vars.lookup(t, q, v,
+					                     BLOCKING_DIRECT);
+					exp->add_var(var_id);
+				}
+			}
+		}
+	}
+	lp.add_equality(exp, 0);
+}
+
+static unsigned int max_num_arrivals_shm(
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti)
+{
+	hashmap<unsigned int, unsigned int> request_counts;
+
+	foreach(ti.get_requests(), req)
+		request_counts[req->get_resource_id()] = 0;
+
+	// count how often each resource is accessed on remote cores
+	foreach_remote_task(info.get_tasks(), ti, tx)
+	{
+		foreach(tx->get_requests(), req)
+		{
+			unsigned int q = req->get_resource_id();
+			if (request_counts.find(q) != request_counts.end())
+				request_counts[q] += req->get_max_num_requests(ti.get_response());
+		}
+	}
+
+	// initialize to 1 to account for job release
+	unsigned int total = 1;
+
+	foreach(ti.get_requests(), req)
+		total += std::min(request_counts[req->get_resource_id()],
+		                  req->get_num_requests());
+
+	return total;
+}
+
+// Constraint 11 in [Brandenburg 2013]
+// Local lower-priority tasks block at most once each time
+// that Ti suspends (and once after release).
+void add_local_lower_priority_constraints_shm(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp)
+{
+	unsigned int num_arrivals = max_num_arrivals_shm(info, ti);
+
+	foreach_local_lowereq_priority_task_except(info.get_tasks(), ti, tx)
+	{
+		LinearExpression *exp = new LinearExpression();
+		unsigned int t = tx->get_id();
+		foreach(tx->get_requests(), request)
+		{
+			unsigned int q = request->get_resource_id();
+			foreach_request_instance(*request, ti, v)
+			{
+				unsigned int var_id;
+				var_id = vars.lookup(t, q, v,
+						     BLOCKING_PREEMPT);
+				exp->add_var(var_id);
+
+				var_id = vars.lookup(t, q, v,
+						     BLOCKING_INDIRECT);
+				exp->add_var(var_id);
+
+				var_id = vars.lookup(t, q, v,
+						     BLOCKING_DIRECT);
+				exp->add_var(var_id);
+			}
+		}
+		lp.add_equality(exp, num_arrivals);
+	}
 }

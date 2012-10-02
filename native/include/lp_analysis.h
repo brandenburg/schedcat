@@ -9,4 +9,6 @@ extern BlockingBounds* lp_dpcp_bounds(const ResourceSharingInfo& info,
 extern BlockingBounds* lp_dflp_bounds(const ResourceSharingInfo& info,
 			    const ResourceLocality& locality);
 
+extern BlockingBounds* lp_mpcp_bounds(const ResourceSharingInfo& info);
+
 #endif /* LP_ANALYSYS_H_ */

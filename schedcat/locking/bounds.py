@@ -62,6 +62,7 @@ def apply_mpcp_bounds(all_tasks, use_virtual_spin=False):
             t.suspended = res.get_remote_blocking(i)
             # all blocking, including arrival blocking
             t.blocked   = res.get_blocking_term(i)
+            t.locally_blocked = res.get_local_blocking(i)
 
 def get_round_robin_resource_mapping(num_resources, num_cpus,
                                      dedicated_irq=cpp.NO_CPU):
@@ -223,3 +224,13 @@ def apply_lp_dpcp_bounds(all_tasks, resource_mapping,
             t.suspended = res.get_remote_blocking(i)
             t.blocked   = res.get_blocking_term(i)
 
+def apply_lp_mpcp_bounds(all_tasks):
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_mpcp_bounds(model)
+
+    for i,t in enumerate(all_tasks):
+        # remote blocking <=> self-suspension time
+        t.suspended = res.get_remote_blocking(i)
+        # all blocking, including local blocking
+        t.blocked   = res.get_blocking_term(i)
+        t.locally_blocked = res.get_local_blocking(i)

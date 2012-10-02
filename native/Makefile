@@ -118,7 +118,7 @@ ALL = testmain _sched.so _locking.so _sim.so
 
 # Compile LP-based code only if we have a solver.
 ifneq ($(CPLEX_PATH)$(GLPK_PATH),)
-LP_OBJ    = lp_common.o io.o lp_dflp.o lp_dpcp.o
+LP_OBJ    = lp_common.o io.o lp_dflp.o lp_dpcp.o lp_mpcp.o
 
 ifneq ($(CPLEX_PATH),)
 LP_OBJ   += cplex.o cpx.o
@@ -159,5 +159,5 @@ _locking.so: ${SYNC_OBJ} interface/locking_wrap.o
 _sim.so: ${CORE_OBJ} ${SCHED_OBJ} interface/sim_wrap.o
 	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
 
-_lp_analysis.so: ${LP_OBJ} sharedres.o cpu_time.o interface/lp_analysis_wrap.o
+_lp_analysis.so: ${LP_OBJ} sharedres.o mpcp.o cpu_time.o interface/lp_analysis_wrap.o
 	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)

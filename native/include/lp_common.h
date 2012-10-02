@@ -118,6 +118,18 @@ void add_topology_constraints_shm(
 	const TaskInfo& ti,
 	LinearProgram& lp);
 
+void add_local_lower_priority_constraints_shm(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp);
+
+void add_local_higher_priority_constraints_shm(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp);
+
 // A generic for loop that iterates 'request_index_variable' from 0 to the
 // maximum number of requests issued by task tx while ti is pending. 'tx_request'
 // should be of type RequestBound&.
@@ -168,6 +180,16 @@ void add_topology_constraints_shm(
 #define foreach_remote_task(tasks, local_task, task_iter)	\
 	foreach(tasks, task_iter)				\
 	if (task_iter->get_cluster() != (local_task).get_cluster())
+
+// iterate only over tasks with equal or lower priority, excluding local tasks
+#define foreach_remote_lowereq_priority_task(tasks, reference_task, task_iter) \
+	foreach_remote_task(tasks, reference_task, task_iter)			   \
+	if (task_iter->get_priority() >= (reference_task).get_priority())
+
+// iterate only over tasks with higher priority, excluding local tasks
+#define foreach_remote_higher_priority_task(tasks, reference_task, task_iter) \
+	foreach_remote_task(tasks, reference_task, task_iter)		   \
+	if (task_iter->get_priority() < (reference_task).get_priority())
 
 #define foreach_local_task(tasks, local_task, task_iter)	\
 	foreach(tasks, task_iter)				\
