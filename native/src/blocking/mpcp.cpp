@@ -181,7 +181,7 @@ static unsigned long mpcp_remote_blocking(unsigned int res_id,
 		// last bound
 		interval = blocking;
 		// Bail out if it doesn't converge.
-		if (interval > tsk->get_response())
+		if (interval > std::max(tsk->get_response(), tsk->get_period()))
 			return UNLIMITED;
 
 		blocking = mpcp_remote_blocking(res_id, interval,
@@ -279,9 +279,8 @@ BlockingBounds* mpcp_bounds(const ResourceSharingInfo& info,
 		remote = mpcp_remote_blocking(&tsk, clusters, responses);
 
 		// 5) Determine arrival blocking for each task.
-		if (remote != UNLIMITED)
-			local = mpcp_arrival_blocking(&tsk, clusters[tsk.get_cluster()],
-						      use_virtual_spinning);
+		local = mpcp_arrival_blocking(&tsk, clusters[tsk.get_cluster()],
+					      use_virtual_spinning);
 
 		// 6) Sum up blocking: remote blocking + arrival blocking.
 		results[i].total_length = remote + local;
