@@ -4,12 +4,9 @@
 #include "stl-helper.h"
 #include "math-helper.h"
 
+# include "mpcp.h"
+
 // ***************************  MPCP ******************************************
-
-
-typedef std::vector<unsigned long> ResponseTimes;
-typedef std::vector<ResponseTimes> TaskResponseTimes;
-typedef std::vector<TaskResponseTimes> ClusterResponseTimes;
 
 static unsigned long get_max_gcs_length(const TaskInfo* tsk,
 					const PriorityCeilings& ceilings,
@@ -69,9 +66,9 @@ static void determine_gcs_response_times(const Cluster& cluster,
 	}
 }
 
-static void determine_gcs_response_times(const Clusters& clusters,
-					 const PriorityCeilings& ceilings,
-					 ClusterResponseTimes& times)
+void determine_gcs_response_times(const Clusters& clusters,
+				  const PriorityCeilings& ceilings,
+				  ClusterResponseTimes& times)
 {
 	times.reserve(clusters.size());
 	foreach(clusters, it)
@@ -160,6 +157,11 @@ static unsigned long  mpcp_remote_blocking(unsigned int res_id,
 
 	for (i = 0; i < clusters.size(); i++)
 	{
+		// Note that this also includes the local cluster.
+		// This is indeed correct (and matches LNR:09): we
+		// are interested in computing the *response time*,
+		// which is also affected by local higher-priority tasks.
+		// The response-time is used as a bound on blocking.
 		blocking += mpcp_remote_blocking(res_id, interval,
 						 tsk, clusters[i], times[i],
 						 max_lower);
@@ -289,6 +291,8 @@ BlockingBounds* mpcp_bounds(const ResourceSharingInfo& info,
 		Interference inf;
 		inf.total_length = remote;
 		results.set_remote_blocking(i, inf);
+		inf.total_length = local;
+		results.set_local_blocking(i, inf);
 	}
 
 	return _results;
