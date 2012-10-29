@@ -13,17 +13,21 @@ class GELPl
     int no_cpus;
     const TaskSet& tasks;
     int rounds;
-    std::vector<double> S_i;
-    std::vector<double> G_i;
+    std::vector<fractional_t> S_i;
+    std::vector<fractional_t> G_i;
 
     // For faster lookups, to avoid too many conversions.
-    std::vector<double> utilizations;
+    std::vector<fractional_t> utilizations;
 
-    double compute_exact_s(double S, const std::vector<double>& Y_ints);
-    double compute_binsearch_s(double S, const std::vector<double>& Y_ints);
+    void compute_exact_s(const fractional_t& S,
+                         const std::vector<fractional_t>& Y_ints,
+                         fractional_t& s);
+    void compute_binsearch_s(const fractional_t& S,
+                             const std::vector<fractional_t>& Y_ints,
+                             fractional_t& s);
 
-    inline double compute_M(double s, double S,
-                                   const std::vector<double>& Y_ints);
+    inline bool M_lt_0(const fractional_t& s, const fractional_t& S,
+                       const std::vector<fractional_t>& Y_ints);
 
     // These are basically just structs that override operator< to allow
     // sort algorithms to work.
@@ -31,8 +35,8 @@ class GELPl
      public:
         unsigned int old_task;
         unsigned int new_task;
-        double location;
-	double old_task_utilization;
+        fractional_t location;
+	fractional_t old_task_utilization;
 
         bool operator<(const ReplacementType& other) const {
             return (location < other.location)
@@ -44,7 +48,7 @@ class GELPl
     class TaggedValue {
      public:
         unsigned int task;
-        double value;
+        fractional_t value;
 
         //Order is reversed - we are going to want the largest, rather than the
         //smallest, values.
@@ -68,12 +72,14 @@ class GELPl
         return bounds[index];
    }
 
+   // Converted to double for the sake of Python
    double get_Si(unsigned int index) {
-   	return S_i[index];
+   	return S_i[index].get_d();
    }
 
+   // Converted to double for the sake of Python
    double get_Gi(unsigned int index) {
-   	return G_i[index];
+   	return G_i[index].get_d();
    }
 };
 
