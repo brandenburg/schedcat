@@ -379,7 +379,7 @@ static Interference max_local_request_span(const TaskInfo &tsk,
 			    t.get_priority() >= tsk.get_priority())
 			{
 				Interference b = bounds.get_max_request_span(i);
-				span = std::max(span, bounds.get_max_request_span(i));
+				span = std::max(span, b);
 			}
 		}
 	}

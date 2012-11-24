@@ -523,8 +523,6 @@ int xxxmain(int argc, char** argv)
 
     Task t = Task(10, 100);
 
-    Job j = Job(t, 123, 12);
-
     cout << "wcet: " << t.get_wcet() << " period: " << t.get_period()
 	 << " deadline: " << t.get_deadline() << endl;
 
