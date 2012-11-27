@@ -176,6 +176,7 @@ class TaskSet
     void get_density(fractional_t &density) const;
     void get_max_density(fractional_t &max_density) const;
 
+    void bound_demand(const integral_t &time, integral_t &demand) const;
     void approx_load(fractional_t &load, const fractional_t &epsilon = 0.1) const;
 
     /* wrapper for Python access */

@@ -152,6 +152,17 @@ unsigned long TaskSet::k_for_epsilon(unsigned int idx,
     return (unsigned long) ceil(std::max(0.0, bound.get_d()));
 }
 
+void TaskSet::bound_demand(const integral_t &time, integral_t &demand) const
+{
+	integral_t task_demand;
+	demand = 0;
+	for (unsigned int i = 0; i < tasks.size(); i++)
+	{
+		tasks[i].bound_demand(time, task_demand);
+		demand += task_demand;
+	}
+}
+
 void TaskSet::approx_load(fractional_t &load, const fractional_t &epsilon) const
 {
     fractional_t density;
