@@ -2,6 +2,7 @@ from __future__ import division
 
 import unittest
 import StringIO
+from math import ceil
 
 import schedcat.overheads.model as m
 import schedcat.overheads.jlfp as jlfp
@@ -167,6 +168,37 @@ class JLFPOverheads(unittest.TestCase):
         self.unchanged_period()
         self.unchanged_deadline()
 
+    def test_dedicated(self):
+        self.o.ipi_latency = const(100)
+        self.assertEqual(jlfp.charge_scheduling_overheads(self.o, 4,  True, self.ts), self.ts)
+        self.assertEqual(self.ts[0].cost, 10100)
+        self.assertEqual(self.ts[1].cost,  5100)
+        self.unchanged_period()
+        self.unchanged_deadline()
+
+        self.o.release = const(133)
+        self.assertEqual(jlfp.charge_scheduling_overheads(self.o, 4,  True, self.ts), self.ts)
+        self.assertEqual(jlfp.quantize_params(self.ts), self.ts)
+        self.assertEqual(self.ts[0].cost, 10333)
+        self.assertEqual(self.ts[1].cost,  5333)
+
+        self.unchanged_period()
+        self.unchanged_deadline()
+
+
+    def test_tick_example(self):
+        e1  = 2000
+        e2  = 3000
+        Q   = 5000
+        tck = 2000
+        self.ts[0].cost = e1
+        self.ts[1].cost = e2
+        self.o.tick = const(tck)
+        self.o.quantum_length = Q
+        self.assertEqual(jlfp.charge_scheduling_overheads(self.o, 1,  False, self.ts), self.ts)
+        self.assertEqual(jlfp.quantize_params(self.ts), self.ts)
+        self.assertEqual(self.ts[0].cost, int(ceil(30000 / 3)))
+        self.assertEqual(self.ts[1].cost, 5000 + int(ceil(20000 / 3)))
 
 class PfairOverheads(unittest.TestCase):
     def setUp(self):
