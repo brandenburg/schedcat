@@ -14,6 +14,8 @@ import schedcat.sched.edf.gfb as gfb
 import schedcat.sched.edf.rta as rta
 import schedcat.sched.edf as edf
 
+import schedcat.sched as sched
+
 import schedcat.model.tasks as tasks
 
 from schedcat.util.math import is_integral
@@ -138,3 +140,34 @@ class Test_ffdbf(unittest.TestCase):
         self.assertEqual(pts.next(), 15000)
         self.assertEqual(pts.next(), 17000)
         self.assertEqual(pts.next(), 20000)
+
+
+class Test_QPA(unittest.TestCase):
+
+    def setUp(self):
+        self.ts =  tasks.TaskSystem([
+            tasks.SporadicTask(6000, 31000, deadline=18000),
+            tasks.SporadicTask(2000,  9800, deadline= 9000),
+            tasks.SporadicTask(1000, 17000, deadline=12000),
+            tasks.SporadicTask(  90,  4200, deadline= 3000),
+            tasks.SporadicTask(   8,    96, deadline=   78),
+            tasks.SporadicTask(   2,    12, deadline=   16),
+            tasks.SporadicTask(  10,   280, deadline=  120),
+            tasks.SporadicTask(  26,   660, deadline=  160),
+            ])
+
+    def test_qpa_schedulable(self):
+        qpa = edf.native.QPATest(1)
+        self.assertTrue(qpa.is_schedulable(sched.get_native_taskset(self.ts)))
+
+    def test_edf_schedulable(self):
+        self.assertTrue(edf.is_schedulable(1, self.ts))
+
+    def test_qpa_not_schedulable(self):
+        self.ts.append(tasks.SporadicTask(   10,    100, deadline=15))
+        qpa = edf.native.QPATest(1)
+        self.assertFalse(qpa.is_schedulable(sched.get_native_taskset(self.ts)))
+
+    def test_edf_schedulable(self):
+        self.ts.append(tasks.SporadicTask(   10,    100, deadline=15))
+        self.assertFalse(edf.is_schedulable(1, self.ts))

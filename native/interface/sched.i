@@ -13,6 +13,7 @@
 #include "edf/load.h"
 #include "edf/gedf.h"
 #include "edf/gel_pl.h"
+#include "edf/qpa.h"
 #include "sharedres.h"
 %}
 
@@ -41,3 +42,4 @@
 #include "edf/load.h"
 #include "edf/gedf.h"
 #include "edf/gel_pl.h"
+#include "edf/qpa.h"

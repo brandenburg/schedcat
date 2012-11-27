@@ -94,11 +94,14 @@ if schedcat.sched.using_native:
                            want_rta=True,
                            want_ffdbf=False,
                            want_load=False):
-        native_test = native.GlobalEDF(no_cpus, rta_min_step,
-                                       want_baruah != False,
-                                       want_rta,
-                                       want_ffdbf,
-                                       want_load)
+        if no_cpus == 1:
+            native_test = native.QPATest(no_cpus);
+        else:
+            native_test = native.GlobalEDF(no_cpus, rta_min_step,
+                                           want_baruah != False,
+                                           want_rta,
+                                           want_ffdbf,
+                                           want_load)
         ts = schedcat.sched.get_native_taskset(tasks)
         return native_test.is_schedulable(ts)
 
