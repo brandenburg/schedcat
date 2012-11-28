@@ -2,33 +2,33 @@
 
 """A taskset generator for experiments with real-time task sets
 
-Copyright 2010 Paul Emberson, Roger Stafford, Robert Davis. 
+Copyright 2010 Paul Emberson, Roger Stafford, Robert Davis.
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-   1. Redistributions of source code must retain the above copyright notice, 
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
 
    2. Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation 
+      this list of conditions and the following disclaimer in the documentation
       and/or other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS 
-OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
-OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO 
-EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS
+OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-The views and conclusions contained in the software and documentation are 
-those of the authors and should not be interpreted as representing official 
-policies, either expressed or implied, of Paul Emberson, Roger Stafford or 
+The views and conclusions contained in the software and documentation are
+those of the authors and should not be interpreted as representing official
+policies, either expressed or implied, of Paul Emberson, Roger Stafford or
 Robert Davis.
 
 Includes Python implementation of Roger Stafford's randfixedsum implementation
@@ -36,7 +36,7 @@ http://www.mathworks.com/matlabcentral/fileexchange/9700
 Adapted specifically for the purpose of taskset generation with fixed
 total utilisation value
 
-Please contact paule@rapitasystems.com or robdavis@cs.york.ac.uk if you have 
+Please contact paule@rapitasystems.com or robdavis@cs.york.ac.uk if you have
 any questions regarding this software.
 """
 
@@ -47,7 +47,8 @@ import textwrap
 from schedcat.model.tasks import TaskSystem
 import schedcat.model.tasks as tasks
 from schedcat.model.tasks import SporadicTask
-#from lib.schedcat.schedcat.model.tasks import TaskSystem
+from schedcat.util.time import ms2us
+from schedcat.overheads.jlfp import quantize_params
 
 NAMED_PERIODS = {
                     'uni-short'     : (3, 33),
@@ -67,7 +68,7 @@ def StaffordRandFixedSum(n, u, nsets):
     #deal with n=1 case
     if n == 1:
         return numpy.tile(numpy.array([u]),[nsets,1])
-    
+
     k = numpy.floor(u)
     s = u
     step = 1 if k < (k-n+1) else -1
@@ -109,7 +110,7 @@ def StaffordRandFixedSum(n, u, nsets):
         j = j - e #change transition table column if required
 
     x[n-1,...] = sm + pr * s
-    
+
     #iterated in fixed dimension order but needs to be randomised
     #permute x row order within each column
     for i in xrange(0,m):
@@ -135,43 +136,53 @@ def gen_periods(n, nsets, min, max, gran, dist):
 #   period_distribution:    'unif' or 'logunif' for uniform or log-based distribution
 #   tasks_n:                number of tasks to be generated
 #   utilization:            target utilization of the task set to be generated
-def gen_taskset(periods, period_distribution, tasks_n, utilization):
-    (period_min, period_max) = NAMED_PERIODS[periods]
+def gen_taskset(periods, period_distribution, tasks_n, utilization,
+                period_granularity=None, scale=ms2us, want_integral=True):
+    if periods in NAMED_PERIODS:
+        # Look up by name.
+        (period_min, period_max) = NAMED_PERIODS[periods]
+    else:
+        # If unknown, then assume caller specified range manually.
+        (period_min, period_max) = periods
     x = StaffordRandFixedSum(tasks_n, utilization, 1)
-    period_granularity = period_min
+    if period_granularity is None:
+        period_granularity = period_min
     periods = gen_periods(tasks_n, 1, period_min, period_max, period_granularity, period_distribution)
     ts = TaskSystem()
-    
-    C = x[0] * periods[0]
-    C = numpy.round(C, decimals=0)
-    
-    taskset = numpy.c_[x[0], C / periods[0], periods[0], C]
+
+    periods = numpy.maximum(periods[0], max(period_min, period_granularity))
+
+    C = scale(x[0] * periods)
+
+    taskset = numpy.c_[x[0], C / periods, periods, C]
     for t in range(numpy.size(taskset,0)):
-        ts.append(SporadicTask(taskset[t][3], taskset[t][2]))        
-    
+        ts.append(SporadicTask(taskset[t][3], scale(taskset[t][2])))
+
+    if want_integral:
+        quantize_params(ts)
     return ts
 
 def gen_tasksets(options):
     x = StaffordRandFixedSum(options.n, options.util, 1)
     periods = gen_periods(options.n, 1, options.permin, options.permax, options.pergran, options.perdist)
     ts = TaskSystem()
-    
+
     C = x[0] * periods[0]
     if options.round_C:
         C = numpy.round(C, decimals=0)
     elif options.floor_C:
         C = numpy.floor(C)
-        
+
     taskset = numpy.c_[x[0], C / periods[0], periods[0], C]
     for t in range(numpy.size(taskset,0)):
         ts.append(SporadicTask(taskset[t][3], taskset[t][2]))
-            
+
 #    print ts
     return ts
-    
+
 def gcd(a, b): # From http://stackoverflow.com/a/147539
     """Return greatest common divisor using Euclid's Algorithm."""
-    while b:      
+    while b:
         a, b = b, a % b
     return a
 
@@ -185,7 +196,7 @@ def print_taskset(taskset, format):
     for t in range(numpy.size(taskset,0)):
         util += taskset[t][1]
         hp = lcm(hp, taskset[t][2])
-        
+
     print "<taskset>"
     print "<properties hyperperiod=\"%d\" utilization=\"%.10f\" />" % (hp, util)
     for t in range(numpy.size(taskset,0)):
@@ -199,17 +210,17 @@ def main():
     usage_str = "%prog [options]"
 
     description_str = "This is a taskset generator intended for generating data for experiments with real-time schedulability tests and design space exploration tools.  The utilisation generation is done using Roger Stafford's randfixedsum algorithm.  A paper describing this tool was published at the WATERS 2010 workshop. Copyright 2010 Paul Emberson, Roger Stafford, Robert Davis. All rights reserved.  Run %prog --about for licensing information."
-            
+
 
     epilog_str = "Examples:"
- 
+
     #don't add help option as we will handle it ourselves
-    parser = optparse.OptionParser(usage=usage_str, 
+    parser = optparse.OptionParser(usage=usage_str,
                                    description=description_str,
                                    epilog=epilog_str,
                                    add_help_option=False,
                                    version="%prog version 0.1")
-   
+
     parser.add_option("-h", "--help", action="store_true", dest="help",
                       default=False,
                       help="Show this help message and exit")
@@ -217,7 +228,7 @@ def main():
     parser.add_option("--about", action="store_true", dest="about",
                       default=False,
                       help="See licensing and other information about this software")
-					  
+
     parser.add_option("-u", "--taskset-utilisation",
                       metavar="UTIL", type="float", dest="util",
                       default="0.75",
@@ -246,7 +257,7 @@ def main():
                       metavar="PGRAN", type="int", dest="pergran",
                       default=None,
                       help="Set period granularity to PGRAN [PMIN]")
-    
+
     parser.add_option("--round-C", action="store_true", dest="round_C",
                       default=False,
                       help="Round execution times to nearest integer [%default]")
@@ -254,7 +265,7 @@ def main():
     parser.add_option("--floor-C", action="store_true", dest="floor_C",
                       default=False,
                       help="Floor() execution times [%default]")
-    
+
     format_default = '%(Ugen)f %(U)f %(C).2f %(T)d\\n';
     format_help = "Specify output format as a Python template string.  The following variables are available: Ugen - the task utilisation value generated by Stafford's randfixedsum algorithm, T - the generated task period value, C - the generated task execution time, U - the actual utilisation equal to C/T which will differ from Ugen if the --round-C option is used.  See below for further examples.  A new line is always inserted between tasksets. [" + format_default + "]"
     parser.add_option("-f", "--output-format",
@@ -304,7 +315,7 @@ def main():
     #pergran = None is default.  Set to permin in this case
     if options.pergran == None:
         options.pergran = options.permin
-        
+
     if options.pergran < 1:
         print >>sys.stderr, "Period granularity must be an integer greater than equal to 1"
         return 1
@@ -316,18 +327,18 @@ def main():
     if (options.permin % options.pergran) != 0:
         print >>sys.stderr, "Period minimum must be a integer multiple of period granularity"
         return 1
-        
+
     options.format = options.format.replace("\\n", "\n")
 
     gen_tasksets(options)
-    
+
     return 0
-    
+
 def print_help(parser):
     parser.print_help();
 
     print ""
-    
+
     example_desc = \
             "Generate 5 tasksets of 10 tasks with loguniform periods " +\
             "between 1000 and 100000.  Round execution times and output "+\
