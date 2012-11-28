@@ -2,6 +2,8 @@
 #include <set>
 
 #include <stdlib.h>
+#include <limits.h>
+
 #include "tasks.h"
 #include "math-helper.h"
 #include "stl-helper.h"
@@ -134,16 +136,17 @@ static integral_t get_largest_testpoint(const TaskSet &ts,
 
 bool QPATest::is_schedulable(const TaskSet &ts, bool check_preconditions)
 {
-	integral_t max_interval = edf_busy_interval(ts);
-	unsigned long min_interval = min_relative_deadline(ts);
-
 	fractional_t util;
 	ts.get_utilization(util);
 
+	if (util > 1)
+		return false;
+
+	integral_t max_interval = edf_busy_interval(ts);
+	unsigned long min_interval = min_relative_deadline(ts);
+
 	if (util < 1)
 		max_interval = std::min(max_interval, zhang_burns_interval(ts));
-	else if (util > 1)
-		return false;
 
 	integral_t next = get_largest_testpoint(ts, max_interval);
 	integral_t demand;
