@@ -82,7 +82,7 @@ def quantize_params(taskset):
         t.cost     = int(ceil(t.cost))
         t.period   = int(floor(t.period))
         t.deadline = int(floor(t.deadline))
-        if t.density() > 1:
+        if not min(t.period, t.deadline) or t.density() > 1:
             return False
 
     return taskset
