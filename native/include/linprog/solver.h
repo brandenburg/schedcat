@@ -25,20 +25,27 @@ public:
 };
 
 #if defined(CONFIG_HAVE_CPLEX)
-
 #include "linprog/cplex.h"
-#define linprog_solve(lp, vars) cpx_solve((lp), (vars))
-
 #elif defined(CONFIG_HAVE_GLPK)
-
 #include "linprog/glpk.h"
-#define linprog_solve(lp, vars) glpk_solve((lp), (vars))
-
 #else
-
 #warning No LP solver available.
-#define linprog_solve(lp, vars) assert(0)
-
 #endif
+
+
+static inline Solution *linprog_solve(
+	const LinearProgram& lp,
+	unsigned int max_num_vars)
+{
+
+#if defined(CONFIG_HAVE_CPLEX)
+	return cpx_solve(lp, max_num_vars);
+#elif defined(CONFIG_HAVE_GLPK)
+	return glpk_solve(lp, max_num_vars);
+#else
+	assert(0);
+	return NULL;
+#endif
+}
 
 #endif
