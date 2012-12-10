@@ -119,7 +119,7 @@ GLPKSolution::~GLPKSolution()
 
 void GLPKSolution::set_objective()
 {
-	assert(linprog.get_objective()->get_terms().size() == num_cols);
+	assert(linprog.get_objective()->get_terms().size() <= num_cols);
 
 	foreach (linprog.get_objective()->get_terms(), term)
 		glp_set_obj_coef(glpk, term->second + 1, term->first);

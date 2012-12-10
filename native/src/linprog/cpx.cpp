@@ -87,11 +87,11 @@ void CPXSolution::solve_model(double var_lb, double var_ub)
 	if (!lp)
 		return;
 
-
 	if (!setup_objective(var_lb, var_ub) ||
 	    !add_rows() ||
 	    !load_coeffs())
 		return;
+
 
 #if DEBUG_LP_OVERHEADS >= 3
 	model_costs.stop();
@@ -100,6 +100,8 @@ void CPXSolution::solve_model(double var_lb, double var_ub)
 
 	err = CPXlpopt(env, lp);
 
+	if (err != 0)
+		return;
 
 #if DEBUG_LP_OVERHEADS >= 3
 	solver_costs.stop();
@@ -146,16 +148,17 @@ bool CPXSolution::setup_objective(double lb, double ub)
 	double *lbs  = all + num_cols;
 	double *ubs  = all + 2 * num_cols;
 
-	assert(obj->get_terms().size() == num_cols);
-
-	foreach(obj->get_terms(), term)
-		vals[term->second] = term->first;
+	assert(obj->get_terms().size() <= num_cols);
 
 	for (unsigned int i = 0; i < num_cols; i++)
 	{
-		lbs[i] = lb;
-		ubs[i] = ub;
+		vals[i] = 0;
+		lbs[i]  = lb;
+		ubs[i]  = ub;
 	}
+
+	foreach(obj->get_terms(), term)
+		vals[term->second] = term->first;
 
 	CPXchgobjsen(env, lp, CPX_MAX);
 	err = CPXnewcols(env, lp, num_cols, vals, lbs, ubs, NULL, NULL);
