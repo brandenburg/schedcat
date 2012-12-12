@@ -64,6 +64,8 @@ def apply_mpcp_bounds(all_tasks, use_virtual_spin=False):
             t.blocked   = res.get_blocking_term(i)
             t.locally_blocked = res.get_local_blocking(i)
 
+    return res
+
 def get_round_robin_resource_mapping(num_resources, num_cpus,
                                      dedicated_irq=cpp.NO_CPU):
     "Default resource assignment: just assign resources to CPUs in index order."
@@ -95,6 +97,8 @@ def apply_dpcp_bounds(all_tasks, resource_mapping,
         # all blocking, including arrival blocking
         t.blocked   = res.get_blocking_term(i)
 
+    return res
+
 def apply_part_fmlp_bounds(all_tasks, preemptive=True):
     model = get_cpp_model(all_tasks)
     res = cpp.part_fmlp_bounds(model, preemptive)
@@ -105,6 +109,8 @@ def apply_part_fmlp_bounds(all_tasks, preemptive=True):
         # all blocking, including local blocking
         t.blocked   = res.get_blocking_term(i)
         t.local_blocking_count = res.get_local_count(i)
+
+    return res
 
 # S-oblivious bounds
 
@@ -123,23 +129,27 @@ def apply_global_fmlp_sob_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
     res = cpp.global_fmlp_bounds(model)
     apply_suspension_oblivious(all_tasks, res)
+    return res
 
 def apply_global_omlp_bounds(all_tasks, num_cpus):
     model = get_cpp_model(all_tasks)
     res = cpp.global_omlp_bounds(model, num_cpus)
     apply_suspension_oblivious(all_tasks, res)
+    return res
 
 def apply_clustered_omlp_bounds(all_tasks, procs_per_cluster,
                                 dedicated_irq=cpp.NO_CPU):
     model = get_cpp_model(all_tasks)
     res = cpp.clustered_omlp_bounds(model, procs_per_cluster, dedicated_irq)
     apply_suspension_oblivious(all_tasks, res)
+    return res
 
 def apply_clustered_rw_omlp_bounds(all_tasks, procs_per_cluster,
                                    dedicated_irq=cpp.NO_CPU):
     model = get_cpp_model_rw(all_tasks)
     res = cpp.clustered_rw_omlp_bounds(model, procs_per_cluster, dedicated_irq)
     apply_suspension_oblivious(all_tasks, res)
+    return res
 
 def apply_clustered_kx_omlp_bounds(all_tasks, procs_per_cluster,
                                    replication_degrees = {},
@@ -151,6 +161,7 @@ def apply_clustered_kx_omlp_bounds(all_tasks, procs_per_cluster,
     res = cpp.clustered_kx_omlp_bounds(model, replica_info, procs_per_cluster,
                                        dedicated_irq)
     apply_suspension_oblivious(all_tasks, res)
+    return res
 
 # spinlocks are charged similarly to s-oblivious analysis
 
@@ -159,6 +170,7 @@ def apply_task_fair_mutex_bounds(all_tasks, procs_per_cluster,
     model = get_cpp_model(all_tasks)
     res = cpp.task_fair_mutex_bounds(model, procs_per_cluster, dedicated_irq)
     apply_suspension_oblivious(all_tasks, res)
+    return res
 
 def apply_task_fair_rw_bounds(all_tasks, procs_per_cluster,
                               dedicated_irq=cpp.NO_CPU):
@@ -167,12 +179,14 @@ def apply_task_fair_rw_bounds(all_tasks, procs_per_cluster,
     model_mtx = get_cpp_model(all_tasks)
     res = cpp.task_fair_rw_bounds(model, model_mtx, procs_per_cluster, dedicated_irq)
     apply_suspension_oblivious(all_tasks, res)
+    return res
 
 def apply_phase_fair_rw_bounds(all_tasks, procs_per_cluster,
                                  dedicated_irq=cpp.NO_CPU):
     model = get_cpp_model_rw(all_tasks)
     res = cpp.phase_fair_rw_bounds(model, procs_per_cluster, dedicated_irq)
     apply_suspension_oblivious(all_tasks, res)
+    return res
 
 
 
@@ -211,6 +225,7 @@ def apply_lp_dflp_bounds(all_tasks, resource_mapping,
         for i, t in enumerate(all_tasks):
             t.suspended = res.get_remote_blocking(i)
             t.blocked   = res.get_blocking_term(i)
+        return res
 
 def apply_lp_dpcp_bounds(all_tasks, resource_mapping,
                          use_rta = True, use_py=False):
@@ -223,6 +238,8 @@ def apply_lp_dpcp_bounds(all_tasks, resource_mapping,
         for i, t in enumerate(all_tasks):
             t.suspended = res.get_remote_blocking(i)
             t.blocked   = res.get_blocking_term(i)
+        return res
+
 
 def apply_lp_mpcp_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
@@ -234,6 +251,8 @@ def apply_lp_mpcp_bounds(all_tasks):
         # all blocking, including local blocking
         t.blocked   = res.get_blocking_term(i)
         t.locally_blocked = res.get_local_blocking(i)
+
+    return res
 
 def apply_lp_part_fmlp_bounds(all_tasks):
     # LP-based analysis of the partitioned, preemptive FMLP+
@@ -247,3 +266,4 @@ def apply_lp_part_fmlp_bounds(all_tasks):
         t.blocked   = res.get_blocking_term(i)
         t.locally_blocked = res.get_local_blocking(i)
 
+    return res
