@@ -65,6 +65,9 @@ def compute_response_bounds(no_cpus, tasks, sched_pps, rounds):
 
     if not has_bounded_tardiness(no_cpus, tasks):
         return None
+
+    # Compute utilization ceiling
+    util_ceil = int(ceil(tasks.utilization_q()))
     # First uniformly reduce scheduler priority points to derive analysis
     # priority points.  Due to uniform reduction, does not change scheduling
     # decisions.  Shown in EA'12 to improve bounds.
@@ -84,10 +87,11 @@ def compute_response_bounds(no_cpus, tasks, sched_pps, rounds):
                      utilizations[i] + Fraction(task.cost) - S_i[i]
 
     if rounds == 0:
-        s = compute_exact_s(no_cpus, tasks, sum(S_i), Y_ints, utilizations)
+        s = compute_exact_s(no_cpus, tasks, util_ceil, sum(S_i), Y_ints,
+                            utilizations)
     else:
-        s = compute_binsearch_s(no_cpus, tasks, sum(S_i), Y_ints, utilizations,
-                                rounds)
+        s = compute_binsearch_s(no_cpus, tasks, util_ceil, sum(S_i), Y_ints,
+                                utilizations, rounds)
 
     details = AnalysisDetails(len(tasks))
     details.bounds = [int(ceil(s - Fraction(tasks[i].cost, no_cpus) + 
@@ -98,7 +102,7 @@ def compute_response_bounds(no_cpus, tasks, sched_pps, rounds):
                    for i in range(len(tasks))]
     return details
 
-def compute_exact_s(no_cpus, tasks, S, Y_ints, utilizations):
+def compute_exact_s(no_cpus, tasks, util_ceil, S, Y_ints, utilizations):
     replacements = []
     for i, task1 in enumerate(tasks):
         for j in range(i+1, len(tasks)):
@@ -138,7 +142,7 @@ def compute_exact_s(no_cpus, tasks, S, Y_ints, utilizations):
     current_value = S
     current_slope = Fraction(-1 * no_cpus)
 
-    init_pairs = heapq.nlargest(no_cpus - 1, enumerate(Y_ints),
+    init_pairs = heapq.nlargest(util_ceil - 1, enumerate(Y_ints),
                                 key=lambda p: p[1])
 
     # For s = 0, just use Y-intercepts to determine what is present.
@@ -169,9 +173,10 @@ def compute_exact_s(no_cpus, tasks, S, Y_ints, utilizations):
             next_s = zero + 1
     return zero
 
-def compute_binsearch_s(no_cpus, tasks, S, Y_ints, utilizations, rounds):
+def compute_binsearch_s(no_cpus, tasks, util_ceil, S, Y_ints, utilizations,
+                        rounds):
     def M(s):
-        Gvals = heapq.nlargest(no_cpus - 1,
+        Gvals = heapq.nlargest(util_ceil - 1,
                                [Y_ints[i] + utilizations[i] * s
                                 for i in range(len(tasks))])
         return sum(Gvals) + S - Fraction(no_cpus) * s

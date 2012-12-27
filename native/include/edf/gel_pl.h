@@ -12,6 +12,7 @@ class GELPl
     std::vector<unsigned long> bounds;
     int no_cpus;
     const TaskSet& tasks;
+    int util_ceil;
     int rounds;
     std::vector<fractional_t> S_i;
     std::vector<fractional_t> G_i;

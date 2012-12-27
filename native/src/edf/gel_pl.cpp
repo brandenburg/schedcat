@@ -17,6 +17,14 @@ GELPl::GELPl(Scheduler sched, unsigned int num_processors, const TaskSet& ts,
              unsigned int num_rounds)
 :no_cpus(num_processors), tasks(ts), rounds(num_rounds)
 {
+    fractional_t sys_utilization;
+    tasks.get_utilization(sys_utilization);
+    // Compute ceiling
+    integral_t util_ceil_pre = sys_utilization.get_num();
+    mpz_cdiv_q(util_ceil_pre.get_mpz_t(),
+               sys_utilization.get_num().get_mpz_t(),
+               sys_utilization.get_den().get_mpz_t());
+    util_ceil = util_ceil_pre.get_ui();
     std::vector<unsigned long> pps;
     fractional_t S = 0;
     std::vector<fractional_t> Y_ints;
@@ -155,16 +163,20 @@ void GELPl::compute_exact_s(const fractional_t& S,
         init_pairs.push_back(new_pair);
     }
     
-    // Allows us to efficiently compute sum of top m-1 elements.  They may not
-    // be in order but must be the correct choices.
-    std::nth_element(init_pairs.begin(), init_pairs.begin() + no_cpus - 2,
-                     init_pairs.end());
+    // Only if we have tasks contributing to G
+    if (util_ceil >= 2) {
+        // Allows us to efficiently compute sum of top m-1 elements.  They may
+        // not be in order but must be the correct choices.
+        std::nth_element(init_pairs.begin(),
+                         init_pairs.begin() + util_ceil - 2,
+                         init_pairs.end());
 
-    for (int i = 0; i < no_cpus - 1; i++) {
-        unsigned int task_index = init_pairs[i].task;
-        task_pres[task_index] = true;
-        current_value += init_pairs[i].value;
-        current_slope += utilizations[task_index];
+        for (int i = 0; i < util_ceil - 1; i++) {
+            unsigned int task_index = init_pairs[i].task;
+            task_pres[task_index] = true;
+            current_value += init_pairs[i].value;
+            current_slope += utilizations[task_index];
+        }
     }
     
     unsigned int rindex = 0;
@@ -237,16 +249,21 @@ bool GELPl::M_lt_0(const fractional_t& s, const fractional_t& S,
         Gvals[i] += Y_ints[i];
     }
 
-    // Again, more efficient computation by not totally sorting.
-    std::nth_element(Gvals.begin(), Gvals.begin() + no_cpus - 2, Gvals.end(),
-                     reversed_order);
     fractional_t final_val = no_cpus;
     final_val *= -1;
     final_val *= s;
     final_val += S;
     
-    for (int i = 0; i < no_cpus - 1; i++) {
-        final_val += Gvals[i];
+    // Only if there will be tasks contributing to G
+    if (util_ceil >= 2) {
+        // Again, more efficient computation by not totally sorting.
+        std::nth_element(Gvals.begin(),
+                         Gvals.begin() + util_ceil - 2,
+                         Gvals.end(),
+                         reversed_order);
+        for (int i = 0; i < util_ceil - 1; i++) {
+            final_val += Gvals[i];
+        }
     }
 
     return (final_val < 0);

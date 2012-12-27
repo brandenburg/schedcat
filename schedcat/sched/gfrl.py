@@ -82,11 +82,13 @@ def Gi_slope(i, L, tasks, no_cpus):
            Si_slope(i, L, tasks, no_cpus)
 
 def G_val(L, tasks, no_cpus):
-    return sum(heapq.nlargest(no_cpus - 1, [Gi_val(i, L, tasks, no_cpus)
+    util_cap = int(ceil(tasks.utilization_q()))
+    return sum(heapq.nlargest(util_cap - 1, [Gi_val(i, L, tasks, no_cpus)
                                             for i in range(len(tasks))]))
 
 def G_slope(L, tasks, no_cpus):
-    largest = heapq.nlargest(no_cpus - 1, [(Gi_val(i, L, tasks, no_cpus),
+    util_cap = int(ceil(tasks.utilization_q()))
+    largest = heapq.nlargest(util_cap - 1, [(Gi_val(i, L, tasks, no_cpus),
                                             Gi_slope(i, L, tasks, no_cpus))
                                             for i in range(len(tasks))])
     return sum([tup[1] for tup in largest])
@@ -106,6 +108,8 @@ def compute_response_bounds(no_cpus, tasks):
 
     if not has_bounded_tardiness(no_cpus, tasks):
         return None
+
+    util_cap = int(ceil(tasks.utilization_q()))
 
     # Y-intercepts of potential "s" values with respect to L
     # s = min(LD_i - \frac{m-1}{m} C_i)
@@ -250,7 +254,7 @@ def compute_response_bounds(no_cpus, tasks):
     current_value = Fraction(-1 * no_cpus) * s_intercepts[zero_task_index] + S
     current_slope = Fraction(-1 * no_cpus * zero_task.deadline) + S_p
 
-    init_pairs = heapq.nlargest(no_cpus - 1, enumerate(G_vals),
+    init_pairs = heapq.nlargest(util_cap - 1, enumerate(G_vals),
                                 key=lambda p: p[1])
 
     # For L = 0, just use Y-intercepts to determine what is present.
