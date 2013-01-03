@@ -13,7 +13,7 @@ static bool reversed_order(const fractional_t& first,
     return second < first;
 }
 
-GELPl::GELPl(Scheduler sched, unsigned int num_processors, const TaskSet& ts,
+GELPl::GELPl(unsigned int num_processors, const TaskSet& ts,
              unsigned int num_rounds)
 :no_cpus(num_processors), tasks(ts), rounds(num_rounds)
 {
@@ -25,13 +25,13 @@ GELPl::GELPl(Scheduler sched, unsigned int num_processors, const TaskSet& ts,
                sys_utilization.get_num().get_mpz_t(),
                sys_utilization.get_den().get_mpz_t());
     util_ceil = util_ceil_pre.get_ui();
-    std::vector<unsigned long> pps;
+    std::vector<unsigned long> prio_pts;
     fractional_t S = 0;
     std::vector<fractional_t> Y_ints;
 
     int task_count = tasks.get_task_count();
     // Reserve capacity in all vectors to minimize allocation costs.
-    pps.reserve(task_count);
+    prio_pts.reserve(task_count);
     Y_ints.reserve(task_count);
     S_i.reserve(task_count);
     G_i.reserve(task_count);
@@ -43,29 +43,26 @@ GELPl::GELPl(Scheduler sched, unsigned int num_processors, const TaskSet& ts,
         utilizations[i] /= tasks[i].get_period();
     }
     
-    unsigned long min_pp = std::numeric_limits<unsigned long>::max();
+    unsigned long min_prio_pt = std::numeric_limits<unsigned long>::max();
 
     // Compute initial priority points, including minimum.
     for (int i = 0; i < task_count; i++) {
         const Task& task = tasks[i];
-        unsigned long new_pp = task.get_deadline();
-        if (sched == GFL) {
-            new_pp -= ((num_processors - 1) * task.get_wcet()) / num_processors;
-        }
-        pps.push_back(new_pp);
-        if (new_pp < min_pp) {
-            min_pp = new_pp;
+        unsigned long new_prio_pt = task.get_prio_pt();
+        prio_pts.push_back(new_prio_pt);
+        if (new_prio_pt < min_prio_pt) {
+            min_prio_pt = new_prio_pt;
         }
     }
 
     // Reduce to compute minimum.  Also compute Y intercepts, S_i values, and
     // S.
     for (int i = 0; i < task_count; i++) {
-        pps[i] -= min_pp;
+        prio_pts[i] -= min_prio_pt;
         const Task& task = tasks[i];
         unsigned long wcet = task.get_wcet();
         unsigned long period = task.get_period();
-        S_i.push_back(pps[i]);
+        S_i.push_back(prio_pts[i]);
         fractional_t& S_i_i = S_i[i];
         S_i_i *= -1;
         S_i_i /= period;
@@ -102,7 +99,7 @@ GELPl::GELPl(Scheduler sched, unsigned int num_processors, const TaskSet& ts,
         mpz_cdiv_q(xi_ceil.get_mpz_t(),
                    x_i.get_num().get_mpz_t(),
                    x_i.get_den().get_mpz_t());
-        bounds.push_back(pps[i]
+        bounds.push_back(prio_pts[i]
                          + tasks[i].get_wcet()
                          + xi_ceil.get_ui());
         G_i.push_back(s);

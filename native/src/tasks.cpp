@@ -9,8 +9,9 @@
 #include "task_io.h"
 
 void Task::init(unsigned long wcet,
-		unsigned long period,
-		unsigned long deadline)
+                unsigned long period,
+                unsigned long deadline,
+                unsigned long prio_pt)
 {
     this->wcet     = wcet;
     this->period   = period;
@@ -18,6 +19,10 @@ void Task::init(unsigned long wcet,
         this->deadline = period; // implicit
     else
         this->deadline = deadline;
+    if (!prio_pt)
+        this->prio_pt = deadline;
+    else
+        this->prio_pt = prio_pt;
 }
 
 bool Task::has_implicit_deadline() const

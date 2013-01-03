@@ -22,42 +22,51 @@ if schedcat.sched.using_native:
 import heapq
 
 class AnalysisDetails:
-    def __init__(self, num_tasks, gel_obj = None):
+    def __init__(self, tasks, gel_obj = None):
+        num_tasks = len(tasks)
+        self.tasks = tasks
         if gel_obj is not None:
             self.bounds = [gel_obj.get_bound(i) for i in range(num_tasks)]
             self.S_i = [gel_obj.get_Si(i) for i in range(num_tasks)]
             self.G_i = [gel_obj.get_Gi(i) for i in range(num_tasks)]
+
+    def max_lateness(self):
+        return max([self.bounds[i] - self.tasks[i].deadline
+                    for i in range(len(self.tasks))])
 
 def compute_gfl_response_details(no_cpus, tasks, rounds):
     """This function computes response time bounds for the given set of tasks
        using G-FL.  "rounds" determines the number of rounds of binary search;
        using "0" results in using the exact algorithm.
     """
-    if schedcat.sched.using_native:
-        native_ts = schedcat.sched.get_native_taskset(tasks)
-        gel_obj = native.GELPl(native.GELPl.GFL,
-                               no_cpus, native_ts, rounds)
-        return AnalysisDetails(len(tasks), gel_obj)
-    else:
-        gfl_pps = [task.deadline - int((no_cpus - 1) / (no_cpus) * task.cost)
-                   for task in tasks]
-        return compute_response_bounds(no_cpus, tasks, gfl_pps, rounds)
+    for task in tasks:
+        task.pp = task.deadline - int((no_cpus - 1) / (no_cpus) * task.cost)
+    return compute_response_details(no_cpus, tasks, rounds)
 
 def compute_gedf_response_details(no_cpus, tasks, rounds):
     """This function computes response time bounds for a given set of tasks
        using G-EDF.  "rounds" determines the number of rounds of binary search;
        using "0" results in using the exact algorithm.
     """
+    for task in tasks:
+        task.pp = task.deadline
+    return compute_response_details(no_cpus, tasks, rounds)
+
+def compute_response_details(no_cpus, tasks, rounds):
+    if (no_cpus == 1) and forall(tasks)(lambda t: t.pp == t.period):
+        details = AnalysisDetails(tasks)
+        details.bounds = [task.period for task in tasks]
+        details.S_i = [0.0 for task in tasks]
+        details.G_i = [0.0 for task in tasks]
+        return details
     if schedcat.sched.using_native:
         native_ts = schedcat.sched.get_native_taskset(tasks)
-        gel_obj = native.GELPl(native.GELPl.GEDF,
-                               no_cpus, native_ts, rounds)
-        return AnalysisDetails(len(tasks), gel_obj)
+        gel_obj = native.GELPl(no_cpus, native_ts, rounds)
+        return AnalysisDetails(tasks, gel_obj)
     else:
-        gedf_pps = [task.deadline for task in tasks]
-        return compute_response_bounds(no_cpus, tasks, gedf_pps, rounds)
+        return compute_response_bounds(no_cpus, tasks, rounds)
 
-def compute_response_bounds(no_cpus, tasks, sched_pps, rounds):
+def compute_response_bounds(no_cpus, tasks, rounds):
     """This function computes response time bounds for the given set of tasks
        and priority points.  "rounds" determines the number of rounds of binary
        search; using "0" results in using the exact algorithm.
@@ -71,6 +80,7 @@ def compute_response_bounds(no_cpus, tasks, sched_pps, rounds):
     # First uniformly reduce scheduler priority points to derive analysis
     # priority points.  Due to uniform reduction, does not change scheduling
     # decisions.  Shown in EA'12 to improve bounds.
+    sched_pps = [task.pp for task in tasks]
     min_priority_point = min(sched_pps)
     analysis_pps = [sched_pps[i] - min_priority_point
                     for i in range(len(sched_pps))]
@@ -93,7 +103,7 @@ def compute_response_bounds(no_cpus, tasks, sched_pps, rounds):
         s = compute_binsearch_s(no_cpus, tasks, util_ceil, sum(S_i), Y_ints,
                                 utilizations, rounds)
 
-    details = AnalysisDetails(len(tasks))
+    details = AnalysisDetails(tasks)
     details.bounds = [int(ceil(s - Fraction(tasks[i].cost, no_cpus) + 
                       Fraction(tasks[i].cost) + Fraction(analysis_pps[i])))
                       for i in range(len(tasks))]
@@ -202,28 +212,14 @@ def has_bounded_tardiness(no_cpus, tasks):
         forall(tasks)(lambda t: t.period >= t.cost)
 
 def bound_gedf_response_times(no_cpus, tasks, rounds):
-    if schedcat.sched.using_native:
-        native_ts = schedcat.sched.get_native_taskset(tasks)
-        gel_obj = native.GELPl(native.GELPl.GEDF,
-                               no_cpus, native_ts, rounds)
-        return bound_response_times_from_native(no_cpus, tasks, gel_obj)
+    response_details = compute_gedf_response_details(no_cpus, tasks, rounds)
 
-    else:
-        response_details = compute_gedf_response_details(no_cpus, tasks, rounds)
-
-        return bound_response_times(tasks, response_details)
+    return bound_response_times(tasks, response_details)
 
 def bound_gfl_response_times(no_cpus, tasks, rounds):
-    if schedcat.sched.using_native:
-        native_ts = schedcat.sched.get_native_taskset(tasks)
-        gel_obj = native.GELPl(native.GELPl.GFL,
-                               no_cpus, native_ts, rounds)
-        return bound_response_times_from_native(no_cpus, tasks, gel_obj)
+    response_details = compute_gfl_response_details(no_cpus, tasks, rounds)
 
-    else:
-        response_details = compute_gfl_response_details(no_cpus, tasks, rounds)
-
-        return bound_response_times(tasks, response_details)
+    return bound_response_times(tasks, response_details)
 
 def bound_response_times(tasks, response_details):
     if response_details is None:
@@ -234,11 +230,3 @@ def bound_response_times(tasks, response_details):
             tasks[i].response_time = response_details.bounds[i]
         return True
 
-def bound_response_times_from_native(no_cpus, tasks, gel_obj):
-    if has_bounded_tardiness(no_cpus, tasks):
-        for i in range(len(tasks)):
-            tasks[i].response_time = gel_obj.get_bound(i)
-        return True
-
-    else:
-        return False

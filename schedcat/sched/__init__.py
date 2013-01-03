@@ -10,10 +10,10 @@ try:
     def get_native_taskset(tasks):
         ts = TaskSet()
         for t in tasks:
-            if t.implicit_deadline():
-                ts.add_task(t.cost, t.period)
+            if (hasattr(t, 'pp')):
+                ts.add_task(t.cost, t.period, t.deadline, t.pp)
             else:
-                ts.add_task(t.cost, t.period, t.deadline)
+                ts.add_tasks(t.cost, t.period, t.deadline)
         return ts
 
 except ImportError:

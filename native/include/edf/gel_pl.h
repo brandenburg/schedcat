@@ -59,13 +59,8 @@ class GELPl
     };
 
  public:
-   enum Scheduler {
-     GEDF,
-     GFL
-   };
 
-   GELPl(Scheduler sched,
-         unsigned int num_processors,
+   GELPl(unsigned int num_processors,
          const TaskSet& tasks,
          unsigned int rounds);
 
