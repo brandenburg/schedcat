@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 
 #include "lp_common.h"
 #include "stl-hashmap.h"
@@ -167,8 +168,8 @@ static BlockingBounds* _lp_dflp_bounds(const ResourceSharingInfo& info,
 	{
 		Interference total, remote, local;
 
-		local.total_length = sol->evaluate(local_obj[i]);
-		remote.total_length = sol->evaluate(remote_obj[i]);
+		local.total_length = lrint(sol->evaluate(local_obj[i]));
+		remote.total_length = lrint(sol->evaluate(remote_obj[i]));
 		total.total_length = local.total_length + remote.total_length;
 
 		(*results)[i] = total;

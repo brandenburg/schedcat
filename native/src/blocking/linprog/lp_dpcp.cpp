@@ -1,6 +1,7 @@
 #include <iostream>
 #include <set>
 #include <algorithm>
+#include <cmath>
 
 #include "lp_common.h"
 #include "blocking.h"
@@ -385,8 +386,8 @@ static BlockingBounds* _lp_dpcp_bounds(const ResourceSharingInfo& info,
 	{
 		Interference total, remote, local;
 
-		local.total_length = sol->evaluate(local_obj[i]);
-		remote.total_length = sol->evaluate(remote_obj[i]);
+		local.total_length = lrint(sol->evaluate(local_obj[i]));
+		remote.total_length = lrint(sol->evaluate(remote_obj[i]));
 		total.total_length = local.total_length + remote.total_length;
 
 		(*results)[i] = total;
@@ -455,8 +456,8 @@ static void apply_dpcp_bounds_for_task(
 
 	Interference total, remote, local;
 
-	total.total_length = sol->evaluate(*lp.get_objective());
-	local.total_length = sol->evaluate(*local_obj);
+	total.total_length = lrint(sol->evaluate(*lp.get_objective()));
+	local.total_length = lrint(sol->evaluate(*local_obj));
 	remote.total_length = total.total_length - local.total_length;
 
 	bounds[i] = total;

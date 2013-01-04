@@ -1,6 +1,7 @@
 #include <iostream>
 #include <set>
 #include <algorithm>
+#include <cmath>
 
 #include "lp_common.h"
 #include "blocking.h"
@@ -527,8 +528,8 @@ static void apply_mpcp_bounds_for_task(
 
 	Interference total, remote, local;
 
-	total.total_length = sol->evaluate(*lp.get_objective());
-	local.total_length = sol->evaluate(*local_obj);
+	total.total_length = lrint(sol->evaluate(*lp.get_objective()));
+	local.total_length = lrint(sol->evaluate(*local_obj));
 
 	bounds[i] = total;
 	bounds.set_local_blocking(i, local);
@@ -546,7 +547,7 @@ static void apply_mpcp_bounds_for_task(
 
 	assert(sol != NULL);
 
-	remote.total_length = sol->evaluate(*lp.get_objective());
+	remote.total_length = lrint(sol->evaluate(*lp.get_objective()));
 	bounds.set_remote_blocking(i, remote);
 
 #if DEBUG_LP_OVERHEADS >= 2
