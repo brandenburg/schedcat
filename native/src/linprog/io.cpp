@@ -22,6 +22,21 @@ std::ostream& operator<<(std::ostream &os, const LinearExpression &exp)
 	return os;
 }
 
+std::ostream& operator<<(std::ostream &os, const LinearProgram &lp)
+{
+	os << "maximize " << *lp.get_objective() << " subject to:" << std::endl;
+	foreach (lp.get_equalities(), it)
+	{
+		os << *(it->first) << " = " << it->second << std::endl;
+	}
+	foreach (lp.get_inequalities(), it)
+	{
+		os << *(it->first) << " <= " << it->second << std::endl;
+	}
+
+	return os;
+}
+
 void dump_lp_solution(
 	VarMapper& vars,
 	const ResourceSharingInfo& info,
