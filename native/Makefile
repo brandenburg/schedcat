@@ -24,6 +24,7 @@ DEFS    ?=
 OS := $(shell uname)
 
 # How to link Python libraries?
+PYTHON_VER := ${shell ${PYTHON} --version 2>&1}
 ifeq ($(OS),Darwin)
 # Mac OS X: link against Python Framework
 PYTHON_INC ?= -I/System/Library/Frameworks/Python.framework/Headers/
@@ -36,6 +37,8 @@ PYTHON_INC ?= -I${shell ${PYTHON} -c "import distutils.sysconfig; print distutil
 PYTHON_LIB ?=
 SOFLAGS     = -shared
 endif
+${info Linking with ${PYTHON_VER} (headers: ${PYTHON_INC}).}
+
 
 # Support for clock_gettime()
 ifeq ($(OS),Linux)
