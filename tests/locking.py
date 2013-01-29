@@ -113,6 +113,10 @@ class ApplyBounds(unittest.TestCase):
         lb.apply_global_omlp_bounds(self.ts, 2)
         self.sob_non_zero_blocking()
 
+    def test_omip(self):
+        lb.apply_omip_bounds(self.ts, 2, 1)
+        self.sob_non_zero_blocking()
+
     def test_clustered_omlp(self):
         lb.apply_clustered_omlp_bounds(self.ts, 2)
         self.sob_non_zero_blocking()

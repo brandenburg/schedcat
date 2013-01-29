@@ -119,6 +119,13 @@ public:
 		return len;
 	}
 
+	unsigned int get_num_requests(unsigned int res_id) const
+	{
+		foreach(requests, it)
+			if (it->get_resource_id() == res_id)
+				return it->get_num_requests();
+		return 0;
+	}
 };
 
 typedef std::vector<TaskInfo> TaskInfos;

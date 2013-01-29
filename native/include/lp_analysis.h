@@ -13,4 +13,9 @@ BlockingBounds* lp_mpcp_bounds(const ResourceSharingInfo& info);
 
 BlockingBounds* lp_part_fmlp_bounds(const ResourceSharingInfo& info);
 
+BlockingBounds* lp_omip_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int num_procs,
+	unsigned int cluster_size);
+
 #endif /* LP_ANALYSYS_H_ */

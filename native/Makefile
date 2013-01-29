@@ -118,7 +118,7 @@ ALL = testmain _sched.so _locking.so _sim.so
 
 # Compile LP-based code only if we have a solver.
 ifneq ($(CPLEX_PATH)$(GLPK_PATH),)
-LP_OBJ    = lp_common.o io.o lp_dflp.o lp_dpcp.o lp_mpcp.o lp_fmlp.o
+LP_OBJ    = lp_common.o io.o lp_dflp.o lp_dpcp.o lp_mpcp.o lp_fmlp.o lp_omip.o
 
 ifneq ($(CPLEX_PATH),)
 LP_OBJ   += cplex.o cpx.o

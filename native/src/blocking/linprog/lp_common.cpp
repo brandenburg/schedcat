@@ -119,6 +119,40 @@ void set_blocking_objective_part_shm(
 	}
 }
 
+// This version is for suspension-oblivious shared-memory protocols,
+// where the analysis does not differentiate among the different kinds
+// of blocking (since they are all just added to the execution time anyway).
+void set_blocking_objective_sob(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp)
+{
+        LinearExpression *obj;
+
+	obj = lp.get_objective();
+
+	foreach_task_except(info.get_tasks(), ti, tx)
+	{
+		unsigned int t = tx->get_id();
+
+		foreach(tx->get_requests(), request)
+		{
+			unsigned int q = request->get_resource_id();
+			double length = request->get_request_length();;
+
+			foreach_request_instance(*request, ti, v)
+			{
+				unsigned int var_id;
+
+				var_id = vars.lookup(t, q, v, BLOCKING_SOB);
+				obj->add_term(length, var_id);
+			}
+		}
+	}
+}
+
+
 // Constraint 1 in [Brandenburg 2013]
 void add_mutex_constraints(
 	VarMapper& vars,

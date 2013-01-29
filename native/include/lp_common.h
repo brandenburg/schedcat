@@ -19,6 +19,9 @@ enum blocking_type
 	BLOCKING_PREEMPT
 };
 
+// s-oblivious analysis reuses BLOCKING_DIRECT as a catch-all blocking type.
+#define BLOCKING_SOB BLOCKING_DIRECT
+
 class VarMapper {
 private:
 	hashmap<uint64_t, unsigned int> map;
@@ -96,6 +99,12 @@ void set_blocking_objective_part_shm(
 	LinearProgram& lp,
 	LinearExpression *local_obj = 0,
 	LinearExpression *remote_obj = 0);
+
+void set_blocking_objective_sob(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp);
 
 void add_mutex_constraints(VarMapper& vars,
 		const ResourceSharingInfo& info,

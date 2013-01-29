@@ -267,3 +267,9 @@ def apply_lp_part_fmlp_bounds(all_tasks):
         t.locally_blocked = res.get_local_blocking(i)
 
     return res
+
+def apply_omip_bounds(all_tasks, num_cpus, procs_per_cluster):
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_omip_bounds(model, num_cpus, procs_per_cluster)
+    apply_suspension_oblivious(all_tasks, res)
+    return res
