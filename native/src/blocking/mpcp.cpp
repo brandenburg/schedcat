@@ -6,17 +6,61 @@
 
 # include "mpcp.h"
 
+static void determine_mpcp_ceilings(const Resources& resources,
+				    const unsigned int cluster,
+				    PriorityCeilings& ceilings)
+{
+	ceilings.reserve(resources.size());
+
+	foreach(resources, it)
+	{
+		unsigned int ceiling = UINT_MAX;
+		const ContentionSet& cs = *it;
+
+		foreach(cs, jt)
+		{
+			const RequestBound* req = *jt;
+			// count only requests of tasks on remote clusters
+			if (req->get_task()->get_cluster() != cluster)
+			{
+				ceiling = std::min(ceiling, req->get_task()->get_priority());
+			}
+		}
+
+		ceilings.push_back(ceiling);
+	}
+}
+
+MPCPCeilings get_mpcp_ceilings(const ResourceSharingInfo& info)
+{
+	Resources resources;
+	Clusters clusters;
+	MPCPCeilings ceilings;
+	unsigned int cluster;
+
+	split_by_resource(info, resources);
+	split_by_cluster(info, clusters);
+
+	enumerate(clusters, it, cluster)
+	{
+		ceilings.push_back(PriorityCeilings());
+		determine_mpcp_ceilings(resources, cluster, ceilings.back());
+	}
+	return ceilings;
+}
+
+
 // ***************************  MPCP ******************************************
 
 static unsigned long get_max_gcs_length(const TaskInfo* tsk,
-					const PriorityCeilings& ceilings,
+					const MPCPCeilings& ceilings,
 					unsigned int preempted_ceiling)
 {
 	unsigned long gcs_length = 0;
 
 	foreach(tsk->get_requests(), it)
 	{
-		unsigned int prio  = ceilings[it->get_resource_id()];
+		unsigned int prio  = ceilings[it->get_task()->get_cluster()][it->get_resource_id()];
 		if (prio <= preempted_ceiling)
 			gcs_length = std::max(gcs_length,
 					      (unsigned long) it->get_request_length());
@@ -27,7 +71,7 @@ static unsigned long get_max_gcs_length(const TaskInfo* tsk,
 
 static void determine_gcs_response_times(const TaskInfo* tsk,
 					 const Cluster& cluster,
-					 const PriorityCeilings& ceilings,
+					 const MPCPCeilings& ceilings,
 					 ResponseTimes& times)
 {
 	times.reserve(tsk->get_requests().size());
@@ -35,7 +79,7 @@ static void determine_gcs_response_times(const TaskInfo* tsk,
 	foreach(tsk->get_requests(), it)
 	{
 		unsigned long resp = it->get_request_length();
-		unsigned int prio  = ceilings[it->get_resource_id()];
+		unsigned int prio  = ceilings[it->get_task()->get_cluster()][it->get_resource_id()];
 
 		// Equation (2) in LNR:09.
 		// One request of each local gcs that can preempt our ceiling,
@@ -54,7 +98,7 @@ static void determine_gcs_response_times(const TaskInfo* tsk,
 }
 
 static void determine_gcs_response_times(const Cluster& cluster,
-					 const PriorityCeilings& ceilings,
+					 const MPCPCeilings& ceilings,
 					 TaskResponseTimes& times)
 {
 	times.reserve(cluster.size());
@@ -67,7 +111,7 @@ static void determine_gcs_response_times(const Cluster& cluster,
 }
 
 void determine_gcs_response_times(const Clusters& clusters,
-				  const PriorityCeilings& ceilings,
+				  const MPCPCeilings& ceilings,
 				  ClusterResponseTimes& times)
 {
 	times.reserve(clusters.size());
@@ -256,8 +300,7 @@ BlockingBounds* mpcp_bounds(const ResourceSharingInfo& info,
 	split_by_cluster(info, clusters);
 
 	// 2) Determine priority ceiling for each request.
-	PriorityCeilings gc;
-	determine_priority_ceilings(resources, gc);
+	MPCPCeilings gc = get_mpcp_ceilings(info);
 
 
 	// 3) For each request, determine response time. This only depends on the
