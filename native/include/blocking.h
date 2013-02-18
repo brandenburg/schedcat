@@ -30,7 +30,7 @@ void sort_by_request_length(ContentionSet& cs);
 typedef std::vector<const TaskInfo*> Cluster;
 typedef std::vector<Cluster> Clusters;
 
-void split_by_cluster(const ResourceSharingInfo& info, Clusters& clusters);
+void split_by_cluster(const ResourceSharingInfo& info, Clusters& clusters, unsigned int num_cpus = 0);
 void split_by_resource(const ResourceSharingInfo& info, Resources& resources);
 void split_by_resource(const Cluster& cluster, Resources& resources);
 void split_by_resource(const Clusters& clusters, ClusterResources& resources);

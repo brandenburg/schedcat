@@ -72,8 +72,11 @@ unsigned int RequestBound::get_max_num_requests(unsigned long interval) const
 // ****** non-exported helpers *******
 
 
-void split_by_cluster(const ResourceSharingInfo& info, Clusters& clusters)
+void split_by_cluster(const ResourceSharingInfo& info, Clusters& clusters, unsigned int num_cpus)
 {
+	if (num_cpus > 0)
+		while (num_cpus > clusters.size())
+			clusters.push_back(Cluster());
 	foreach(info.get_tasks(), it)
 	{
 		const TaskInfo& tsk  = *it;
