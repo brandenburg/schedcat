@@ -10,7 +10,8 @@ def get_cpp_model(all_tasks, use_task_period=False):
                      t.locking_prio)
         for req in t.resmodel:
             req = t.resmodel[req]
-            rsi.add_request_rw(req.res_id, req.max_requests, req.max_length, cpp.WRITE)
+            if req.max_requests > 0:
+                rsi.add_request_rw(req.res_id, req.max_requests, req.max_length, cpp.WRITE)
     return rsi
 
 def get_cpp_model_rw(all_tasks, use_task_period=False):
