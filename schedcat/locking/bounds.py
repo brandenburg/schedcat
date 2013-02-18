@@ -298,3 +298,16 @@ def apply_omip_bounds(all_tasks, num_cpus, procs_per_cluster):
     res = lp_cpp.lp_omip_bounds(model, num_cpus, procs_per_cluster)
     apply_suspension_oblivious(all_tasks, res)
     return res
+
+def apply_msrp_bounds(all_tasks, num_cpus):
+    for t in all_tasks:
+        if t.partition == None:
+            t.partition= num_cpus + 1
+    model = get_cpp_model(all_tasks, True)
+    res = cpp.msrp_bounds(model, num_cpus)
+    
+    for i,t in enumerate(all_tasks):
+        t.blocked   = res.get_local_blocking(i)
+        t.cost      += res.get_remote_blocking(i)
+        t.remote_blocking = res.get_remote_blocking(i)
+

@@ -18,6 +18,7 @@
 %newobject part_fmlp_bounds;
 %newobject mpcp_bounds;
 %newobject dpcp_bounds;
+%newobject msrp_bounds;
 
 %include "sharedres_types.i"
 
