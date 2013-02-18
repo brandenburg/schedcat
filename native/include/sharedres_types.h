@@ -355,6 +355,11 @@ public:
 		return request_span[tsk_index].count;
 	}
 
+	Interference get_raw_remote_blocking(unsigned int tsk_index) const
+	{
+		assert( tsk_index < local.size() );
+		return remote[tsk_index];
+	}
 
 	unsigned long get_remote_blocking(unsigned int tsk_index) const
 	{
