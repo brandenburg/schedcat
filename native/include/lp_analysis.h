@@ -18,4 +18,8 @@ BlockingBounds* lp_omip_bounds(
 	unsigned int num_procs,
 	unsigned int cluster_size);
 
+BlockingBounds* lp_msrp_bounds(const ResourceSharingInfo& info);
+
+unsigned long lp_msrp_bounds_single(const ResourceSharingInfo& info, unsigned int task_index);
+
 #endif /* LP_ANALYSYS_H_ */

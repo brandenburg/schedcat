@@ -6,7 +6,8 @@
 
 %newobject lp_dpcp_bounds;
 %newobject lp_dflp_bounds;
-
+%newobject lp_msrp_bounds;
+%
 %include "sharedres_types.i"
 
 %include "lp_analysis.h"
