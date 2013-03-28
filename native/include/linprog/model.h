@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <utility>
+#include <set>
 
 #include "stl-helper.h"
 
@@ -52,6 +53,12 @@ class LinearProgram
 	// linear expressions constrained by an upper bound (exp <= bound)
 	Constraints inequalities;
 
+	// set of integer variables
+	std::set<unsigned int> variables_integer;
+
+	// set of binary variables
+	std::set<unsigned int> variables_binary;
+
 public:
 	LinearProgram() : objective(new LinearExpression()) {};
 
@@ -62,6 +69,16 @@ public:
 			delete eq->first;
 		foreach(inequalities, ineq)
 			delete ineq->first;
+	}
+
+	void declare_variable_integer(unsigned int variable_index)
+	{
+		variables_integer.insert(variable_index);
+	}
+
+	void declare_variable_binary(unsigned int variable_index)
+	{
+		variables_binary.insert(variable_index);
 	}
 
 	void set_objective(LinearExpression *exp)
@@ -89,6 +106,36 @@ public:
 	const LinearExpression *get_objective() const
 	{
 		return objective;
+	}
+
+	const std::set<unsigned int>& get_integer_variables() const
+	{
+		return variables_integer;
+	}
+
+	bool has_binary_variables() const
+	{
+		return !variables_binary.empty();
+	}
+
+	bool has_integer_variables() const
+	{
+		return !variables_integer.empty();
+	}
+
+	bool is_integer_variable(unsigned int variable_id) const
+	{
+		return variables_integer.find(variable_id) != variables_integer.end();
+	}
+
+	bool is_binary_variable(unsigned int variable_id) const
+	{
+		return variables_binary.find(variable_id) != variables_binary.end();
+	}
+
+	const std::set<unsigned int>& get_binary_variables() const
+	{
+		return variables_binary;
 	}
 
 	LinearExpression *get_objective()

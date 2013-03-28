@@ -77,8 +77,18 @@ void CPLEXSolution::solve_model(unsigned int max_num_vars,
 
 		model_costs.start();
 #endif
-		IloNumVarArray cplex_vars = IloNumVarArray(get_env(), max_num_vars,
-							   var_lb, var_ub);
+		IloNumVarArray cplex_vars = IloNumVarArray(get_env(), 0);
+		for (unsigned int var_id = 0; var_id < max_num_vars; var_id++)
+		{
+			IloNumVar IloVar;
+			if (linprog.is_binary_variable(var_id))
+				IloVar = IloNumVar(get_env(), var_lb, var_ub, IloNumVar::Bool);
+			else if (linprog.is_integer_variable(var_id))
+				IloVar = IloNumVar(get_env(), var_lb, IloIntMax, IloNumVar::Int);
+			else
+				IloVar = IloNumVar(get_env(), var_lb, var_ub, IloNumVar::Float);
+			cplex_vars.add(IloVar);
+		}
 
 		IloObjective objective = make_objective(cplex_vars);
 		IloRangeArray constraints = make_constraints(cplex_vars);
