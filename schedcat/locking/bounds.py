@@ -325,3 +325,19 @@ def apply_cpp_lp_msrp_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
     res = lp_cpp.lp_msrp_bounds(model)
     return res
+    
+def apply_cpp_lp_unordered_bounds_single(all_tasks, task_index):
+    model = get_cpp_model(all_tasks)
+    blocking_term = lp_cpp.lp_unordered_bounds_single(model, task_index)
+    return blocking_term
+    
+def apply_cpp_lp_prio_bounds_single(all_tasks, task_index):
+    model = get_cpp_model(all_tasks)
+    blocking_term = lp_cpp.lp_prio_bounds_single(model, task_index)
+    return blocking_term
+
+def apply_cpp_lp_prio_fifo_bounds_single(all_tasks, task_index):
+    model = get_cpp_model(all_tasks)
+    blocking_term = lp_cpp.lp_prio_fifo_bounds_single(model, task_index)
+    return blocking_term
+
