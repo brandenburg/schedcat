@@ -87,6 +87,12 @@ void CPXSolution::solve_model(double var_lb, double var_ub)
 	if (!lp)
 		return;
 
+	// crash when we hit an MIP-problem;
+	// this is currently not correctly handled in this code
+	if (linprog.has_integer_variables() ||
+		linprog.has_binary_variables())
+		abort();
+
 	if (!setup_objective(var_lb, var_ub) ||
 	    !add_rows() ||
 	    !load_coeffs())
