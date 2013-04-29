@@ -11,7 +11,7 @@ def get_cpp_model(all_tasks, use_task_period=False):
         for req in t.resmodel:
             req = t.resmodel[req]
             if req.max_requests > 0:
-                rsi.add_request_rw(req.res_id, req.max_requests, req.max_length, cpp.WRITE)
+                rsi.add_request_rw(req.res_id, req.max_requests, req.max_length, cpp.WRITE, t.locking_prio)
     return rsi
 
 def get_cpp_model_rw(all_tasks, use_task_period=False):
@@ -24,9 +24,9 @@ def get_cpp_model_rw(all_tasks, use_task_period=False):
         for req in t.resmodel:
             req = t.resmodel[req]
             if req.max_writes > 0:
-                rsi.add_request_rw(req.res_id, req.max_writes, req.max_write_length, cpp.WRITE)
+                rsi.add_request_rw(req.res_id, req.max_writes, req.max_write_length, cpp.WRITE, t.locking_prio)
             if req.max_reads > 0:
-                rsi.add_request_rw(req.res_id, req.max_reads, req.max_read_length, cpp.READ)
+                rsi.add_request_rw(req.res_id, req.max_reads, req.max_read_length, cpp.READ, t.locking_prio)
     return rsi
 
 def assign_edf_locking_prios(all_tasks):

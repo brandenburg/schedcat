@@ -26,18 +26,21 @@ private:
 	unsigned int request_length;
 	const TaskInfo*    task;
 	request_type_t request_type;
+	unsigned int request_priority;
 
 public:
 	RequestBound(unsigned int res_id,
 		     unsigned int num,
 		     unsigned int length,
 		     const TaskInfo* tsk,
-		     request_type_t type = WRITE)
+		     request_type_t type = WRITE,
+		     unsigned int priority = 0)
 		: resource_id(res_id),
 		  num_requests(num),
 		  request_length(length),
 		  task(tsk),
-		  request_type(type)
+		  request_type(type),
+		  request_priority(priority)
 	{}
 
 	unsigned int get_max_num_requests(unsigned long interval) const;
@@ -47,6 +50,8 @@ public:
 	unsigned int get_request_length() const { return request_length; }
 
 	request_type_t get_request_type() const { return request_type; }
+
+	unsigned int get_request_priority() const { return request_priority; }
 
 	bool is_read() const { return get_request_type() == READ; }
 	bool is_write() const { return get_request_type() == WRITE; }
@@ -82,9 +87,10 @@ public:
 	void add_request(unsigned int res_id,
 			 unsigned int num,
 			 unsigned int length,
-			 request_type_t type = WRITE)
+			 request_type_t type = WRITE,
+			 unsigned int priority = 0)
 	{
-		requests.push_back(RequestBound(res_id, num, length, this, type));
+		requests.push_back(RequestBound(res_id, num, length, this, type, priority));
 	}
 
 	const Requests& get_requests() const
@@ -160,7 +166,8 @@ public:
 
 	void add_request(unsigned int resource_id,
 			 unsigned int max_num,
-			 unsigned int max_length)
+			 unsigned int max_length,
+			 unsigned int locking_priority = 0)
 	{
 		assert(!tasks.empty());
 
@@ -171,13 +178,14 @@ public:
 	void add_request_rw(unsigned int resource_id,
 			    unsigned int max_num,
 			    unsigned int max_length,
-			    int type)
+			    int type,
+			    unsigned int locking_priority = 0)
 	{
 		assert(!tasks.empty());
 		assert(type == WRITE || type == READ);
 
 		TaskInfo& last_added = tasks.back();
-		last_added.add_request(resource_id, max_num, max_length, (request_type_t) type);
+		last_added.add_request(resource_id, max_num, max_length, (request_type_t) type, locking_priority);
 	}
 
 };
