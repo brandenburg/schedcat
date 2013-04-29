@@ -2,12 +2,13 @@
 
 class ResourceRequirement(object):
     def __init__(self, res_id, num_writes=1, write_length=1,
-                 num_reads=0, read_length=0):
+                 num_reads=0, read_length=0, priority=0):
         self.res_id           = res_id
         self.max_writes       = num_writes
         self.max_reads        = num_reads
         self.max_write_length = write_length
         self.max_read_length  = read_length
+        self.priority         = priority
 
     @property
     def max_requests(self):
@@ -15,12 +16,20 @@ class ResourceRequirement(object):
         return self.max_writes + self.max_reads
 
     @property
+    def locking_priority(self):
+        return self.priority
+    
+    def set_locking_priority(self, new_locking_priority):
+        self.priority = new_locking_priority
+
+    @property
     def max_length(self):
         "Maximum request length (of any kind)."
         return max(self.max_write_length, self.max_read_length)
 
-    def add_request(self, length, read=False):
+    def add_request(self, length, read=False, priority=0):
         "Increase requirements."
+        self.priority = min(self.priority, priority)
         if read:
             self.max_reads += 1
             self.max_read_length = max(self.max_read_length, length)
