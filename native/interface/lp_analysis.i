@@ -8,6 +8,7 @@
 %newobject lp_dflp_bounds;
 %newobject lp_msrp_bounds;
 %newobject lp_prio_bounds;
+%newobject lp_unordered_bounds;
 
 %include "sharedres_types.i"
 
