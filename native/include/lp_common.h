@@ -154,6 +154,49 @@ void add_local_higher_priority_constraints_shm(
 	const TaskInfo& ti,
 	LinearProgram& lp);
 
+
+// common constraints and helper functions for spinlocks analysis
+void add_common_spinlock_constraints(
+		VarMapperSpinlocks& vars,
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		LinearProgram& lp);
+
+unsigned int count_local_hp_reqs(
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		unsigned int res_id);
+
+unsigned int count_requests_while_pending(
+		const ResourceSharingInfo& info,
+		unsigned long period,
+		unsigned int res_id,
+		unsigned int cluster);
+
+void set_spinlock_blocking_objective(
+		VarMapperSpinlocks& vars,
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		LinearProgram& lp);
+
+unsigned int get_min_prio(
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		unsigned int res_id,
+		bool LP);
+
+// used by both non-preemptive unordered prioritized mutex spinlocks and
+// prioritized FIFO mutex spinlocks
+void add_prio_blocking_LP_constraints(
+		VarMapperSpinlocks& vars,
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		LinearProgram& lp);
+
+std::set<unsigned int> get_all_resources(const ResourceSharingInfo& info);
+std::set<unsigned int> get_global_resources(const ResourceSharingInfo& info);
+std::set<unsigned int> get_local_resources(const ResourceSharingInfo& info);
+
 // A generic for loop that iterates 'request_index_variable' from 0 to the
 // maximum number of requests issued by task tx while ti is pending. 'tx_request'
 // should be of type RequestBound&.
