@@ -84,6 +84,21 @@ public:
 	}
 };
 
+// spinlock analysis: re-use indirect for arrival
+#define BLOCKING_ARRIVAL BLOCKING_INDIRECT
+
+class VarMapperSpinlocks : public VarMapper
+{
+public:
+	VarMapperSpinlocks(unsigned int start_var = 0)
+		: VarMapper(start_var) { }
+	// re-use preemption blocking for arrival blocking decision variables
+	unsigned int lookup_arrival_enabled(unsigned int res_id)
+	{
+		return lookup(0, res_id, 0, BLOCKING_PREEMPT);
+	}
+};
+
 void set_blocking_objective(
 	VarMapper& vars,
 	const ResourceSharingInfo& info, const ResourceLocality&,
