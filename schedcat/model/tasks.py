@@ -85,7 +85,7 @@ class TaskSystem(list):
         for i, t in enumerate(sorted(self, key=lambda t: t.period)):
             t.id = i + 1
 
-    def assign_ids_by_period(self):
+    def assign_ids_by_deadline(self):
         for i, t in enumerate(sorted(self, key=lambda t: t.deadline)):
             t.id = i + 1
 
