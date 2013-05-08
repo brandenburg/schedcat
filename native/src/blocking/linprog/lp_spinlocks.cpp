@@ -18,6 +18,24 @@ void set_msrp_blocking_objective(
 // \tbw
 
 
+// return the minimum locking priority of any request Ti issues for
+// resource res_id
+// Take care: assumes that Ti indeed accesses that resource, otherwise
+// always returns 0
+unsigned int get_min_prio(
+		const TaskInfo& ti,
+		unsigned int res_id)
+{
+	unsigned int min_prio = 0;
+	foreach(ti.get_requests(), request)
+	{
+		if (request->get_resource_id() == res_id)
+			min_prio = std::max(min_prio, request->get_request_priority());
+	}
+	return min_prio;
+}
+
+
 // determine the minimum locking priority of any local higher/lower-priority
 // task accessing the resource identified with res_id. If LP==true, local
 // lower-priority tasks are considered, and otherwise higher-priority tasks

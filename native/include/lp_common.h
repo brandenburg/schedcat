@@ -223,6 +223,22 @@ unsigned int max_preemptions(
 		const TaskInfo& ti,
 		unsigned long interval = 0);
 
+unsigned long get_LPlh(
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		unsigned int res_id,
+		unsigned int locking_prio,
+		unsigned long W,
+		std::set<unsigned int>& Qlh);
+
+unsigned int get_min_prio(
+		const TaskInfo& ti,
+		unsigned int res_id);
+
+unsigned int get_max_reqs(
+		const TaskInfo& ti,
+		unsigned int res_id);
+
 std::set<unsigned int> get_all_resources(const ResourceSharingInfo& info);
 std::set<unsigned int> get_global_resources(const ResourceSharingInfo& info);
 std::set<unsigned int> get_localHP_resources(const ResourceSharingInfo& info, const TaskInfo& ti);
