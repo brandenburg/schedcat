@@ -370,11 +370,10 @@ def apply_cpp_lp_preemptive_prio_fifo_bounds(all_tasks):
     res = lp_cpp.lp_prio_fifo_bounds(model, True)
     return res
 
-
-def apply_cpp_lp_baseline_bounds_single(all_tasks, task_index):
+def apply_cpp_lp_baseline_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    blocking_term = lp_cpp.lp_baseline_bounds_single(model, task_index)
-    return blocking_term
+    res = lp_cpp.lp_baseline_bounds(model)
+    return res
 
 def apply_dummy_bounds_single(all_tasks, task_index):
     return 0

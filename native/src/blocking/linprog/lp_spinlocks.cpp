@@ -551,3 +551,52 @@ void add_common_preemptive_spinlock_constraints(
 	add_common_preemptive_no_remote_arrival_blocking_constraints(vars, info, ti, lp);
 }
 
+unsigned long apply_baseline_bounds_for_task(
+	unsigned int i,
+	BlockingBounds& bounds,
+	const ResourceSharingInfo& info,
+	bool preemptive)
+{
+	LinearProgram lp;
+	VarMapperSpinlocks vars;
+	const TaskInfo& ti = info.get_tasks()[i];
+
+	add_common_spinlock_constraints(vars, info, ti, lp);
+
+	set_spinlock_blocking_objective(vars, info, ti, lp);
+	vars.seal();
+
+	Solution *sol = linprog_solve(lp, vars.get_num_vars());
+
+	assert(sol != NULL);
+	Interference total;
+	total.total_length = lrint(sol->evaluate(*lp.get_objective()));
+	bounds[i] = total;
+	delete sol;
+	return total.total_length;
+}
+
+unsigned long lp_baseline_bounds_single(
+		const ResourceSharingInfo& info,
+		unsigned int task_index)
+{
+	BlockingBounds* results = new BlockingBounds(info);
+
+	apply_baseline_bounds_for_task(task_index, *results, info, false);
+	unsigned long blocking_term = results->get_blocking_term(task_index);
+
+	delete results;
+	return blocking_term;
+}
+
+BlockingBounds* lp_baseline_bounds(const ResourceSharingInfo& info)
+{
+	BlockingBounds* results = new BlockingBounds(info);
+
+	for (unsigned int i=0; i<info.get_tasks().size(); i++)
+	{
+		apply_baseline_bounds_for_task(i, *results, info, false);
+	}
+
+	return results;
+}

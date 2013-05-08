@@ -13,6 +13,8 @@
 %newobject lp_prio_bounds;
 %newobject lp_prio_fifo_bounds;
 
+%newobject lp_baseline_bounds;
+
 %include "sharedres_types.i"
 
 %include "lp_analysis.h"
