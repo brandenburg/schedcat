@@ -69,6 +69,7 @@ private:
 	unsigned long response;
 	unsigned int  cluster;
 	unsigned int  id;
+	unsigned long cost;
 	Requests requests;
 
 public:
@@ -76,12 +77,15 @@ public:
 		 unsigned long _response,
 		 unsigned int _cluster,
 		 unsigned int _priority,
-		 int _id)
+		 int _id,
+		 unsigned long _cost = 0)
 		: priority(_priority),
 		  period(_period),
 		  response(_response),
 		  cluster(_cluster),
-		  id(_id)
+		  id(_id),
+		  cost(_cost)
+
 	{}
 
 	void add_request(unsigned int res_id,
@@ -103,6 +107,7 @@ public:
 	unsigned long get_period() const { return period; }
 	unsigned long get_response() const { return response; }
 	unsigned int  get_cluster() const { return cluster; }
+	unsigned long get_cost() const { return cost; }
 
 	unsigned int get_num_arrivals() const
 	{
@@ -156,12 +161,13 @@ public:
 	void add_task(unsigned long period,
 		      unsigned long response,
 		      unsigned int cluster  = 0,
-		      unsigned int priority = UINT_MAX)
+		      unsigned int priority = UINT_MAX,
+                      unsigned long cost = 0)
 	{
 		// Avoid re-allocation!
 		assert(tasks.size() < tasks.capacity());
 		int id = tasks.size();
-		tasks.push_back(TaskInfo(period, response, cluster, priority, id));
+		tasks.push_back(TaskInfo(period, response, cluster, priority, id, cost));
 	}
 
 	void add_request(unsigned int resource_id,

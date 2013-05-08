@@ -7,7 +7,8 @@ def get_cpp_model(all_tasks, use_task_period=False):
         rsi.add_task(t.period,
                      t.period if use_task_period else t.response_time,
                      t.partition,
-                     t.locking_prio)
+                     t.id,
+                     t.cost)
         for req in t.resmodel:
             req = t.resmodel[req]
             if req.max_requests > 0:
@@ -20,7 +21,8 @@ def get_cpp_model_rw(all_tasks, use_task_period=False):
         rsi.add_task(t.period,
                      t.period if use_task_period else t.response_time,
                      t.partition,
-                     t.locking_prio)
+                     t.id,
+                     t.cost)
         for req in t.resmodel:
             req = t.resmodel[req]
             if req.max_writes > 0:

@@ -1,4 +1,5 @@
 #include "lp_common.h"
+#include "math-helper.h"
 #include <set>
 #include <map>
 #include <cmath>
@@ -51,6 +52,43 @@ unsigned int get_min_prio(
 	return prio;
 }
 
+// Determine the maximum number of times any job of Ti can be preempted
+// by local higher-priority tasks. If the interval parameter is provided,
+// this function returns the number of times any job of Ti can be preempted
+// by local higher-priority tasks throughout that interval.
+unsigned int max_preemptions(
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		unsigned long interval)
+{
+	unsigned int preemptions = 0;
+	if (interval == 0)
+		interval = ti.get_response();
+	foreach(info.get_tasks(), task)
+	{
+		if (task->get_cluster() == ti.get_cluster() && task->get_priority() < ti.get_priority())
+			preemptions += divide_with_ceil(ti.get_response(), task->get_period());
+	}
+	return preemptions;
+}
+
+// Determine the maximum interference Ti can experience from local
+// higher-priority tasks during any interval of the length provided.
+unsigned long get_hp_interference(
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		const unsigned long interval)
+{
+	unsigned long interference = 0;
+
+	foreach(info.get_tasks(), task)
+	{
+		if (task->get_cluster() == ti.get_cluster() && task->get_priority() < ti.get_priority())
+			interference += divide_with_ceil(interval, task->get_period()) * task->get_cost();
+	}
+	return interference;
+}
+
 unsigned int count_requests_while_pending(
 		const ResourceSharingInfo& info,
 		unsigned long interval,
@@ -84,6 +122,23 @@ std::set<unsigned int> get_all_resources(const ResourceSharingInfo& info)
 	}
 	return all_resources;
 }
+
+
+// return all resources accessed by Ti and other local higher-priority tasks.
+std::set<unsigned int> get_localHP_resources(const ResourceSharingInfo& info, const TaskInfo& ti)
+{
+	std::set<unsigned int> Qlh;
+	foreach(info.get_tasks(), task)
+	{
+		if (task->get_cluster() != ti.get_cluster()
+			|| task->get_priority() > ti.get_priority())
+			continue;
+		foreach(task->get_requests(), request)
+			Qlh.insert(request->get_resource_id());
+	}
+	return Qlh;
+}
+
 
 std::set<unsigned int> get_global_resources(const ResourceSharingInfo& info)
 {
@@ -206,7 +261,7 @@ void add_common_conflict_set_constraints(
 		const TaskInfo& ti,  LinearProgram& lp)
 {
 	std::set<unsigned int> non_conflicting_resources;
-	std::set<unsigned int> local_resources = get_local_resources(info);
+	ResourceSet local_resources = get_local_resources(info);
 	PriorityCeilings ceilings = get_priority_ceilings(info);
 
 	foreach(local_resources, resource)
@@ -403,6 +458,42 @@ void add_common_atmostonce_local_arrival_constraints(
 }
 
 
+// Constraint 20: disallow remote arrival blocking.
+void add_common_preemptive_no_remote_arrival_blocking_constraints(
+		VarMapperSpinlocks& vars,
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,  LinearProgram& lp)
+{
+	std::set<unsigned int> all_resources = get_all_resources(info);
+
+	foreach(all_resources, resource)
+	{
+		foreach(info.get_tasks(), task)
+		{
+			LinearExpression *exp = new LinearExpression();
+			if ((*task).get_cluster() != ti.get_cluster())
+			{
+				foreach((*task).get_requests(), request)
+				{
+					if (request->get_resource_id() == *resource)
+					{
+						foreach_request_instance(*request, ti, v)
+						{
+							unsigned int var_id = vars.lookup((*task).get_id(), (*request).get_resource_id(), v, BLOCKING_ARRIVAL);
+							exp->add_var(var_id);
+						}
+					}
+				}
+			}
+			if (exp->has_terms())
+				lp.add_inequality(exp, 0);
+			else
+				delete exp;
+		}
+	}
+}
+
+
 void add_common_spinlock_constraints(
 		VarMapperSpinlocks& vars,
 		const ResourceSharingInfo& info,
@@ -430,3 +521,15 @@ void add_common_spinlock_constraints(
 	// Constraint 7
 	add_common_atmostonce_local_arrival_constraints(vars, info, ti, lp);
 }
+
+
+void add_common_preemptive_spinlock_constraints(
+		VarMapperSpinlocks& vars,
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		LinearProgram& lp)
+{
+	// Constraint XXX - no remote arrival blocking
+	add_common_preemptive_no_remote_arrival_blocking_constraints(vars, info, ti, lp);
+}
+

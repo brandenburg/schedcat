@@ -16,7 +16,8 @@ enum blocking_type
 {
 	BLOCKING_DIRECT,
 	BLOCKING_INDIRECT,
-	BLOCKING_PREEMPT
+	BLOCKING_PREEMPT,
+	BLOCKING_OTHER
 };
 
 // s-oblivious analysis reuses BLOCKING_DIRECT as a catch-all blocking type.
@@ -97,6 +98,11 @@ public:
 	{
 		return lookup(0, res_id, 0, BLOCKING_PREEMPT);
 	}
+
+	unsigned int lookup_max_preemptions(unsigned int res_id)
+	{
+		return lookup(0, res_id, 0, BLOCKING_OTHER);
+	}
 };
 
 void set_blocking_objective(
@@ -162,6 +168,12 @@ void add_common_spinlock_constraints(
 		const TaskInfo& ti,
 		LinearProgram& lp);
 
+void add_common_preemptive_spinlock_constraints(
+		VarMapperSpinlocks& vars,
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		LinearProgram& lp);
+
 unsigned int count_local_hp_reqs(
 		const ResourceSharingInfo& info,
 		const TaskInfo& ti,
@@ -185,6 +197,12 @@ unsigned int get_min_prio(
 		unsigned int res_id,
 		bool LP);
 
+unsigned long get_hp_interference(
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		const unsigned long interval);
+
+
 // used by both non-preemptive unordered prioritized mutex spinlocks and
 // prioritized FIFO mutex spinlocks
 void add_prio_blocking_LP_constraints(
@@ -193,9 +211,14 @@ void add_prio_blocking_LP_constraints(
 		const TaskInfo& ti,
 		LinearProgram& lp);
 
+unsigned int max_preemptions(
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		unsigned long interval = 0);
+
 std::set<unsigned int> get_all_resources(const ResourceSharingInfo& info);
 std::set<unsigned int> get_global_resources(const ResourceSharingInfo& info);
-std::set<unsigned int> get_local_resources(const ResourceSharingInfo& info);
+std::set<unsigned int> get_localHP_resources(const ResourceSharingInfo& info, const TaskInfo& ti);
 
 // A generic for loop that iterates 'request_index_variable' from 0 to the
 // maximum number of requests issued by task tx while ti is pending. 'tx_request'
