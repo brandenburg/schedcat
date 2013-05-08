@@ -7,12 +7,49 @@
 #include <climits>
 #include "cpu_time.h"
 
+// Constraint 21: Limit the number of preemptions that Ti can incur to
+// the number of releases of local higher-priority jobs while Ti's job
+// was pending.
+// Constraint 22: Force number of preemptions that can cause Ti to
+// re-request a resource to zero if Ti doesn't access it.
+void add_preemptive_fifo_max_preempt_constraints(
+		VarMapperSpinlocks & vars,
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
+		LinearProgram& lp)
+{
+	std::set<unsigned int> all_resources = get_all_resources(info);
+	LinearExpression *exp = new LinearExpression();
+	foreach(all_resources, resource)
+	{
+		unsigned int var_id;
+		var_id = vars.lookup_max_preemptions(*resource);
+		exp->add_var(var_id);
+		lp.declare_variable_integer(var_id);
+
+		unsigned int ncs = count_local_hp_reqs(info, ti, *resource);
+		if (ncs == 0)
+		{
+			LinearExpression *not_accessed_res = new LinearExpression();
+			not_accessed_res->add_var(var_id);
+			lp.add_inequality(not_accessed_res, 0); // Constraint 22
+		}
+	}
+	unsigned int max_preempt = max_preemptions(info, ti);
+	if (exp->has_terms()) // Constraint 21
+		lp.add_inequality(exp, max_preempt);
+	else
+		delete exp;
+}
+
 // Constraint 8: limit direct blocking for each resource per processor to the number
 // requests issued by Ti and higher-prio tasks on the same processor while Ti is pending.
 void add_msrp_max_direct_blocking_constraints(
 		VarMapperSpinlocks & vars,
 		const ResourceSharingInfo& info,
-		const TaskInfo& ti,  LinearProgram& lp)
+		const TaskInfo& ti,
+		LinearProgram& lp,
+		bool preemptive)
 {
 	Clusters clusters;
 	split_by_cluster(info, clusters);
@@ -43,9 +80,17 @@ void add_msrp_max_direct_blocking_constraints(
 				}
 			}
 			if (exp->has_terms())
+			{
+				if (preemptive)
+				{
+					unsigned int var_id = vars.lookup_max_preemptions(*resource);
+					exp->add_term(-1, var_id);
+				}
 				lp.add_inequality(exp, niql);
+			}
 			else
 				delete exp;
+
 		}
 	}
 }
@@ -97,6 +142,23 @@ void add_msrp_atmostonce_remote_arrival_constraints(
 	}
 }
 
+static void add_preemptive_fifo_constraints(
+	VarMapperSpinlocks& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp)
+{
+	add_common_spinlock_constraints(vars, info, ti, lp);
+
+	add_common_preemptive_spinlock_constraints(vars, info, ti, lp);
+
+	add_preemptive_fifo_max_preempt_constraints(vars, info, ti, lp);
+
+	// Constraint 23
+	 add_msrp_max_direct_blocking_constraints(vars, info, ti, lp, true);
+}
+
+
 static void add_msrp_constraints(
 	VarMapperSpinlocks& vars,
 	const ResourceSharingInfo& info,
@@ -106,7 +168,7 @@ static void add_msrp_constraints(
 	add_common_spinlock_constraints(vars, info, ti, lp);
 
 	// Constraint 8
-	 add_msrp_max_direct_blocking_constraints(vars, info, ti, lp);
+	 add_msrp_max_direct_blocking_constraints(vars, info, ti, lp, false);
 
 	// Constraint 9
 	 add_msrp_atmostonce_remote_arrival_constraints(vars, info, ti, lp);
@@ -115,7 +177,8 @@ static void add_msrp_constraints(
 unsigned long apply_msrp_bounds_for_task(
 	unsigned int i,
 	BlockingBounds& bounds,
-	const ResourceSharingInfo& info)
+	const ResourceSharingInfo& info,
+	bool preemptive)
 {
 #if DEBUG_LP_OVERHEADS >= 1
 	static DEFINE_CPU_CLOCK(build_model);
@@ -125,7 +188,11 @@ unsigned long apply_msrp_bounds_for_task(
 	VarMapperSpinlocks vars;
 	const TaskInfo& ti = info.get_tasks()[i];
 
-	add_msrp_constraints(vars, info, ti, lp);
+	if (preemptive)
+		add_preemptive_fifo_constraints(vars, info, ti, lp);
+	else
+		add_msrp_constraints(vars, info, ti, lp);
+
 	set_spinlock_blocking_objective(vars, info, ti, lp);
 	vars.seal();
 #if DEBUG_LP_OVERHEADS >= 1
@@ -158,6 +225,31 @@ unsigned long apply_msrp_bounds_for_task(
 
 }
 
+unsigned long lp_preemptive_fifo_bounds_single(
+		const ResourceSharingInfo& info,
+		unsigned int task_index)
+{
+	BlockingBounds* results = new BlockingBounds(info);
+	PriorityCeilings prio_ceilings = get_priority_ceilings(info);
+
+	apply_msrp_bounds_for_task(task_index, *results, info, true);
+	unsigned long blocking_term = results->get_blocking_term(task_index);
+
+	delete results;
+	return blocking_term;
+}
+
+BlockingBounds* lp_preemptive_fifo_bounds(const ResourceSharingInfo& info)
+{
+	BlockingBounds* results = new BlockingBounds(info);
+
+	for (unsigned int i=0; i<info.get_tasks().size(); i++)
+	{
+		apply_msrp_bounds_for_task(i, *results, info, true);
+	}
+	return results;
+}
+
 unsigned long lp_msrp_bounds_single(
 		const ResourceSharingInfo& info,
 		unsigned int task_index)
@@ -165,7 +257,7 @@ unsigned long lp_msrp_bounds_single(
 	BlockingBounds* results = new BlockingBounds(info);
 	PriorityCeilings prio_ceilings = get_priority_ceilings(info);
 
-	apply_msrp_bounds_for_task(task_index, *results, info);
+	apply_msrp_bounds_for_task(task_index, *results, info, false);
 	unsigned long blocking_term = results->get_blocking_term(task_index);
 
 	delete results;
@@ -184,7 +276,7 @@ BlockingBounds* lp_msrp_bounds(const ResourceSharingInfo& info)
 
 	for (unsigned int i=0; i<info.get_tasks().size(); i++)
 	{
-		apply_msrp_bounds_for_task(i, *results, info);
+		apply_msrp_bounds_for_task(i, *results, info, false);
 	}
 
 #if DEBUG_LP_OVERHEADS >= 1

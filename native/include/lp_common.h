@@ -209,6 +209,13 @@ void add_prio_blocking_LP_constraints(
 		VarMapperSpinlocks& vars,
 		const ResourceSharingInfo& info,
 		const TaskInfo& ti,
+		LinearProgram& lp,
+		bool preemptive);
+
+void add_preemptive_fifo_max_preempt_constraints(
+		VarMapperSpinlocks & vars,
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,
 		LinearProgram& lp);
 
 unsigned int max_preemptions(
