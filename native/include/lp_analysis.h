@@ -20,9 +20,14 @@ BlockingBounds* lp_omip_bounds(
 
 BlockingBounds* lp_msrp_bounds(const ResourceSharingInfo& info);
 
-unsigned long lp_msrp_bounds_single(const ResourceSharingInfo& info, unsigned int task_index);
-unsigned long lp_unordered_bounds_single(const ResourceSharingInfo& info, unsigned int task_index);
-unsigned long lp_prio_bounds_single(const ResourceSharingInfo& info, unsigned int task_index);
-unsigned long lp_prio_fifo_bounds_single(const ResourceSharingInfo& info, unsigned int task_index);
+BlockingBounds* lp_preemptive_fifo_bounds(const ResourceSharingInfo& info);
+
+unsigned long lp_baseline_bounds_single(const ResourceSharingInfo& info, unsigned int task_index);
+
+BlockingBounds* lp_unordered_bounds(const ResourceSharingInfo& info, bool preemptive = false);
+
+BlockingBounds* lp_prio_bounds(const ResourceSharingInfo& info, bool preemptive = false);
+
+BlockingBounds* lp_prio_fifo_bounds(const ResourceSharingInfo& info, bool preemptive = false);
 
 #endif /* LP_ANALYSYS_H_ */

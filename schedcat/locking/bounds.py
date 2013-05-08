@@ -313,33 +313,74 @@ def apply_msrp_bounds(all_tasks, num_cpus):
         t.cost      += res.get_remote_blocking(i)
         t.remote_blocking = res.get_remote_blocking(i)
 
-def apply_msrp_bounds_holistic(all_tasks, num_cpus):
-    model = get_cpp_model(all_tasks, True)
-    res = cpp.msrp_bounds_holistic(model)
-    apply_suspension_oblivious(all_tasks, res)
+# remove!
+# def apply_msrp_bounds_holistic(all_tasks, num_cpus):
+#     model = get_cpp_model(all_tasks, True)
+#     res = cpp.msrp_bounds_holistic(model)
+#     apply_suspension_oblivious(all_tasks, res)
  
 def apply_cpp_lp_msrp_bounds_single(all_tasks, task_index):
     model = get_cpp_model(all_tasks)
     blocking_term = lp_cpp.lp_msrp_bounds_single(model, task_index)
     return blocking_term
 
+def apply_cpp_lp_preemptive_fifo_bounds_single(all_tasks, task_index):
+    model = get_cpp_model(all_tasks)
+    blocking_term = lp_cpp.lp_preemptive_fifo_bounds_single(model, task_index)
+    return blocking_term
+
+def apply_cpp_lp_preemptive_fifo_bounds(all_tasks):
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_preemptive_fifo_bounds(model)
+    return res
+
 def apply_cpp_lp_msrp_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
     res = lp_cpp.lp_msrp_bounds(model)
     return res
     
-def apply_cpp_lp_unordered_bounds_single(all_tasks, task_index):
+def apply_cpp_lp_unordered_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    blocking_term = lp_cpp.lp_unordered_bounds_single(model, task_index)
-    return blocking_term
+    res = lp_cpp.lp_unordered_bounds(model, False)
+    return res
+
+def apply_cpp_lp_preemptive_unordered_bounds(all_tasks):
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_unordered_bounds(model, True)
+    return res
     
-def apply_cpp_lp_prio_bounds_single(all_tasks, task_index):
+def apply_cpp_lp_prio_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    blocking_term = lp_cpp.lp_prio_bounds_single(model, task_index)
+    res = lp_cpp.lp_prio_bounds(model, False)
+    return res
+
+def apply_cpp_lp_preemptive_prio_bounds(all_tasks):
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_prio_bounds(model, True)
+    return res
+
+
+def apply_cpp_lp_prio_fifo_bounds(all_tasks):
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_prio_fifo_bounds(model, False)
+    return res
+
+def apply_cpp_lp_preemptive_prio_fifo_bounds(all_tasks):
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_prio_fifo_bounds(model, True)
+    return res
+
+
+def apply_cpp_lp_baseline_bounds_single(all_tasks, task_index):
+    model = get_cpp_model(all_tasks)
+    blocking_term = lp_cpp.lp_baseline_bounds_single(model, task_index)
     return blocking_term
 
-def apply_cpp_lp_prio_fifo_bounds_single(all_tasks, task_index):
-    model = get_cpp_model(all_tasks)
-    blocking_term = lp_cpp.lp_prio_fifo_bounds_single(model, task_index)
-    return blocking_term
+def apply_dummy_bounds_single(all_tasks, task_index):
+    return 0
 
+def apply_omip_bounds(all_tasks, num_cpus, procs_per_cluster):
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_omip_bounds(model, num_cpus, procs_per_cluster)
+    apply_suspension_oblivious(all_tasks, res)
+    return res
