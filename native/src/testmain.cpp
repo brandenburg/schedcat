@@ -930,6 +930,20 @@ int main(int argc, char** argv)
 
 	delete results;
 
+	results = msrp_bounds(rsi, 5);
+
+	cout << endl << endl  << "MSRP (old)" << endl;
+	for (i = 0; i < results->size(); i++)
+		cout << "T" << i
+		     << " y=" << rsi.get_tasks()[i].get_priority()
+		     << " c=" << rsi.get_tasks()[i].get_cluster()
+		     << ": total=" << (*results)[i].total_length
+		     << "  remote=" << results->get_remote_blocking(i)
+		     << "  local=" << results->get_local_blocking(i)
+		     << endl;
+
+	delete results;
+
 
 #if defined(CONFIG_HAVE_CPLEX) || defined(CONFIG_HAVE_GLPK)
 
@@ -974,6 +988,22 @@ int main(int argc, char** argv)
 		     << endl;
 
 	delete results;
+
+
+	results = lp_msrp_bounds(rsi);
+
+	cout << endl << endl  << "MSRP (LP)" << endl;
+	for (i = 0; i < results->size(); i++)
+		cout << "T" << i
+		     << " y=" << rsi.get_tasks()[i].get_priority()
+		     << " c=" << rsi.get_tasks()[i].get_cluster()
+		     << ": total=" << (*results)[i].total_length
+		     << "  remote=" << results->get_remote_blocking(i)
+		     << "  local=" << results->get_local_blocking(i)
+		     << endl;
+
+	delete results;
+
 
 	bool check_for_memory_leaks = true;
 
