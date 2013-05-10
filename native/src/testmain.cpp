@@ -1005,6 +1005,20 @@ int main(int argc, char** argv)
 	delete results;
 
 
+	results = lp_preemptive_fifo_bounds(rsi);
+
+	cout << endl << endl  << "Preemptive MSRP (LP)" << endl;
+	for (i = 0; i < results->size(); i++)
+		cout << "T" << i
+		     << " y=" << rsi.get_tasks()[i].get_priority()
+		     << " c=" << rsi.get_tasks()[i].get_cluster()
+		     << ": total=" << (*results)[i].total_length
+		     << "  remote=" << results->get_remote_blocking(i)
+		     << "  local=" << results->get_local_blocking(i)
+		     << endl;
+
+	delete results;
+
 	bool check_for_memory_leaks = true;
 
 	// Run the LP code in a loop to see if memory footprint increases
