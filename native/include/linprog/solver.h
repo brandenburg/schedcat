@@ -24,10 +24,10 @@ public:
 	}
 };
 
-#if defined(CONFIG_HAVE_CPLEX)
-#include "linprog/cplex.h"
-#elif defined(CONFIG_HAVE_GLPK)
+#if defined(CONFIG_HAVE_GLPK)
 #include "linprog/glpk.h"
+#elif defined(CONFIG_HAVE_CPLEX)
+#include "linprog/cplex.h"
 #else
 #warning No LP solver available.
 #endif
@@ -38,10 +38,10 @@ static inline Solution *linprog_solve(
 	unsigned int max_num_vars)
 {
 
-#if defined(CONFIG_HAVE_CPLEX)
-	return cpx_solve(lp, max_num_vars);
-#elif defined(CONFIG_HAVE_GLPK)
+#if defined(CONFIG_HAVE_GLPK)
 	return glpk_solve(lp, max_num_vars);
+#elif defined(CONFIG_HAVE_CPLEX)
+	return cpx_solve(lp, max_num_vars);
 #else
 	assert(0);
 	return NULL;
