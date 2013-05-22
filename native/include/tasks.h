@@ -69,7 +69,7 @@ class Task
 
     void bound_demand(const integral_t &time, integral_t &demand) const
     {
-        if (time <= deadline)
+        if (time < deadline)
             demand = 0;
         else
         {
