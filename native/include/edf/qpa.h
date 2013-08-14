@@ -3,9 +3,6 @@
 
 class QPATest : public SchedulabilityTest
 {
- private:
-    unsigned int m;
-
  public:
     QPATest(unsigned int num_processors);
 
