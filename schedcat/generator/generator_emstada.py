@@ -54,6 +54,7 @@ NAMED_PERIODS = {
                     'uni-short'     : (3, 33),
                     'uni-moderate'  : (10, 100),
                     'uni-long'      : (50, 250),
+                    'uni-broad'     : (1, 1000),
                 }
 
 NAMED_PERIOD_DISTRIBUTIONS = [
