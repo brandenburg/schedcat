@@ -102,6 +102,9 @@ ResourceSharingInfo extract_local_resources(
 ResourceSharingInfo extract_global_resources(
 	const ResourceSharingInfo& info,
 	const ResourceSet& locals);
+
+BlockingBounds pcp_blocking(const ResourceSharingInfo& info);
+
 extern const unsigned int UNLIMITED;
 
 #endif

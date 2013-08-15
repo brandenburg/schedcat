@@ -18,6 +18,10 @@ BlockingBounds* phase_fair_rw_bounds(const ResourceSharingInfo& info,
 				     unsigned int procs_per_cluster,
 				     int dedicated_irq = NO_CPU);
 
+BlockingBounds* msrp_bounds_holistic(
+	const ResourceSharingInfo& info,
+	int dedicated_irq = NO_CPU);
+
 // s-oblivious protocols
 
 BlockingBounds* global_omlp_bounds(const ResourceSharingInfo& info,

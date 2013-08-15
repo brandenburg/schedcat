@@ -240,6 +240,7 @@ struct Interference
 	unsigned long total_length;
 
 	Interference() : count(0), total_length(0) {}
+	Interference(unsigned int length) : count(1), total_length(length) {}
 
 	Interference& operator+=(const Interference& other)
 	{
@@ -309,6 +310,12 @@ public:
 	{
 		assert( idx < size() );
 		return request_span[idx];
+	}
+
+	void raise_blocking_length(unsigned idx, const Interference& val)
+	{
+		assert( idx < size() );
+		blocking[idx] = std::max(blocking[idx], val);
 	}
 
 	size_t size() const

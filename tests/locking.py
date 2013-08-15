@@ -204,6 +204,52 @@ class Test_bounds(unittest.TestCase):
         self.assertEqual(7 + 7 + 77, res.get_arrival_blocking(4))
         self.assertEqual(0, res.get_arrival_blocking(5))
 
+
+    def test_arrival_blocking_msrp(self):
+        res = cpp.msrp_bounds_holistic(self.rsi1)
+        self.assertEqual(6 + 7 + 7, res.get_arrival_blocking(0))
+        self.assertEqual(5 + 7 + 7, res.get_arrival_blocking(1))
+        self.assertEqual(0, res.get_arrival_blocking(2))
+        self.assertEqual(0, res.get_arrival_blocking(3))
+        self.assertEqual(7 + 7 + 77, res.get_arrival_blocking(4))
+        self.assertEqual(0, res.get_arrival_blocking(5))
+
+    def test_local_resources_msrp(self):
+        self.rsi1.add_request(99, 100, 123456)
+        res = cpp.msrp_bounds_holistic(self.rsi1)
+        self.assertEqual(7 + 7 + 77, res.get_arrival_blocking(4))
+
+    def test_local_resources_msrp2(self):
+        self.rsi1 = cpp.ResourceSharingInfo(7)
+
+        self.rsi1.add_task(100, 100, 0, 0)
+        self.rsi1.add_request(0, 1, 77)
+
+        self.rsi1.add_task(50, 50, 0, 1)
+        self.rsi1.add_request(0, 1, 6)
+
+        self.rsi1.add_task(10, 10, 0, 2)
+        self.rsi1.add_request(0, 1, 5)
+
+        self.rsi1.add_task(10, 10, 1, 3)
+        self.rsi1.add_request(0, 1, 7)
+
+        self.rsi1.add_task(20, 20, 2, 4)
+        self.rsi1.add_request(0, 4, 1)
+
+        self.rsi1.add_task(30, 30, 2, 5)
+        self.rsi1.add_request(0, 1, 7)
+        self.rsi1.add_request(99, 1, 1)
+
+        self.rsi1.add_task(100, 100, 2, 6)
+        self.rsi1.add_request(99, 100, 123456)
+        res = cpp.msrp_bounds_holistic(self.rsi1)
+        self.assertEqual(7 + 7 + 77, res.get_arrival_blocking(4))
+        self.assertEqual(123456, res.get_arrival_blocking(5))
+        self.assertEqual(123456 + 7 + 77, res.get_blocking_term(5))
+        self.assertEqual(0, res.get_blocking_term(6))
+        self.assertEqual(0, res.get_arrival_blocking(6))
+
     def test_arrival_blocking_pf(self):
         c = 1
 

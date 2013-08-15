@@ -7,6 +7,7 @@
 %newobject task_fair_mutex_bounds;
 %newobject task_fair_rw_bounds;
 %newobject phase_fair_rw_bounds;
+%newobject msrp_bounds_holistic;
 
 %newobject global_omlp_bounds;
 %newobject global_fmlp_bounds;
