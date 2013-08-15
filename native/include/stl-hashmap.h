@@ -3,9 +3,12 @@
 
 #ifdef CONFIG_USE_0X
 #include <unordered_map>
+#include <unordered_set>
 #define hashmap std::unordered_map
+#define hashset std::unordered_set
 #else
 #include <ext/hash_map>
+#include <ext/hash_set>
 
 namespace __gnu_cxx
 {
@@ -30,6 +33,7 @@ struct hash<unsigned long long int>
 };
 
 #define hashmap __gnu_cxx::hash_map
+#define hashset __gnu_cxx::hash_set
 #endif
 
 #endif
