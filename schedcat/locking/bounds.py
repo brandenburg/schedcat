@@ -311,3 +311,8 @@ def apply_msrp_bounds(all_tasks, num_cpus):
         t.cost      += res.get_remote_blocking(i)
         t.remote_blocking = res.get_remote_blocking(i)
 
+def apply_msrp_bounds_holistic(all_tasks, num_cpus):
+    model = get_cpp_model(all_tasks, True)
+    res = cpp.msrp_bounds_holistic(model)
+    apply_suspension_oblivious(all_tasks, res)
+ 
