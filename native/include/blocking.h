@@ -1,6 +1,8 @@
 #ifndef BLOCKING_H
 #define BLOCKING_H
 
+#include "stl-hashmap.h"
+
 typedef std::vector<const RequestBound*> ContentionSet;
 typedef std::vector<ContentionSet> Resources;
 typedef std::vector<Resources> ClusterResources;
@@ -89,6 +91,17 @@ void determine_priority_ceilings(const Resources& resources,
 
 PriorityCeilings get_priority_ceilings(const ResourceSharingInfo& info);
 
+typedef hashset<unsigned int> ResourceSet;
+
+ResourceSet get_local_resources(const ResourceSharingInfo& info);
+
+ResourceSharingInfo extract_local_resources(
+	const ResourceSharingInfo& info,
+	const ResourceSet& locals);
+
+ResourceSharingInfo extract_global_resources(
+	const ResourceSharingInfo& info,
+	const ResourceSet& locals);
 extern const unsigned int UNLIMITED;
 
 #endif

@@ -11,6 +11,7 @@
 #include "math-helper.h"
 
 #include "stl-helper.h"
+#include "stl-hashmap.h"
 
 #include "blocking.h"
 
@@ -254,6 +255,83 @@ PriorityCeilings get_priority_ceilings(const ResourceSharingInfo& info)
 	determine_priority_ceilings(resources, ceilings);
 
 	return ceilings;
+}
+
+ResourceSet get_local_resources(const ResourceSharingInfo& info)
+{
+	ResourceSet locals;
+	hashmap<unsigned int, unsigned int> accessed_in;
+
+	foreach(info.get_tasks(), tsk)
+	{
+		foreach(tsk->get_requests(), req)
+		{
+			unsigned int res = req->get_resource_id();
+			if (accessed_in.find(res) == accessed_in.end())
+			{
+				// resource not yet encountered
+				accessed_in[res] = tsk->get_cluster();
+				// assume res is local until proven otherwise
+				locals.insert(res);
+			}
+			else if (accessed_in[res] != tsk->get_cluster())
+			{
+				// resource previously encountered and
+				// accessed from at least two different clusters
+				// => not local, remove res from set of locals
+				locals.erase(res);
+			}
+		}
+	}
+
+	return locals;
+}
+
+static ResourceSharingInfo extract_resources(
+	const ResourceSharingInfo& info,
+	const ResourceSet& locals,
+	const bool want_local)
+{
+	ResourceSharingInfo rsi(info.get_tasks().size());
+
+	foreach(info.get_tasks(), tsk)
+	{
+		// copy task
+		rsi.add_task(
+			tsk->get_period(),
+		        tsk->get_response(),
+		        tsk->get_cluster(),
+		        tsk->get_priority());
+
+		foreach(tsk->get_requests(), req)
+		{
+			unsigned int res = req->get_resource_id();
+			if ((locals.find(res) != locals.end() && want_local) ||
+			    (locals.find(res) == locals.end() && !want_local))
+			{
+				rsi.add_request(
+					res,
+					req->get_num_requests(),
+					req->get_request_length());
+			}
+		}
+	}
+
+	return rsi;
+}
+
+ResourceSharingInfo extract_local_resources(
+	const ResourceSharingInfo& info,
+	const ResourceSet& locals)
+{
+	return extract_resources(info, locals, true);
+}
+
+ResourceSharingInfo extract_global_resources(
+	const ResourceSharingInfo& info,
+	const ResourceSet& locals)
+{
+	return extract_resources(info, locals, false);
 }
 
 typedef std::vector<TaskContention> ClusterContention;
