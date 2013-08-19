@@ -197,7 +197,22 @@ def apply_phase_fair_rw_bounds(all_tasks, procs_per_cluster,
     apply_suspension_oblivious(all_tasks, res)
     return res
 
+### spin lock analysis that assumes s-aware schedulability tests
+#   (=> FP response-time analysis in schedcat.sched.fp.rta)
 
+def apply_msrp_bounds_holistic(all_tasks, dedicated_irq=cpp.NO_CPU):
+    model = get_cpp_model(all_tasks)
+    res = cpp.msrp_bounds_holistic(model, dedicated_irq)
+
+    for i, t in enumerate(all_tasks):
+        # spin locks => no self-suspension (local blocking is not a self-suspension)
+        t.suspended = 0
+        # account for local arrival blocking (either local resources or NP section)
+        t.blocked   = res.get_arrival_blocking(i)
+        # charge only spinning (NOT arrival blocking) as execution time inflation
+        t.cost     += res.get_remote_blocking(i)
+
+    return res
 
 ### S-aware LP-based analysis of distributed locking protocols
 
