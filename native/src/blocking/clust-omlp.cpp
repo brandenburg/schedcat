@@ -66,6 +66,7 @@ BlockingBounds* clustered_omlp_bounds(const ResourceSharingInfo& info,
 		}
 
 		results[i] = bterm;
+		results.set_remote_blocking(i, bterm);
 	}
 
 	// This is the initial delay due to priority donation.

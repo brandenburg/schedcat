@@ -245,8 +245,10 @@ class Test_bounds(unittest.TestCase):
         self.rsi1.add_request(99, 100, 123456)
         res = cpp.msrp_bounds_holistic(self.rsi1)
         self.assertEqual(7 + 7 + 77, res.get_arrival_blocking(4))
+        self.assertEqual(3 * 7 + 2 * 77 + 2 * 6, res.get_remote_blocking(4))
         self.assertEqual(123456, res.get_arrival_blocking(5))
         self.assertEqual(123456 + 7 + 77, res.get_blocking_term(5))
+        self.assertEqual(7 + 77, res.get_remote_blocking(5))
         self.assertEqual(0, res.get_blocking_term(6))
         self.assertEqual(0, res.get_arrival_blocking(6))
 
