@@ -16,8 +16,8 @@ public:
 		double sum = 0;
 		foreach(exp.get_terms(), term)
 		{
-			double coeff = term->first;
-			double var   = term->second;
+			double coeff     = term->first;
+			unsigned int var = term->second;
 			sum += coeff * get_value(var);
 		}
 		return sum;
