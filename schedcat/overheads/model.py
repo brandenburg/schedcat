@@ -39,12 +39,19 @@ class Overheads(object):
         return " ".join(["%s: %s" % (name, self.__dict__[field])
                          for (name, field) in Overheads.FIELD_MAPPING])
 
-    def load_approximations(self, fname, non_decreasing=True):
+    def load_approximations(self, fname, non_decreasing=True, extra_fields=None):
+        if extra_fields is None:
+            extra_fields = []
+
         data = load_column_csv(fname, convert=float)
         if not 'TASK-COUNT' in data.by_name:
             raise IOError, "TASK-COUNT column is missing"
 
-        for (name, field) in Overheads.FIELD_MAPPING:
+        # initialize custom fields, if any
+        for (name, field) in extra_fields:
+            self.__dict__[field] = const(0)
+
+        for (name, field) in Overheads.FIELD_MAPPING + extra_fields:
             if name in data.by_name:
                 points = zip(data.by_name['TASK-COUNT'], data.by_name[name])
                 if non_decreasing:
@@ -53,10 +60,10 @@ class Overheads(object):
                     self.__dict__[field] = piece_wise_linear(points)
 
     @staticmethod
-    def from_file(fname, non_decreasing=True):
+    def from_file(fname, non_decreasing=True, custom_fields=None):
         o = Overheads()
         o.source = fname
-        o.load_approximations(fname, non_decreasing)
+        o.load_approximations(fname, non_decreasing, custom_fields)
         return o
 
 class CacheDelay(object):
