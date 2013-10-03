@@ -1,6 +1,6 @@
 from __future__ import division
 
-from math import trunc
+from math import trunc, exp, log
 
 import random
 
@@ -16,6 +16,22 @@ def uniform(minval, maxval):
     "Create a function that draws floats uniformly from [minval, maxval]"
     def _draw():
         return random.uniform(minval, maxval)
+    return _draw
+
+def log_uniform(minval, maxval):
+    "Create a function that draws floats log-uniformly from [minval, maxval]"
+    def _draw():
+        return exp(random.uniform(log(minval), log(maxval))) 
+    return _draw
+
+def log_uniform_int(minval, maxval):
+    "Create a function that draws ints log-uniformly from {minval, ..., maxval}"
+    draw_float = log_uniform(minval, maxval + 1)
+    def _draw():
+        val = int(draw_float())
+        val = max(minval, val)
+        val = min(maxval, val)
+        return val
     return _draw
 
 def uniform_choice(choices):

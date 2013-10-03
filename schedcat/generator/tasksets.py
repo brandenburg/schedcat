@@ -21,6 +21,10 @@ NAMED_PERIODS = {
     'uni-short'     : gen.uniform_int( 3,  33),
     'uni-moderate'  : gen.uniform_int(10, 100),
     'uni-long'      : gen.uniform_int(50, 250),
+
+    'log-uni-short'     : gen.log_uniform_int( 3,  33),
+    'log-uni-moderate'  : gen.log_uniform_int(10, 100),
+    'log-uni-long'      : gen.log_uniform_int(50, 250),
     }
 
 NAMED_UTILIZATIONS = {
