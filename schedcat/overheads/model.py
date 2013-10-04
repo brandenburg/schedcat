@@ -39,31 +39,34 @@ class Overheads(object):
         return " ".join(["%s: %s" % (name, self.__dict__[field])
                          for (name, field) in Overheads.FIELD_MAPPING])
 
-    def load_approximations(self, fname, non_decreasing=True, extra_fields=None):
-        if extra_fields is None:
-            extra_fields = []
+    def load_approximations(self, fname, non_decreasing=True, custom_fields=None,
+                            per_cpu_task_counts=False, num_cpus=None):
+        if custom_fields is None:
+            custom_fields = []
 
         data = load_column_csv(fname, convert=float)
         if not 'TASK-COUNT' in data.by_name:
             raise IOError, "TASK-COUNT column is missing"
 
         # initialize custom fields, if any
-        for (name, field) in extra_fields:
+        for (name, field) in custom_fields:
             self.__dict__[field] = const(0)
 
-        for (name, field) in Overheads.FIELD_MAPPING + extra_fields:
+        for (name, field) in Overheads.FIELD_MAPPING + custom_fields:
             if name in data.by_name:
                 points = zip(data.by_name['TASK-COUNT'], data.by_name[name])
+                if per_cpu_task_counts:
+                    points = [(num_cpus * x, y) for (x, y) in points]
                 if non_decreasing:
                     self.__dict__[field] = monotonic_pwlin(points)
                 else:
                     self.__dict__[field] = piece_wise_linear(points)
 
     @staticmethod
-    def from_file(fname, non_decreasing=True, custom_fields=None):
+    def from_file(fname, *args, **kargs):
         o = Overheads()
         o.source = fname
-        o.load_approximations(fname, non_decreasing, custom_fields)
+        o.load_approximations(fname, *args, **kargs)
         return o
 
 class CacheDelay(object):
