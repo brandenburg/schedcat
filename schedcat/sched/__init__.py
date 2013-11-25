@@ -10,8 +10,8 @@ try:
     def get_native_taskset(tasks):
         ts = TaskSet()
         for t in tasks:
-            if (hasattr(t, 'pp')):
-                ts.add_task(t.cost, t.period, t.deadline, t.pp)
+            if (hasattr(t, 'prio_pt')):
+                ts.add_task(t.cost, t.period, t.deadline, t.prio_pt)
             else:
                 ts.add_task(t.cost, t.period, t.deadline)
         return ts

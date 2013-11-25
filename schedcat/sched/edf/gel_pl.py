@@ -40,7 +40,8 @@ def compute_gfl_response_details(no_cpus, tasks, rounds):
        using "0" results in using the exact algorithm.
     """
     for task in tasks:
-        task.pp = task.deadline - int((no_cpus - 1) / (no_cpus) * task.cost)
+        task.prio_pt = task.deadline - \
+                int((no_cpus - 1) / (no_cpus) * task.cost)
     return compute_response_details(no_cpus, tasks, rounds)
 
 def compute_gedf_response_details(no_cpus, tasks, rounds):
@@ -49,11 +50,11 @@ def compute_gedf_response_details(no_cpus, tasks, rounds):
        using "0" results in using the exact algorithm.
     """
     for task in tasks:
-        task.pp = task.deadline
+        task.prio_pt = task.deadline
     return compute_response_details(no_cpus, tasks, rounds)
 
 def compute_response_details(no_cpus, tasks, rounds):
-    if (no_cpus == 1) and forall(tasks)(lambda t: t.pp == t.period):
+    if (no_cpus == 1) and forall(tasks)(lambda t: t.prio_pt == t.period):
         details = AnalysisDetails(tasks)
         details.bounds = [task.period for task in tasks]
         details.S_i = [0.0 for task in tasks]
@@ -80,7 +81,7 @@ def compute_response_bounds(no_cpus, tasks, rounds):
     # First uniformly reduce scheduler priority points to derive analysis
     # priority points.  Due to uniform reduction, does not change scheduling
     # decisions.  Shown in EA'12 to improve bounds.
-    sched_pps = [task.pp for task in tasks]
+    sched_pps = [task.prio_pt for task in tasks]
     min_priority_point = min(sched_pps)
     analysis_pps = [sched_pps[i] - min_priority_point
                     for i in range(len(sched_pps))]
