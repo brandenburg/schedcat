@@ -8,10 +8,11 @@ def charge_spinlock_overheads(oheads, tasks):
     if oheads is None or not tasks:
         return tasks
 
+    ntasks = len(tasks)
     # the individual charges
-    rcost  = oheads.read_lock(tasks) + oheads.read_unlock(tasks)
-    wcost  = oheads.lock(tasks) + oheads.unlock(tasks)
-    scost = oheads.syscall_in(tasks) + oheads.syscall_out(tasks)
+    rcost  = oheads.read_lock(ntasks) + oheads.read_unlock(ntasks)
+    wcost  = oheads.lock(ntasks) + oheads.unlock(ntasks)
+    scost = oheads.syscall_in(ntasks) + oheads.syscall_out(ntasks)
 
     # inflate each request and each task's exec cost
     for t in tasks:
@@ -40,13 +41,14 @@ def charge_semaphore_overheads(oheads, preemptive, suspension_aware, tasks):
     if oheads is None or not tasks:
         return tasks
 
-    lock   = oheads.lock(tasks)
-    unlock = oheads.unlock(tasks)
-    sysin  = oheads.syscall_in(tasks)
-    sysout = oheads.syscall_out(tasks)
-    sched  = oheads.schedule(tasks) + oheads.ctx_switch(tasks)
-    cpmd   = oheads.cache_affinity_loss(tasks)
-    ipi    = oheads.ipi_latency(tasks)
+    ntasks = len(tasks)
+    lock   = oheads.lock(ntasks)
+    unlock = oheads.unlock(ntasks)
+    sysin  = oheads.syscall_in(ntasks)
+    sysout = oheads.syscall_out(ntasks)
+    sched  = oheads.schedule(ntasks) + oheads.ctx_switch(ntasks)
+    cpmd   = oheads.cache_affinity_loss(ntasks)
+    ipi    = oheads.ipi_latency(ntasks)
 
     # per-request execution cost increase (equ 7.3)
     # 3 sched: wait + resume + yield
@@ -106,13 +108,14 @@ def charge_dpcp_overheads(oheads, tasks):
     if oheads is None or not tasks:
         return tasks
 
-    lock   = oheads.lock(tasks)
-    unlock = oheads.unlock(tasks)
-    sysin  = oheads.syscall_in(tasks)
-    sysout = oheads.syscall_out(tasks)
-    sched  = oheads.schedule(tasks) + oheads.ctx_switch(tasks)
-    cpmd   = oheads.cache_affinity_loss(tasks)
-    ipi    = oheads.ipi_latency(tasks)
+    ntasks = len(tasks)
+    lock   = oheads.lock(ntasks)
+    unlock = oheads.unlock(ntasks)
+    sysin  = oheads.syscall_in(ntasks)
+    sysout = oheads.syscall_out(ntasks)
+    sched  = oheads.schedule(ntasks) + oheads.ctx_switch(ntasks)
+    cpmd   = oheads.cache_affinity_loss(ntasks)
+    ipi    = oheads.ipi_latency(ntasks)
 
 
     exec_increase = sysin + sysout + 2 * sched + 2 * cpmd
