@@ -37,6 +37,15 @@ def assign_edf_locking_prios(all_tasks):
     for t in all_tasks:
         t.locking_prio = prio[int(t.deadline)]
 
+def assign_prio_pt_locking_prios(all_tasks):
+    all_prio_pts = set([t.prio_pt for t in all_tasks])
+    prio = {}
+    for i, pp in enumerate(sorted(all_prio_pts)):
+        prio[int(pp)] = i
+
+    for t in all_tasks:
+        t.locking_prio = prio[int(t.prio_pt)]
+
 def assign_fp_locking_prios(all_tasks):
     # prioritized in index order
     for i, t in enumerate(all_tasks):
