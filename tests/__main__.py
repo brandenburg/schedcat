@@ -13,6 +13,7 @@ import tests.binpack
 import tests.locking
 import tests.sim
 import tests.overheads
+import tests.example_end_to_end
 
 suite = unittest.TestSuite(
     [unittest.defaultTestLoader.loadTestsFromModule(x) for x in
@@ -26,7 +27,8 @@ suite = unittest.TestSuite(
       tests.binpack,
       tests.locking,
       tests.sim,
-      tests.overheads]
+      tests.overheads,
+      tests.example_end_to_end]
     ])
 
 def run_all_tests():
