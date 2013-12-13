@@ -1023,6 +1023,8 @@ int main(int argc, char** argv)
 
 	// Run the LP code in a loop to see if memory footprint increases
 	// significantly.
+	cout << endl << endl << "Running LP code in a loop to test for memory "
+	     << "leaks." << endl << "Press CTRL+C to exit..." << endl;
 	while (check_for_memory_leaks) {
 		results = lp_dflp_bounds(rsi, loc);
 		delete results;
