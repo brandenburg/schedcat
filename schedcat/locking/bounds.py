@@ -306,6 +306,30 @@ def apply_lp_part_fmlp_bounds(all_tasks):
 
     return res
 
+def apply_generalized_fmlp_bounds(all_tasks, cluster_size, using_edf):
+    # LP-based analysis of the generalized FMLP+
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_gfmlp_bounds(model, cluster_size, using_edf)
+
+    if cluster_size == 1:
+        # partitioned scheduling: charge uniproc-analysis compatible blocking
+        for i,t in enumerate(all_tasks):
+            # remote blocking <=> self-suspension time
+            t.suspended = res.get_remote_blocking(i)
+            # all blocking, including local blocking
+            t.blocked   = res.get_blocking_term(i)
+            t.locally_blocked = res.get_local_blocking(i)
+    else:
+        # global analysis => no special treatment of local blocking
+        for i,t in enumerate(all_tasks):
+            # remote blocking <=> self-suspension time
+            t.suspended = res.get_blocking_term(i)
+            # all blocking
+            t.blocked   = res.get_blocking_term(i)
+
+    return res
+
+
 def apply_omip_bounds(all_tasks, num_cpus, procs_per_cluster):
     model = get_cpp_model(all_tasks)
     res = lp_cpp.lp_omip_bounds(model, num_cpus, procs_per_cluster)

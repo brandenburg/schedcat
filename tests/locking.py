@@ -114,6 +114,20 @@ class ApplyBounds(unittest.TestCase):
         lb.apply_part_fmlp_bounds(self.ts, preemptive=True)
         self.saw_non_zero_blocking()
 
+    def test_generalized_fmlp1(self):
+        lb.apply_generalized_fmlp_bounds(self.ts, 1, True)
+        self.saw_non_zero_blocking()
+
+        lb.apply_generalized_fmlp_bounds(self.ts, 1, False)
+        self.saw_non_zero_blocking()
+
+    def test_generalized_fmlp2(self):
+        lb.apply_generalized_fmlp_bounds(self.ts, 2, True)
+        self.saw_non_zero_blocking()
+
+        lb.apply_generalized_fmlp_bounds(self.ts, 2, False)
+        self.saw_non_zero_blocking()
+
     def test_part_fmlp_np(self):
         lb.apply_part_fmlp_bounds(self.ts, preemptive=False)
         self.saw_non_zero_blocking()
