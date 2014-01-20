@@ -40,7 +40,8 @@ def get_cpp_model(all_tasks, use_task_period=False):
                      t.period if use_task_period else t.response_time,
                      t.partition,
                      t.preemption_level, # mapped to fixed priorities in the C++ code
-                     t.cost)
+                     t.cost,
+                     t.deadline)
         for req in t.resmodel:
             req = t.resmodel[req]
             if req.max_requests > 0:
@@ -54,7 +55,8 @@ def get_cpp_model_rw(all_tasks, use_task_period=False):
                      t.period if use_task_period else t.response_time,
                      t.partition,
                      t.preemption_level, # mapped to fixed priorities in the C++ code
-                     t.cost)
+                     t.cost,
+                     t.deadline)
         for req in t.resmodel:
             req = t.resmodel[req]
             if req.max_writes > 0:
