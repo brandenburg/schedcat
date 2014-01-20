@@ -58,14 +58,16 @@ std::ostream& operator<<(std::ostream &os, const ResourceSharingInfo &rsi)
 	return os;
 }
 
-unsigned int RequestBound::get_max_num_requests(unsigned long interval) const
+unsigned int TaskInfo::get_max_num_jobs(unsigned long interval) const
 {
 	unsigned long num_jobs;
+	num_jobs = divide_with_ceil(interval + get_response(), get_period());
+	return num_jobs;
+}
 
-	num_jobs = divide_with_ceil(interval + task->get_response(),
-				    task->get_period());
-
-	return (unsigned int) (num_jobs * num_requests);
+unsigned int RequestBound::get_max_num_requests(unsigned long interval) const
+{
+	return (unsigned int) (task->get_max_num_jobs(interval) * num_requests);
 }
 
 
