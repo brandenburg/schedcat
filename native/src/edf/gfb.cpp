@@ -9,7 +9,8 @@ bool GFBGedf::is_schedulable(const TaskSet &ts, bool check_preconditions)
 	{
         if (!(ts.has_only_feasible_tasks()
               && ts.is_not_overutilized(m)
-              && ts.has_only_constrained_deadlines()))
+              && ts.has_only_constrained_deadlines()
+              && ts.has_no_self_suspending_tasks()))
             return false;
     }
 

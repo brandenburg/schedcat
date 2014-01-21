@@ -7,13 +7,20 @@ try:
 
     using_native = True
 
-    def get_native_taskset(tasks):
+    def get_native_taskset(tasks, with_suspensions=False):
         ts = TaskSet()
-        for t in tasks:
-            if (hasattr(t, 'prio_pt')):
-                ts.add_task(t.cost, t.period, t.deadline, t.prio_pt)
-            else:
-                ts.add_task(t.cost, t.period, t.deadline)
+        if with_suspensions:
+            for t in tasks:
+                if (hasattr(t, 'prio_pt')):
+                    ts.add_task(t.cost, t.period, t.deadline, t.prio_pt, t.suspended)
+                else:
+                    ts.add_task(t.cost, t.period, t.deadline, 0, t.suspended)
+        else:
+            for t in tasks:
+                if (hasattr(t, 'prio_pt')):
+                    ts.add_task(t.cost, t.period, t.deadline, t.prio_pt)
+                else:
+                    ts.add_task(t.cost, t.period, t.deadline)
         return ts
 
 except ImportError:

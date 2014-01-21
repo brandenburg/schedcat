@@ -19,15 +19,29 @@ class Task
     unsigned long wcet;
     unsigned long deadline;
     unsigned long prio_pt;
+    unsigned long self_suspension;
+    unsigned long tardiness_threshold;
 
   public:
 
     /* construction and initialization */
-    void init(unsigned long wcet, unsigned long period, unsigned long deadline = 0, unsigned long prio_pt = 0);
+    void init(
+        unsigned long wcet,
+        unsigned long period,
+        unsigned long deadline = 0,
+        unsigned long prio_pt = 0,
+        unsigned long susp = 0,
+        unsigned long max_tardiness = 0
+    );
     Task(unsigned long wcet = 0,
          unsigned long period = 0,
          unsigned long deadline = 0,
-         unsigned long prio_pt = 0) { init(wcet, period, deadline, prio_pt); }
+         unsigned long prio_pt = 0,
+         unsigned long susp = 0,
+         unsigned long max_tardiness = 0)
+    {
+        init(wcet, period, deadline, prio_pt, susp, max_tardiness);
+    }
 
     /* getter / setter */
     unsigned long get_period() const { return period;   }
@@ -35,16 +49,36 @@ class Task
     /* defaults to implicit deadline */
     unsigned long get_deadline() const {return deadline; }
     unsigned long get_prio_pt() const { return prio_pt; }
+    unsigned long get_self_suspension() const { return self_suspension; };
 
     void set_period(unsigned long period)     { this->period   = period;   }
     void set_wcet(unsigned long wcet)         { this->wcet     = wcet;     }
     void set_deadline(unsigned long deadline) { this->deadline = deadline; }
+    unsigned long get_tardiness_threshold() const { return tardiness_threshold; };
 
     /* properties */
-    bool has_implicit_deadline() const;
-    bool has_constrained_deadline() const;
-    bool is_feasible() const;
 
+    bool has_implicit_deadline() const
+    {
+        return deadline == period;
+    }
+
+    bool has_constrained_deadline() const
+    {
+        return deadline <= period;
+    }
+
+    bool is_feasible() const
+    {
+        return get_deadline() >= get_wcet() + get_self_suspension()
+            && get_period() >= get_wcet() + get_self_suspension()
+            && get_wcet() > 0;
+    }
+
+    bool is_self_suspending() const
+    {
+        return get_self_suspension() > 0;
+    }
 
     void get_utilization(fractional_t &util) const;
     void get_density(fractional_t &density) const;
@@ -160,9 +194,11 @@ class TaskSet
     virtual ~TaskSet();
 
     void add_task(unsigned long wcet, unsigned long period,
-                  unsigned long deadline = 0, unsigned long prio_pt = 0)
+                  unsigned long deadline = 0, unsigned long prio_pt = 0,
+                  unsigned long suspension = 0, unsigned long tardiness_threshold = 0)
     {
-        tasks.push_back(Task(wcet, period, deadline, prio_pt));
+        tasks.push_back(Task(wcet, period, deadline,
+            prio_pt, suspension, tardiness_threshold));
     }
 
     unsigned int get_task_count() const { return tasks.size(); }
@@ -174,6 +210,7 @@ class TaskSet
     bool has_only_implicit_deadlines() const;
     bool has_only_constrained_deadlines() const;
     bool has_only_feasible_tasks() const;
+    bool has_no_self_suspending_tasks() const;
     bool is_not_overutilized(unsigned int num_processors) const;
 
     void get_utilization(fractional_t &util) const;

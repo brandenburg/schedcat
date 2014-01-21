@@ -23,6 +23,9 @@ bool GlobalEDF::is_schedulable(const TaskSet &ts,
             return true;
     }
 
+    if (!ts.has_no_self_suspending_tasks())
+        return false;
+
     // density bound on a uniprocessor.
     if (m == 1)
     {

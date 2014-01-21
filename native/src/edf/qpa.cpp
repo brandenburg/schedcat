@@ -136,6 +136,13 @@ static integral_t get_largest_testpoint(const TaskSet &ts,
 
 bool QPATest::is_schedulable(const TaskSet &ts, bool check_preconditions)
 {
+	if (check_preconditions)
+	{
+		if (!(ts.has_no_self_suspending_tasks()
+		      && ts.has_only_feasible_tasks()))
+			return false;
+	}
+
 	fractional_t util;
 	ts.get_utilization(util);
 
@@ -152,7 +159,8 @@ bool QPATest::is_schedulable(const TaskSet &ts, bool check_preconditions)
 	integral_t demand;
 	integral_t interval;
 
-	do {
+	do
+	{
 		interval = next;
 		ts.bound_demand(interval, demand);
 		if (demand < interval)

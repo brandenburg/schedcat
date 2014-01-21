@@ -11,7 +11,9 @@
 void Task::init(unsigned long wcet,
                 unsigned long period,
                 unsigned long deadline,
-                unsigned long prio_pt)
+                unsigned long prio_pt,
+   			    unsigned long susp,
+                unsigned long max_tardiness)
 {
     this->wcet     = wcet;
     this->period   = period;
@@ -23,23 +25,9 @@ void Task::init(unsigned long wcet,
         this->prio_pt = deadline;
     else
         this->prio_pt = prio_pt;
-}
 
-bool Task::has_implicit_deadline() const
-{
-    return deadline == period;
-}
-
-bool Task::has_constrained_deadline() const
-{
-    return deadline <= period;
-}
-
-bool Task::is_feasible() const
-{
-    return get_deadline() >= get_wcet()
-        && get_period() >= get_wcet()
-        && get_wcet() > 0;
+    this->self_suspension = susp;
+    this->tardiness_threshold = max_tardiness;
 }
 
 void Task::get_utilization(fractional_t &util) const
@@ -80,7 +68,7 @@ TaskSet::~TaskSet()
 #define FORALL(i, pred)                             \
     for (unsigned int i = 0; i < tasks.size(); i++) \
     {                                               \
-        if (!pred)                                  \
+        if (!(pred))                                \
             return false;                           \
     }                                               \
     return true;                                    \
@@ -98,6 +86,11 @@ bool TaskSet::has_only_constrained_deadlines() const
 bool TaskSet::has_only_feasible_tasks() const
 {
     FORALL(i, tasks[i].is_feasible());
+}
+
+bool TaskSet::has_no_self_suspending_tasks() const
+{
+	FORALL(i, !tasks[i].is_self_suspending());
 }
 
 void TaskSet::get_utilization(fractional_t &util) const

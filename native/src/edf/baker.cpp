@@ -55,7 +55,8 @@ bool BakerGedf::is_schedulable(const TaskSet &ts,
     if (check_preconditions)
 	{
 	 if (!(ts.has_only_feasible_tasks() &&
-	       ts.is_not_overutilized(m)))
+	       ts.is_not_overutilized(m) &&
+	       ts.has_no_self_suspending_tasks()))
 	     return false;
     }
 
