@@ -14,7 +14,7 @@
 #include "edf/gedf.h"
 #include "edf/gel_pl.h"
 #include "edf/qpa.h"
-#include "sharedres.h"
+#include "edf/la.h"
 %}
 
 %ignore Task::get_utilization(fractional_t &util) const;
@@ -44,3 +44,4 @@
 #include "edf/gedf.h"
 #include "edf/gel_pl.h"
 #include "edf/qpa.h"
+#include "edf/la.h"
