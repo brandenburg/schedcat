@@ -12,6 +12,7 @@
 #include "edf/gfb.h"
 #include "edf/bcl.h"
 #include "edf/bcl_iterative.h"
+#include "edf/la.h"
 #include "edf/gedf.h"
 #include "edf/sim.h"
 
@@ -491,9 +492,37 @@ void test_baruah()
          << endl;
 }
 
-int bar_main(int argc, char** argv)
+void test_la()
 {
-    test_baruah();
+    TaskSet ts = TaskSet();
+
+    ts.add_task(40, 100,  0, 0, 10, 0);
+    ts.add_task(42, 100,  0, 0, 20, 0);
+    ts.add_task( 2, 100, 50, 0,  5, 0);
+
+    BakerGedf t = BakerGedf(2);
+    cout << "Baker schedulable?  : " << t.is_schedulable(ts) << endl;
+
+    GFBGedf gfb = GFBGedf(2);
+    cout << "GFB schedulable?    : " << gfb.is_schedulable(ts) << endl;
+
+    cout << "BCL schedulable?    : " << BCLGedf(2).is_schedulable(ts) << endl;
+
+    cout << "Baruah schedulable? : " << BaruahGedf(2).is_schedulable(ts)
+         << endl;
+    cout << "BCL Iter. sched.?   : " << BCLIterativeGedf(2).is_schedulable(ts)
+         << endl;
+
+    cout << "LA schedulable?     : " << LAGedf(2).is_schedulable(ts)
+         << endl;
+
+    cout << "G-EDF schedulable?  : " << GlobalEDF(2).is_schedulable(ts) << endl;
+}
+
+
+int main(int argc, char** argv)
+{
+    test_la();
     return 0;
 }
 
@@ -765,7 +794,7 @@ int main7(int argc, char** argv)
 }
 
 
-int main(int argc, char** argv)
+int __main(int argc, char** argv)
 {
 	ResourceSharingInfo rsi(100);
 	unsigned int i;
