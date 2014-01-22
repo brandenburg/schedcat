@@ -84,7 +84,7 @@ class Task
 
     unsigned long bound_demand(unsigned long time) const
     {
-        if (time <= deadline)
+        if (time < deadline)
             return 0;
         else
         {
@@ -99,17 +99,23 @@ class Task
 
     void bound_demand(const integral_t &time, integral_t &demand) const
     {
-        if (time < deadline)
+        demand = time - deadline;
+        if (demand < 0)
             demand = 0;
         else
         {
-            demand = time;
-            demand -= deadline;
-
             demand /= period; // implicit floor in integer division
             demand += 1;
             demand *= wcet;
         }
+    }
+
+    // rely on return value optimization
+    integral_t dbf(integral_t t) const
+    {
+        integral_t db;
+        bound_demand(t, db);
+        return db;
     }
 
     void bound_load(const integral_t &time, fractional_t &load) const
