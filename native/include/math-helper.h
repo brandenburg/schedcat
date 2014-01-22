@@ -29,7 +29,7 @@ static inline integral_t round_up(const fractional_t &f)
 {
 	integral_t result;
 	mpz_cdiv_q(result.get_mpz_t(), f.get_num_mpz_t(), f.get_den_mpz_t());
-	return result * f.get_den();
+	return result;
 }
 
 
