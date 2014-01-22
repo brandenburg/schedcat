@@ -50,10 +50,6 @@ class Task
     unsigned long get_deadline() const {return deadline; }
     unsigned long get_prio_pt() const { return prio_pt; }
     unsigned long get_self_suspension() const { return self_suspension; };
-
-    void set_period(unsigned long period)     { this->period   = period;   }
-    void set_wcet(unsigned long wcet)         { this->wcet     = wcet;     }
-    void set_deadline(unsigned long deadline) { this->deadline = deadline; }
     unsigned long get_tardiness_threshold() const { return tardiness_threshold; };
 
     /* properties */
