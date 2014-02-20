@@ -1,6 +1,8 @@
 #ifndef TIME_TYPES_H
 #define TIME_TYPES_H
 
+/* include string.h for gmpxx.h */
+#include <string.h>
 #include <gmpxx.h>
 
 typedef mpz_class integral_t;
