@@ -18,6 +18,7 @@ def charge_initial_load(oheads, taskset):
 
 def preemption_centric_irq_costs(oheads, dedicated_irq, taskset):
     n      = len(taskset)
+    n_rel_irq = 0
     qlen   = oheads.quantum_length
     tck    = oheads.tick(n)
     ev_lat = oheads.release_latency(n)
@@ -29,12 +30,14 @@ def preemption_centric_irq_costs(oheads, dedicated_irq, taskset):
     if not dedicated_irq:
         rel   = oheads.release(n)
         for ti in taskset:
-            urel += (rel / ti.period)
+            if not hasattr(ti, 'early_releasing') or ti.early_releasing == False:
+                urel += (rel / ti.period)
+                n_rel_irq += 1
 
     # cost of preemption
     cpre_numerator = tck + ev_lat * utick
     if not dedicated_irq:
-        cpre_numerator += n * rel + ev_lat * urel
+        cpre_numerator += n_rel_irq * rel + ev_lat * urel
 
     uscale = 1.0 - utick - urel
 
