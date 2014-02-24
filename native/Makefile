@@ -84,9 +84,9 @@ endif
 
 # #### Debug support ####
 ifeq ($(DEBUG),y)
-DEFS += -g -DDEBUG
+DEFS += -g -DDEBUG -march=native
 else
-DEFS += -O2
+DEFS += -O2 -march=native
 endif
 
 # disable assertions only if explicitly requested
@@ -151,7 +151,7 @@ interface/%_wrap.cc: interface/%.i
 	$(SWIG) $(SWIGFLAGS) -o $@ $<
 
 interface/%_wrap.o: interface/%_wrap.cc
-	$(CXX) -fPIC $(PYTHON_INC) -c -o $@ $+ $(INCLUDES)
+	$(CXX) $(DEFS) -fPIC $(PYTHON_INC) -c -o $@ $+ $(INCLUDES)
 
 _sched.so: ${CORE_OBJ} ${EDF_OBJ} interface/sched_wrap.o
 	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
