@@ -2,6 +2,8 @@ from __future__ import division
 
 from math import ceil, floor
 
+from model import TaskAwareMaxValTracker
+
 def charge_initial_load(oheads, taskset):
     """Increase WCET to reflect the cost of establishing a warm cache.
     Note: assumes that .wss (working set size) has been populated in each task.
@@ -22,6 +24,7 @@ def preemption_centric_irq_costs(oheads, dedicated_irq, taskset):
     qlen   = oheads.quantum_length
     tck    = oheads.tick(n)
     ev_lat = oheads.release_latency(n)
+
 
     # tick interrupt
     utick = tck / qlen
@@ -54,11 +57,8 @@ def charge_scheduling_overheads(oheads, num_cpus, dedicated_irq, taskset):
         return False
 
     n   = len(taskset)
-    wss = taskset.max_wss()
 
-    sched = 2 * (oheads.schedule(n) + oheads.ctx_switch(n)) \
-            + oheads.cache_affinity_loss(wss)
-
+    sched = 2 * (oheads.schedule(n) + oheads.ctx_switch(n))
     irq_latency = oheads.release_latency(n)
 
     if dedicated_irq:
@@ -68,10 +68,16 @@ def charge_scheduling_overheads(oheads, num_cpus, dedicated_irq, taskset):
     else:
         unscaled = 2 * cpre
 
+    # find the two largest wss in the task set
+    wss_tracker = TaskAwareMaxValTracker()
     for ti in taskset:
+        wss_tracker.track_value(ti, ti.wss)
+
+    for ti in taskset:
+        tasksched = sched + oheads.cache_affinity_loss(wss_tracker.get_value(ti))
         ti.period   -= irq_latency
         ti.deadline -= irq_latency
-        ti.cost      = ((ti.cost + sched) / uscale) + unscaled
+        ti.cost      = ((ti.cost + tasksched) / uscale) + unscaled
         if ti.density() > 1:
             return False
 

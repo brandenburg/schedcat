@@ -120,3 +120,30 @@ class CacheDelay(object):
                     o.mem_hierarchy[idx] = piece_wise_linear(points)
                 o.__dict__[name] = o.mem_hierarchy[idx]
         return o
+
+class TaskAwareMaxValTracker(object):
+    def __init__(self):
+        # sorted (decreasing) list of (val, task) tuples
+        # len(self.top_two) <= 2
+        self.top_two = []
+
+    def track_value(self, task, val):
+        num_tracked = len(self.top_two)
+        # use >= to allow equal values to be tracked
+        if num_tracked == 0 or val >= self.top_two[-1][0]:
+            if num_tracked == 0 or val > self.top_two[0][0]:
+                self.top_two.insert(0, (val, task))
+            else:
+                self.top_two.insert(1, (val, task))
+            # we inserted a value. remove last value if len of list > 2
+            if num_tracked > 1:
+                self.top_two.pop()
+
+    def get_value(self, task):
+        num_tracked = len(self.top_two)
+        if num_tracked == 0 or (num_tracked == 1 and self.top_two[0][1] == task):
+            return 0.0
+        elif self.top_two[0][1] != task:
+            return self.top_two[0][0]
+        else:
+            return self.top_two[1][0]
