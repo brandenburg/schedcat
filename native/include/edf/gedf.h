@@ -1,5 +1,5 @@
 #ifndef GEDF_H
-#define GEDF_h
+#define GEDF_H
 
 class GlobalEDF : public SchedulabilityTest
 {
