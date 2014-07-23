@@ -719,6 +719,7 @@ class Test_linprog(unittest.TestCase):
         # only one resource, assigned to the first processor
         self.resource_locality = { 0: 0 }
 
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_dpcp_cpp(self):
         lb.apply_lp_dpcp_bounds(self.ts, self.resource_locality, use_py=False)
 
@@ -726,6 +727,7 @@ class Test_linprog(unittest.TestCase):
     def test_dpcp_py(self):
         lb.apply_lp_dpcp_bounds(self.ts, self.resource_locality, use_py=True)
 
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_dflp_cpp(self):
         lb.apply_lp_dflp_bounds(self.ts, self.resource_locality, use_py=False)
 
@@ -734,7 +736,7 @@ class Test_linprog(unittest.TestCase):
         lb.apply_lp_dflp_bounds(self.ts, self.resource_locality, use_py=True)
 
 
-
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_dpcp_cpp_no_req(self):
         lb.apply_lp_dpcp_bounds(self.ts_no_req, {}, use_py=False)
         self.assertEqual(self.ts_no_req[0].blocked, 0)
@@ -754,6 +756,7 @@ class Test_linprog(unittest.TestCase):
         self.assertEqual(self.ts_no_req[2].blocked, 0)
         self.assertEqual(self.ts_no_req[2].suspended, 0)
 
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_dflp_cpp_no_req(self):
         lb.apply_lp_dflp_bounds(self.ts_no_req, {}, use_py=False)
         self.assertEqual(self.ts_no_req[0].blocked, 0)
