@@ -55,15 +55,13 @@ BlockingBounds* mpcp_bounds(const ResourceSharingInfo& info,
 BlockingBounds* dpcp_bounds(const ResourceSharingInfo& info,
 			    const ResourceLocality& locality);
 
-BlockingBounds* msrp_bounds(const ResourceSharingInfo& info, 
+BlockingBounds* msrp_bounds(const ResourceSharingInfo& info,
 				unsigned int num_cpus);
 
 
 // Still missing:
 // ==============
 
-// clustered_omlp_kex_bounds
-// clustered_omlp_rw_bounds
 // spin_rw_wpref_bounds
 // spin_rw_rpref_bounds
 

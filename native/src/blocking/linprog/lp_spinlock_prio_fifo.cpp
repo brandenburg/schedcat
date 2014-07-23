@@ -819,7 +819,7 @@ bool apply_prio_fifo_bounds_for_task(
 }
 
 
-BlockingBounds* lp_prio_fifo_bounds(const ResourceSharingInfo& info, bool preemptive)
+BlockingBounds* lp_pfp_prio_fifo_spinlock_bounds(const ResourceSharingInfo& info, bool preemptive)
 {
 	BlockingBounds* results = new BlockingBounds(info);
 	PriorityCeilings prio_ceilings = get_priority_ceilings(info);

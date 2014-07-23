@@ -990,7 +990,7 @@ int main(int argc, char** argv)
 	delete results;
 
 
-	results = lp_msrp_bounds(rsi);
+	results = lp_pfp_msrp_bounds(rsi);
 
 	cout << endl << endl  << "MSRP (LP)" << endl;
 	for (i = 0; i < results->size(); i++)
@@ -1005,7 +1005,7 @@ int main(int argc, char** argv)
 	delete results;
 
 
-	results = lp_preemptive_fifo_bounds(rsi);
+	results = lp_pfp_preemptive_fifo_spinlock_bounds(rsi);
 
 	cout << endl << endl  << "Preemptive MSRP (LP)" << endl;
 	for (i = 0; i < results->size(); i++)

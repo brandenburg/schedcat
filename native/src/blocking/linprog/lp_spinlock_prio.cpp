@@ -478,7 +478,7 @@ bool apply_prio_bounds_for_task(
 	return true;
 }
 
-BlockingBounds* lp_prio_bounds(const ResourceSharingInfo& info, bool preemptive)
+BlockingBounds* lp_pfp_prio_spinlock_bounds(const ResourceSharingInfo& info, bool preemptive)
 {
 	BlockingBounds* results = new BlockingBounds(info);
 	PriorityCeilings prio_ceilings = get_priority_ceilings(info);

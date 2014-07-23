@@ -373,13 +373,10 @@ def apply_cpp_lp_preemptive_prio_fifo_bounds(all_tasks):
     res = lp_cpp.lp_prio_fifo_bounds(model, True)
     return res
 
-def apply_cpp_lp_baseline_bounds(all_tasks):
+def apply_pfp_baseline_spinlock_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    res = lp_cpp.lp_baseline_bounds(model)
+    res = lp_cpp.lp_pfp_baseline_spinlock_bounds(model)
     return res
-
-def apply_dummy_bounds_single(all_tasks, task_index):
-    return 0
 
 def apply_omip_bounds(all_tasks, num_cpus, procs_per_cluster):
     model = get_cpp_model(all_tasks)

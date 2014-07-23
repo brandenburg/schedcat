@@ -199,7 +199,7 @@ bool apply_unordered_bounds_for_task(
 }
 
 
-BlockingBounds* lp_unordered_bounds(const ResourceSharingInfo& info, bool preemptive)
+BlockingBounds* lp_pfp_unordered_spinlock_bounds(const ResourceSharingInfo& info, bool preemptive)
 {
 	BlockingBounds* results = new BlockingBounds(info);
 

@@ -239,7 +239,7 @@ unsigned long lp_preemptive_fifo_bounds_single(
 	return blocking_term;
 }
 
-BlockingBounds* lp_preemptive_fifo_bounds(const ResourceSharingInfo& info)
+BlockingBounds* lp_pfp_preemptive_fifo_spinlock_bounds(const ResourceSharingInfo& info)
 {
 	BlockingBounds* results = new BlockingBounds(info);
 
@@ -264,7 +264,7 @@ unsigned long lp_msrp_bounds_single(
 	return blocking_term;
 }
 
-BlockingBounds* lp_msrp_bounds(const ResourceSharingInfo& info)
+BlockingBounds* lp_pfp_msrp_bounds(const ResourceSharingInfo& info)
 {
 #if DEBUG_LP_OVERHEADS >= 1
 	static DEFINE_CPU_CLOCK(solve_full_ts);

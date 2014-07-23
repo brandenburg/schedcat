@@ -589,7 +589,7 @@ unsigned long lp_baseline_bounds_single(
 	return blocking_term;
 }
 
-BlockingBounds* lp_baseline_bounds(const ResourceSharingInfo& info)
+BlockingBounds* lp_pfp_baseline_spinlock_bounds(const ResourceSharingInfo& info)
 {
 	BlockingBounds* results = new BlockingBounds(info);
 
