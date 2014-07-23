@@ -1,6 +1,7 @@
 from __future__ import division
 
 from math import ceil, floor
+import heapq
 
 def charge_initial_load(oheads, taskset):
     """Increase WCET to reflect the cost of establishing a warm cache.
@@ -54,10 +55,10 @@ def charge_scheduling_overheads(oheads, num_cpus, dedicated_irq, taskset):
         return False
 
     n   = len(taskset)
-    wss = taskset.max_wss()
-
-    sched = 2 * (oheads.schedule(n) + oheads.ctx_switch(n)) \
-            + oheads.cache_affinity_loss(wss)
+    
+    cpmd = [(ti, oheads.cache_affinity_loss(ti.wss)) \
+                for ti in heapq.nlargest(2, taskset, lambda x: x.wss)]
+    sched = 2 * (oheads.schedule(n) + oheads.ctx_switch(n))
 
     irq_latency = oheads.release_latency(n)
 
@@ -69,9 +70,16 @@ def charge_scheduling_overheads(oheads, num_cpus, dedicated_irq, taskset):
         unscaled = 2 * cpre
 
     for ti in taskset:
+        tasksched = sched
+        if cpmd:
+            if ti != cpmd[0][0]:
+                tasksched += cpmd[0][1]
+            elif len(cpmd) > 1:
+                tasksched += cpmd[1][1]
+
         ti.period   -= irq_latency
         ti.deadline -= irq_latency
-        ti.cost      = ((ti.cost + sched) / uscale) + unscaled
+        ti.cost      = ((ti.cost + tasksched) / uscale) + unscaled
         if ti.density() > 1:
             return False
 
