@@ -1,7 +1,7 @@
 #Necessary includes and stuff
 
 from schedcat.locking.bounds import apply_task_fair_mutex_bounds, \
-                                    assign_prio_pt_locking_prios
+                                    assign_prio_pt_preemption_levels
 
 from schedcat.overheads.jlfp import charge_scheduling_overheads, \
                                     quantize_params
@@ -29,7 +29,7 @@ def preprocess_ts(taskset, clusts, oheads):
             task.response_time = task.deadline
             task.prio_pt = task.deadline - \
                            (clust.cpus - 1) / (clust.cpus) * task.cost
-    assign_prio_pt_locking_prios(taskset)
+    assign_prio_pt_preemption_levels(taskset)
 
 def post_blocking_term_oh_inflation(oheads, clusts):
     for clust in clusts:

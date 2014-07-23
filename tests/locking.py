@@ -25,28 +25,28 @@ class Locking(unittest.TestCase):
             t.response_time = t.period
             t.resmodel[1].add_request(1)
 
-    def test_fp_locking_prios(self):
+    def test_fp_preemption_levels(self):
         self.ts.sort_by_period()
-        lb.assign_fp_locking_prios(self.ts)
-        self.assertEqual(self.ts[0].locking_prio, 0)
-        self.assertEqual(self.ts[1].locking_prio, 1)
-        self.assertEqual(self.ts[2].locking_prio, 2)
-        self.assertEqual(self.ts[3].locking_prio, 3)
+        lb.assign_fp_preemption_levels(self.ts)
+        self.assertEqual(self.ts[0].preemption_level, 0)
+        self.assertEqual(self.ts[1].preemption_level, 1)
+        self.assertEqual(self.ts[2].preemption_level, 2)
+        self.assertEqual(self.ts[3].preemption_level, 3)
 
-    def test_edf_locking_prios(self):
+    def test_edf_preemption_levels(self):
         self.ts[0].deadline = 5
         self.ts[3].deadline = 9
         ts = list(self.ts)
         random.shuffle(ts)
-        lb.assign_edf_locking_prios(self.ts)
-        self.assertEqual(self.ts[0].locking_prio, 0)
-        self.assertEqual(self.ts[1].locking_prio, 0)
-        self.assertEqual(self.ts[2].locking_prio, 1)
-        self.assertEqual(self.ts[3].locking_prio, 1)
+        lb.assign_edf_preemption_levels(self.ts)
+        self.assertEqual(self.ts[0].preemption_level, 0)
+        self.assertEqual(self.ts[1].preemption_level, 0)
+        self.assertEqual(self.ts[2].preemption_level, 1)
+        self.assertEqual(self.ts[3].preemption_level, 1)
 
 
     def test_cpp_bridge(self):
-        lb.assign_fp_locking_prios(self.ts)
+        lb.assign_fp_preemption_levels(self.ts)
         self.assertIsNotNone(lb.get_cpp_model(self.ts))
         self.assertIsNotNone(lb.get_cpp_model_rw(self.ts))
 
@@ -68,7 +68,7 @@ class ApplyBounds(unittest.TestCase):
             t.response_time = t.period
             t.resmodel[0].add_request(1)
             t.resmodel[1].add_request(1)
-        lb.assign_fp_locking_prios(self.ts)
+        lb.assign_fp_preemption_levels(self.ts)
 
     def saw_non_zero_blocking(self):
         for t, t_ in zip(self.ts, self.ts_):
@@ -701,7 +701,7 @@ class Test_linprog(unittest.TestCase):
         self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3])
 
         self.ts.assign_ids()
-        lb.assign_fp_locking_prios(self.ts)
+        lb.assign_fp_preemption_levels(self.ts)
 
         for t in self.ts:
             t.response_time = t.period

@@ -16,13 +16,6 @@ class ResourceRequirement(object):
         return self.max_writes + self.max_reads
 
     @property
-    def locking_priority(self):
-        return self.priority
-    
-    def set_locking_priority(self, new_locking_priority):
-        self.priority = new_locking_priority
-
-    @property
     def max_length(self):
         "Maximum request length (of any kind)."
         return max(self.max_write_length, self.max_read_length)

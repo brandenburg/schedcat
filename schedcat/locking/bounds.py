@@ -1,5 +1,37 @@
 import schedcat.locking.native as cpp
 
+# The blocking analysis needs to know which task can be preempted by which
+# other task. This of course differs under EDF and FP scheduling. To simplify
+# the interface, and to avoid having to propagate information about which
+# scheduling policy is used to the blocking analysis, we instead determine for
+# each task a *preemption level*, with the following interpretation: a task A
+# can preempt a task B if and only if A.preemption_level < B.preemption_level.
+
+def assign_edf_preemption_levels(all_tasks):
+    all_deadlines = set([t.deadline for t in all_tasks])
+    prio = {}
+    for i, dl in enumerate(sorted(all_deadlines)):
+        prio[int(dl)] = i
+
+    for t in all_tasks:
+        t.preemption_level = prio[int(t.deadline)]
+
+def assign_prio_pt_preemption_levels(all_tasks):
+    all_prio_pts = set([t.prio_pt for t in all_tasks])
+    prio = {}
+    for i, pp in enumerate(sorted(all_prio_pts)):
+        prio[int(pp)] = i
+
+    for t in all_tasks:
+        t.preemption_level = prio[int(t.prio_pt)]
+
+def assign_fp_preemption_levels(all_tasks):
+    # prioritized in index order
+    for i, t in enumerate(all_tasks):
+        t.preemption_level = i
+
+
+
 # assumes mutex constraints
 def get_cpp_model(all_tasks, use_task_period=False):
     rsi = cpp.ResourceSharingInfo(len(all_tasks))
@@ -7,12 +39,12 @@ def get_cpp_model(all_tasks, use_task_period=False):
         rsi.add_task(t.period,
                      t.period if use_task_period else t.response_time,
                      t.partition,
-                     t.id,
+                     t.preemption_level, # mapped to fixed priorities in the C++ code
                      t.cost)
         for req in t.resmodel:
             req = t.resmodel[req]
             if req.max_requests > 0:
-                rsi.add_request_rw(req.res_id, req.max_requests, req.max_length, cpp.WRITE, t.locking_prio)
+                rsi.add_request(req.res_id, req.max_requests, req.max_length, req.priority)
     return rsi
 
 def get_cpp_model_rw(all_tasks, use_task_period=False):
@@ -21,38 +53,15 @@ def get_cpp_model_rw(all_tasks, use_task_period=False):
         rsi.add_task(t.period,
                      t.period if use_task_period else t.response_time,
                      t.partition,
-                     t.id,
+                     t.preemption_level, # mapped to fixed priorities in the C++ code
                      t.cost)
         for req in t.resmodel:
             req = t.resmodel[req]
             if req.max_writes > 0:
-                rsi.add_request_rw(req.res_id, req.max_writes, req.max_write_length, cpp.WRITE, t.locking_prio)
+                rsi.add_request_rw(req.res_id, req.max_writes, req.max_write_length, cpp.WRITE, req.priority)
             if req.max_reads > 0:
-                rsi.add_request_rw(req.res_id, req.max_reads, req.max_read_length, cpp.READ, t.locking_prio)
+                rsi.add_request_rw(req.res_id, req.max_reads, req.max_read_length, cpp.READ, req.priority)
     return rsi
-
-def assign_edf_locking_prios(all_tasks):
-    all_deadlines = set([t.deadline for t in all_tasks])
-    prio = {}
-    for i, dl in enumerate(sorted(all_deadlines)):
-        prio[int(dl)] = i
-
-    for t in all_tasks:
-        t.locking_prio = prio[int(t.deadline)]
-
-def assign_prio_pt_locking_prios(all_tasks):
-    all_prio_pts = set([t.prio_pt for t in all_tasks])
-    prio = {}
-    for i, pp in enumerate(sorted(all_prio_pts)):
-        prio[int(pp)] = i
-
-    for t in all_tasks:
-        t.locking_prio = prio[int(t.prio_pt)]
-
-def assign_fp_locking_prios(all_tasks):
-    # prioritized in index order
-    for i, t in enumerate(all_tasks):
-        t.locking_prio = i
 
 # S-aware bounds
 
@@ -307,18 +316,12 @@ def apply_msrp_bounds(all_tasks, num_cpus):
             t.partition= num_cpus + 1
     model = get_cpp_model(all_tasks, True)
     res = cpp.msrp_bounds(model, num_cpus)
-    
+
     for i,t in enumerate(all_tasks):
         t.blocked   = res.get_local_blocking(i)
         t.cost      += res.get_remote_blocking(i)
         t.remote_blocking = res.get_remote_blocking(i)
 
-# remove!
-# def apply_msrp_bounds_holistic(all_tasks, num_cpus):
-#     model = get_cpp_model(all_tasks, True)
-#     res = cpp.msrp_bounds_holistic(model)
-#     apply_suspension_oblivious(all_tasks, res)
- 
 def apply_cpp_lp_msrp_bounds_single(all_tasks, task_index):
     model = get_cpp_model(all_tasks)
     blocking_term = lp_cpp.lp_msrp_bounds_single(model, task_index)
@@ -338,7 +341,7 @@ def apply_cpp_lp_msrp_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
     res = lp_cpp.lp_msrp_bounds(model)
     return res
-    
+
 def apply_cpp_lp_unordered_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
     res = lp_cpp.lp_unordered_bounds(model, False)
@@ -348,7 +351,7 @@ def apply_cpp_lp_preemptive_unordered_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
     res = lp_cpp.lp_unordered_bounds(model, True)
     return res
-    
+
 def apply_cpp_lp_prio_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
     res = lp_cpp.lp_prio_bounds(model, False)
