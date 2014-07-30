@@ -310,6 +310,15 @@ def apply_omip_bounds(all_tasks, num_cpus, procs_per_cluster):
     apply_suspension_oblivious(all_tasks, res)
     return res
 
+def apply_dummy_bounds(all_tasks):
+    model = get_cpp_model(all_tasks, True)
+    res = lp_cpp.dummy_bounds(model)
+    for i,t in enumerate(all_tasks):
+        t.blocked   = res.get_local_blocking(i)
+        t.remote_blocking = res.get_remote_blocking(i)
+    return res
+
+
 def apply_msrp_bounds(all_tasks, num_cpus):
     for t in all_tasks:
         if t.partition == None:
@@ -322,60 +331,67 @@ def apply_msrp_bounds(all_tasks, num_cpus):
         t.cost      += res.get_remote_blocking(i)
         t.remote_blocking = res.get_remote_blocking(i)
 
-def apply_cpp_lp_msrp_bounds_single(all_tasks, task_index):
+def apply_pfp_lp_preemptive_fifo_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    blocking_term = lp_cpp.lp_msrp_bounds_single(model, task_index)
-    return blocking_term
-
-def apply_cpp_lp_preemptive_fifo_bounds_single(all_tasks, task_index):
-    model = get_cpp_model(all_tasks)
-    blocking_term = lp_cpp.lp_preemptive_fifo_bounds_single(model, task_index)
-    return blocking_term
-
-def apply_cpp_lp_preemptive_fifo_bounds(all_tasks):
-    model = get_cpp_model(all_tasks)
-    res = lp_cpp.lp_preemptive_fifo_bounds(model)
+    res = lp_cpp.lp_pfp_preemptive_fifo_spinlock_bounds(model)
+    for i, _ in enumerate(all_tasks):
+        all_tasks[i].blocked = res.get_blocking_term(i)
     return res
 
-def apply_cpp_lp_msrp_bounds(all_tasks):
+def apply_pfp_lp_msrp_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    res = lp_cpp.lp_msrp_bounds(model)
+    res = lp_cpp.lp_pfp_msrp_bounds(model)
+    for i, _ in enumerate(all_tasks):
+        all_tasks[i].blocked = res.get_blocking_term(i)
     return res
 
-def apply_cpp_lp_unordered_bounds(all_tasks):
+def apply_pfp_lp_unordered_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    res = lp_cpp.lp_unordered_bounds(model, False)
+    res = lp_cpp.lp_pfp_unordered_spinlock_bounds(model, False)
+    for i, _ in enumerate(all_tasks):
+        all_tasks[i].blocked = res.get_blocking_term(i)
     return res
 
-def apply_cpp_lp_preemptive_unordered_bounds(all_tasks):
+def apply_pfp_lp_preemptive_unordered_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    res = lp_cpp.lp_unordered_bounds(model, True)
+    res = lp_cpp.lp_pfp_unordered_spinlock_bounds(model, True)
+    for i, _ in enumerate(all_tasks):
+        all_tasks[i].blocked = res.get_blocking_term(i)
     return res
 
-def apply_cpp_lp_prio_bounds(all_tasks):
+def apply_pfp_lp_prio_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    res = lp_cpp.lp_prio_bounds(model, False)
+    res = lp_cpp.lp_pfp_prio_spinlock_bounds(model, False)
+    for i, _ in enumerate(all_tasks):
+        all_tasks[i].blocked = res.get_blocking_term(i)
     return res
 
-def apply_cpp_lp_preemptive_prio_bounds(all_tasks):
+def apply_pfp_lp_preemptive_prio_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    res = lp_cpp.lp_prio_bounds(model, True)
+    res = lp_cpp.lp_pfp_prio_spinlock_bounds(model, True)
+    for i, _ in enumerate(all_tasks):
+        all_tasks[i].blocked = res.get_blocking_term(i)
     return res
 
-
-def apply_cpp_lp_prio_fifo_bounds(all_tasks):
+def apply_pfp_lp_prio_fifo_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    res = lp_cpp.lp_prio_fifo_bounds(model, False)
+    res = lp_cpp.lp_pfp_prio_fifo_spinlock_bounds(model, False)
+    for i, _ in enumerate(all_tasks):
+        all_tasks[i].blocked = res.get_blocking_term(i)
     return res
 
-def apply_cpp_lp_preemptive_prio_fifo_bounds(all_tasks):
+def apply_pfp_lp_preemptive_prio_fifo_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
-    res = lp_cpp.lp_prio_fifo_bounds(model, True)
+    res = lp_cpp.lp_pfp_prio_fifo_spinlock_bounds(model, True)
+    for i, _ in enumerate(all_tasks):
+        all_tasks[i].blocked = res.get_blocking_term(i)
     return res
 
-def apply_pfp_baseline_spinlock_bounds(all_tasks):
+def apply_pfp_lp_baseline_spinlock_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
     res = lp_cpp.lp_pfp_baseline_spinlock_bounds(model)
+    for i, _ in enumerate(all_tasks):
+        all_tasks[i].blocked = res.get_blocking_term(i)
     return res
 
 def apply_omip_bounds(all_tasks, num_cpus, procs_per_cluster):

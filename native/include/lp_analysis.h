@@ -29,6 +29,11 @@ BlockingBounds* lp_omip_bounds(
 	unsigned int num_procs,
 	unsigned int cluster_size);
 
+
+/* The following dummy bounds function always returns zero blocking. */
+BlockingBounds* dummy_bounds(const ResourceSharingInfo& info);
+
+
 /* The following analyses are described in the extended version of:
  *
  *  A. Wieder and B. Brandenburg, "On Spin Locks in AUTOSAR: Blocking Analysis

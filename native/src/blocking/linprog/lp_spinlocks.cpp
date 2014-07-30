@@ -600,3 +600,9 @@ BlockingBounds* lp_pfp_baseline_spinlock_bounds(const ResourceSharingInfo& info)
 
 	return results;
 }
+
+BlockingBounds* dummy_bounds(const ResourceSharingInfo& info)
+{
+	BlockingBounds* results = new BlockingBounds(info);
+	return results;
+}

@@ -8,12 +8,17 @@
 %newobject lp_dflp_bounds;
 
 %newobject lp_msrp_bounds;
-%newobject lp_preemptive_fifo_bounds;
-%newobject lp_unordered_bounds;
-%newobject lp_prio_bounds;
-%newobject lp_prio_fifo_bounds;
+%newobject lp_pfp_preemptive_fifo_spinlock_bounds;
 
-%newobject lp_baseline_bounds;
+%newobject lp_pfp_unordered_spinlock_bounds;
+
+%newobject lp_pfp_prio_spinlock_bounds;
+
+%newobject lp_pfp_prio_fifo_spinlock_bounds;
+
+%newobject lp_pfp_baseline_spinlock_bounds;
+
+%newobject dummy_bounds;
 
 %include "sharedres_types.i"
 
