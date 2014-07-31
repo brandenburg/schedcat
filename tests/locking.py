@@ -89,6 +89,13 @@ class ApplyBounds(unittest.TestCase):
             self.assertGreater(t.blocked, 0)
             self.assertEqual(t.cost, t_.cost)
             self.assertEqual(t.period, t_.period)
+
+    def lp_zero_blocking(self):
+        for t, t_ in zip(self.ts, self.ts_):
+            self.assertEqual(t.blocked, 0)
+            self.assertEqual(t.cost, t_.cost)
+            self.assertEqual(t.period, t_.period)
+
     
     def test_mpcp(self):
         lb.apply_mpcp_bounds(self.ts, use_virtual_spin=False)
@@ -203,6 +210,10 @@ class ApplyBounds(unittest.TestCase):
     def test_pfp_lp_preemptive_prio_fifo_bounds(self):
         lb.apply_pfp_lp_preemptive_prio_fifo_bounds(self.ts)
         self.lp_non_zero_blocking()
+    
+    def test_dummy_bounds(self):
+        lb.apply_dummy_bounds(self.ts)
+        self.lp_zero_blocking()
     
 
 # lower-level tests for C++ implementation
