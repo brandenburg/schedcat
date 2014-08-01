@@ -83,7 +83,7 @@ class ApplyBounds(unittest.TestCase):
             self.assertEqual(t.suspended, 0)
             self.assertGreater(t.cost, t_.cost)
             self.assertEqual(t.period, t_.period)
-    
+
     def lp_non_zero_blocking(self):
         for t, t_ in zip(self.ts, self.ts_):
             self.assertGreater(t.blocked, 0)
@@ -96,7 +96,7 @@ class ApplyBounds(unittest.TestCase):
             self.assertEqual(t.cost, t_.cost)
             self.assertEqual(t.period, t_.period)
 
-    
+
     def test_mpcp(self):
         lb.apply_mpcp_bounds(self.ts, use_virtual_spin=False)
         self.saw_non_zero_blocking()
@@ -126,6 +126,7 @@ class ApplyBounds(unittest.TestCase):
         lb.apply_global_omlp_bounds(self.ts, 2)
         self.sob_non_zero_blocking()
 
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_omip(self):
         lb.apply_omip_bounds(self.ts, 2, 1)
         self.sob_non_zero_blocking()
@@ -179,42 +180,51 @@ class ApplyBounds(unittest.TestCase):
         lb.apply_phase_fair_rw_bounds(self.ts, 2)
         self.sob_non_zero_blocking()
 
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_pfp_lp_preemptive_fifo_bounds(self):
         lb.apply_pfp_lp_preemptive_fifo_bounds(self.ts)
         self.lp_non_zero_blocking()
-        
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_pfp_lp_msrp_bounds(self):
         lb.apply_pfp_lp_msrp_bounds(self.ts)
         self.lp_non_zero_blocking()
-    
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_pfp_lp_unordered_bounds(self):
         lb.apply_pfp_lp_unordered_bounds(self.ts)
         self.lp_non_zero_blocking()
-    
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_pfp_lp_preemptive_unordered_bounds(self):
         lb.apply_pfp_lp_preemptive_unordered_bounds(self.ts)
         self.lp_non_zero_blocking()
-    
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_pfp_lp_prio_bounds(self):
         lb.apply_pfp_lp_prio_bounds(self.ts)
         self.lp_non_zero_blocking()
-    
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_pfp_lp_preemptive_prio_bounds(self):
         lb.apply_pfp_lp_preemptive_prio_bounds(self.ts)
         self.lp_non_zero_blocking()
-    
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_pfp_lp_prio_fifo_bounds(self):
         lb.apply_pfp_lp_prio_fifo_bounds(self.ts)
         self.lp_non_zero_blocking()
-        
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_pfp_lp_preemptive_prio_fifo_bounds(self):
         lb.apply_pfp_lp_preemptive_prio_fifo_bounds(self.ts)
         self.lp_non_zero_blocking()
-    
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_dummy_bounds(self):
         lb.apply_dummy_bounds(self.ts)
         self.lp_zero_blocking()
-    
+
 
 # lower-level tests for C++ implementation
 
