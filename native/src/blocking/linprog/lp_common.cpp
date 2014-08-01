@@ -299,6 +299,7 @@ void add_topology_constraints_shm(
 
 // Constraint 9 in [Brandenburg 2013]
 // local higher-priority tasks never cause blocking under SHM protocols
+// assuming partitioned scheduling
 void add_local_higher_priority_constraints_shm(
 	VarMapper& vars,
 	const ResourceSharingInfo& info,

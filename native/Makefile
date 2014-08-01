@@ -122,6 +122,7 @@ ifneq ($(CPLEX_PATH)$(GLPK_PATH),)
 LP_OBJ    = lp_common.o io.o lp_dflp.o lp_dpcp.o lp_mpcp.o lp_fmlp.o lp_omip.o
 LP_OBJ   += lp_spinlocks.o lp_spinlock_msrp.o lp_spinlock_unordered.o
 LP_OBJ   += lp_spinlock_prio.o lp_spinlock_prio_fifo.o
+LP_OBJ   += lp_gfmlp.o
 
 ifneq ($(CPLEX_PATH),)
 LP_OBJ   += cplex.o cpx.o

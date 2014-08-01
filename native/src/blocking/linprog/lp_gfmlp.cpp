@@ -11,105 +11,111 @@
 
 typedef hashmap<unsigned int, unsigned int> BlockingLimits;
 
-// Constraint 14
-void add_fifo_cluster_constraints(
+// reused from partitioned FMLP+ blocking bounds
+void add_fifo_resource_constraints(
 	VarMapper& vars,
 	const ResourceSharingInfo& info,
 	const TaskInfo& ti,
-	LinearProgram& lp)
-{
-	foreach_remote_task(info.get_tasks(), ti, tx)
-	{
-		unsigned int t = tx->get_id();
-
-		// compute direct blocking opportunities, not counting Tx
-		BlockingLimits per_resource_remote;
-
-		foreach(ti.get_requests(), req)
-			per_resource_remote[req->get_resource_id()] = 0;
-
-		foreach_local_task_except(info.get_tasks(), *tx, ty)
-		{
-			foreach(ty->get_requests(), req)
-			{
-				unsigned int u = req->get_resource_id();
-				if (per_resource_remote.find(u) !=
-				    per_resource_remote.end())
-					per_resource_remote[u] += req->get_max_num_requests(ti.get_response());
-			}
-		}
-
-		unsigned int total_limit = 0;
-		foreach(ti.get_requests(), req)
-		{
-			unsigned int u = req->get_resource_id();
-			total_limit += std::min(req->get_num_requests(),
-			                        per_resource_remote[u]);
-		}
-
-		LinearExpression *exp = new LinearExpression();
-
-		foreach(tx->get_requests(), request)
-		{
-			unsigned int q = request->get_resource_id();
-
-			foreach_request_instance(*request, ti, v)
-			{
-				unsigned int var_id;
-				var_id = vars.lookup(t, q, v, BLOCKING_INDIRECT);
-				exp->add_var(var_id);
-			}
-		}
-
-		lp.add_inequality(exp, total_limit);
-	}
-}
-
-// Constraint 13
+	LinearProgram& lp);
 void add_total_fifo_constraints(
 	VarMapper& vars,
 	const ResourceSharingInfo& info,
 	const TaskInfo& ti,
 	LinearProgram& lp,
-	BlockingLimits &per_cluster_counts)
-{
+	BlockingLimits &per_cluster_counts);
+void add_fifo_cluster_constraints(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp);
 
-	unsigned int total_num_requests = 0;
+BlockingLimits count_blocking_opportunities(
+	const ResourceSharingInfo &info,
+	const TaskInfo& ti);
 
-	foreach(ti.get_requests(), req)
-		total_num_requests += req->get_num_requests();
 
-	foreach_task_except(info.get_tasks(), ti, tx)
-	{
-		unsigned int t = tx->get_id();
-
-		LinearExpression *exp = new LinearExpression();
-
-		//for all requests accessed by tx
-		foreach(tx->get_requests(), request)
-		{
-			unsigned int q = request->get_resource_id();
-
-			foreach_request_instance(*request, ti, v)
-			{
-				unsigned int var_id;
-				var_id = vars.lookup(t, q, v, BLOCKING_DIRECT);
-				exp->add_var(var_id);
-				var_id = vars.lookup(t, q, v, BLOCKING_INDIRECT);
-				exp->add_var(var_id);
-			}
-		}
-
-		lp.add_inequality(exp, per_cluster_counts[tx->get_cluster()]);
-	}
-}
-
-// Constraint 12
-void add_fifo_resource_constraints(
+// Local tasks block at most once in each segment.
+void add_per_segment_once_constraints(
 	VarMapper& vars,
 	const ResourceSharingInfo& info,
 	const TaskInfo& ti,
 	LinearProgram& lp)
+{
+	// one segment started by job release
+	unsigned int num_segments = 1;
+	// each request creates two segments
+	num_segments += 2 * ti.get_total_num_requests();
+
+	foreach_task_except(info.get_tasks(), ti, tx)
+	{
+		LinearExpression *exp = new LinearExpression();
+		unsigned int t = tx->get_id();
+		foreach(tx->get_requests(), request)
+		{
+			unsigned int q = request->get_resource_id();
+			foreach_request_instance(*request, ti, v)
+			{
+				unsigned int var_id;
+				var_id = vars.lookup(t, q, v,
+						     BLOCKING_PREEMPT);
+				exp->add_var(var_id);
+
+				var_id = vars.lookup(t, q, v,
+						     BLOCKING_INDIRECT);
+				exp->add_var(var_id);
+
+				var_id = vars.lookup(t, q, v,
+						     BLOCKING_DIRECT);
+				exp->add_var(var_id);
+			}
+		}
+		lp.add_equality(exp, num_segments);
+	}
+}
+
+// Local tasks block at most once in each segment.
+void add_total_preemption_limit_constraints(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp,
+	bool using_edf)
+{
+	BlockingLimits per_resource_counts;
+
+	foreach(ti.get_requests(), req)
+		per_resource_counts[req->get_resource_id()] = req->get_num_requests();
+
+	foreach_task_except(info.get_tasks(), ti, tx)
+	{
+		LinearExpression *exp = new LinearExpression();
+		unsigned int t = tx->get_id();
+		unsigned int requests_per_job = 0;
+		unsigned int lower_prio_jobs = tx->get_max_lower_prio_jobs(ti, using_edf);
+
+		foreach(tx->get_requests(), request)
+		{
+			unsigned int q = request->get_resource_id();
+			requests_per_job += request->get_num_requests();
+			foreach_request_instance(*request, ti, v)
+			{
+				unsigned int var_id;
+				var_id = vars.lookup(t, q, v,
+						     BLOCKING_PREEMPT);
+				exp->add_var(var_id);
+			}
+		}
+		lp.add_equality(exp, lower_prio_jobs * requests_per_job);
+	}
+}
+
+// Local tasks block at most once in each segment.
+void add_resource_preemption_limit_constraints(
+	VarMapper& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti,
+	LinearProgram& lp,
+	bool using_edf)
 {
 	BlockingLimits per_resource_counts;
 
@@ -119,101 +125,67 @@ void add_fifo_resource_constraints(
 	foreach_task_except(info.get_tasks(), ti, tx)
 	{
 		unsigned int t = tx->get_id();
-		//for all requests accessed by tx
+		unsigned int lower_prio_jobs = tx->get_max_lower_prio_jobs(ti, using_edf);
+
 		foreach(tx->get_requests(), request)
 		{
-			unsigned int q = request->get_resource_id();
 			LinearExpression *exp = new LinearExpression();
+			unsigned int q = request->get_resource_id();
 
 			foreach_request_instance(*request, ti, v)
 			{
 				unsigned int var_id;
-				var_id = vars.lookup(t, q, v, BLOCKING_DIRECT);
+				var_id = vars.lookup(t, q, v,
+						     BLOCKING_PREEMPT);
 				exp->add_var(var_id);
 			}
-
-			lp.add_inequality(exp, per_resource_counts[q]);
+			lp.add_equality(exp, lower_prio_jobs * request->get_num_requests());
 		}
 	}
 }
 
-BlockingLimits count_blocking_opportunities(
-	const ResourceSharingInfo &info,
-	const TaskInfo& ti)
-{
-	BlockingLimits per_cluster_counts;
-
-	foreach_task_except(info.get_tasks(), ti, tx)
-	{
-		unsigned int c = tx->get_cluster();
-
-		if (per_cluster_counts.find(c) == per_cluster_counts.end())
-		{
-			// compute direct blocking opportunities on Tx's cluster
-			BlockingLimits per_resource_remote;
-
-			foreach(ti.get_requests(), req)
-				per_resource_remote[req->get_resource_id()] = 0;
-
-			foreach_local_task(info.get_tasks(), *tx, ty)
-			{
-				// make sure we are not counting Ti itself
-				if (ty->get_id() != ti.get_id())
-				{
-					foreach(ty->get_requests(), req)
-					{
-						unsigned int u = req->get_resource_id();
-						if (per_resource_remote.find(u) !=
-							per_resource_remote.end())
-							per_resource_remote[u] +=
-								req->get_max_num_requests(ti.get_response());
-					}
-				}
-			}
-
-			per_cluster_counts[c] = 0;
-			foreach(ti.get_requests(), req)
-			{
-				unsigned int u = req->get_resource_id();
-				per_cluster_counts[c] += std::min(req->get_num_requests(),
-							 per_resource_remote[u]);
-			}
-		}
-	}
-
-	return per_cluster_counts;
-}
-
-static void add_fmlp_constraints(
+static void add_gfmlp_constraints(
 	VarMapper& vars,
 	const ResourceSharingInfo& info,
 	const TaskInfo& ti,
-	LinearProgram& lp)
+	LinearProgram& lp,
+	unsigned int cluster_size,
+	bool using_edf)
 {
-	// Constraint 1
+	// Constraint 1 in RTAS'13
 	add_mutex_constraints(vars, info, ti, lp);
-	// Constraint  9
-	add_local_higher_priority_constraints_shm(vars, info, ti, lp);
-	// Constraint 10
+	// Constraint 10 in RTAS'13
 	add_topology_constraints_shm(vars, info, ti, lp);
-	// Constraint 11
-	add_local_lower_priority_constraints_shm(vars, info, ti, lp);
 
 	BlockingLimits per_cluster_counts;
 	per_cluster_counts = count_blocking_opportunities(info, ti);
 
-	// Constraint 12
+	// Constraint 12 in RTAS'13
 	add_fifo_resource_constraints(vars, info, ti, lp);
-	// Constraint 13
+	// Constraint 13 in RTAS'13
 	add_total_fifo_constraints(vars, info, ti, lp, per_cluster_counts);
-	// Constraint 14
+	// Constraint 14 in RTAS'14
 	add_fifo_cluster_constraints(vars, info, ti, lp);
+
+	add_per_segment_once_constraints(vars, info, ti, lp);
+	add_total_preemption_limit_constraints(vars, info, ti, lp, using_edf);
+	add_resource_preemption_limit_constraints(vars, info, ti, lp, using_edf);
+
+	if (cluster_size == 1)
+	{
+		// special case: partitioned scheduling
+		// can exploit non-parallelism of lower-priority jobs
+		// Constraint 11 in RTAS'13
+		add_local_lower_priority_constraints_shm(vars, info, ti, lp);
+	}
 }
 
-static void apply_fmlp_bounds_for_task(
+static void apply_gfmlp_bounds_for_task(
 	unsigned int i,
 	BlockingBounds& bounds,
-	const ResourceSharingInfo& info)
+	const ResourceSharingInfo& info,
+	unsigned int cluster_size,
+	bool using_edf)
 {
 	LinearProgram lp;
 	VarMapper vars;
@@ -229,10 +201,11 @@ static void apply_fmlp_bounds_for_task(
 	model_gen_cost.start();
 #endif
 
+	// XXX is this ok for clustered?
 	set_blocking_objective_part_shm(vars, info, ti, lp, local_obj);
 	vars.seal();
 
-	add_fmlp_constraints(vars, info, ti, lp);
+	add_gfmlp_constraints(vars, info, ti, lp, cluster_size, using_edf);
 
 #if DEBUG_LP_OVERHEADS >= 2
 	model_gen_cost.stop();
@@ -263,17 +236,23 @@ static void apply_fmlp_bounds_for_task(
 }
 
 
-static BlockingBounds* _lp_fmlp_bounds(const ResourceSharingInfo& info)
+static BlockingBounds* _lp_gfmlp_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int cluster_size,
+	bool using_edf)
 {
 	BlockingBounds* results = new BlockingBounds(info);
 
 	for (unsigned int i = 0; i < info.get_tasks().size(); i++)
-		apply_fmlp_bounds_for_task(i, *results, info);
+		apply_gfmlp_bounds_for_task(i, *results, info, cluster_size, using_edf);
 
 	return results;
 }
 
-BlockingBounds* lp_part_fmlp_bounds(const ResourceSharingInfo& info)
+BlockingBounds* lp_gfmlp_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int cluster_size,
+	bool using_edf)
 {
 #if DEBUG_LP_OVERHEADS >= 1
 	static DEFINE_CPU_CLOCK(cpu_costs);
@@ -281,7 +260,7 @@ BlockingBounds* lp_part_fmlp_bounds(const ResourceSharingInfo& info)
 	cpu_costs.start();
 #endif
 
-	BlockingBounds *results = _lp_fmlp_bounds(info);
+	BlockingBounds *results = _lp_gfmlp_bounds(info, cluster_size, using_edf);
 
 #if DEBUG_LP_OVERHEADS >= 1
 	cpu_costs.stop();

@@ -27,8 +27,19 @@ BlockingBounds* lp_part_fmlp_bounds(const ResourceSharingInfo& info);
 BlockingBounds* lp_omip_bounds(
 	const ResourceSharingInfo& info,
 	unsigned int num_procs,
-	unsigned int cluster_size);
+	unsigned int cluster_size
+);
 
+/* The analysis of the Generalized FMLP+ is described in the extended version of:
+ *
+ * B. Brandenburg, "The FMLP+: An Asymptotically Optimal Real-Time Locking
+ * Protocol for Suspension-Aware Analysis”, ECRTS'14.
+ */
+BlockingBounds* lp_gfmlp_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int cluster_size,
+	bool using_edf
+);
 
 /* The following dummy bounds function always returns zero blocking. */
 BlockingBounds* dummy_bounds(const ResourceSharingInfo& info);
