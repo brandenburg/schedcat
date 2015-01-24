@@ -159,6 +159,7 @@ LP_OBJ   += lp_global_no.o lp_global_pi.o lp_global_rsb.o lp_global_prio.o lp_gl
 LP_OBJ   += lp_pedf_analysis.o
 LP_OBJ	 += lp_pedf_spinlocks_common.o lp_pedf_msrp.o lp_pedf_fifo_preempt.o
 LP_OBJ	 += lp_pedf_lockfree_common.o lp_pedf_lockfree_NP.o lp_pedf_lockfree_preempt.o
+LP_OBJ   += nested_cs.o lp_spinlock_nested_fifo.o
 
 APA_OBJ += apa_feas.o varmapperbase.o
 

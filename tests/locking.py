@@ -1123,9 +1123,6 @@ class RTABlockingAccounting(unittest.TestCase):
         self.assertTrue(rta.is_schedulable(1, self.p0))
         self.assertTrue(rta.is_schedulable(1, self.p1))
 
-        for t in self.ts:
-            print t.partition, t.preemption_level, t.blocked, t.suspended, t.response_time, t
-
         # Expected inflated WCET and response times:
 
         # - for highest-priority task:
@@ -1152,3 +1149,760 @@ class RTABlockingAccounting(unittest.TestCase):
         self.assertEqual(self.p1[1].cost, 10)
         self.assertEqual(self.p1[1].response_time, 10 + 10 + 2)
 
+
+class Test_nested_resource_model(unittest.TestCase):
+    def setUp(self):
+        self.m = r.OutermostCriticalSections()
+
+        res_id = 8
+        self.outer1 = self.m.add_outermost(res_id, 1)
+        self.outer2 = self.m.add_outermost(res_id, 1)
+
+        res_id = 9
+        self.nested1 = self.m.add_nested(self.outer2, res_id, 1)
+        self.nested2 = self.m.add_nested(self.outer2, res_id, 1)
+
+        res_id = 10
+        self.nested3 = self.m.add_nested(self.nested2, res_id, 1)
+        self.nested4 = self.m.add_nested(self.outer2, res_id, 1)
+
+    def test_no_reentrant_locks(self):
+        self.assertEqual(len(self.m), 2)
+        self.assertEqual(self.m[0].res_id, 8)
+
+        with self.assertRaises(AssertionError):
+            self.m.add_nested(self.outer1, 8, 1)
+
+            self.m.add_nested(self.nested, 8, 1)
+
+    def test_iterator(self):
+
+        all = [cs for cs in self.m.all()]
+        self.assertEqual([self.outer1, self.outer2, self.nested1, self.nested2,
+                          self.nested3, self.nested4], all)
+
+        outer = [cs for cs in self.m.outer()]
+        self.assertEqual([self.outer1, self.outer2], outer)
+
+        all_flat = [x for x in self.m.all_flat()]
+        expected = [
+            ( 8, 1, -1),
+            ( 8, 1, -1),
+            ( 9, 1,  1),
+            ( 9, 1,  1),
+            (10, 1,  3),
+            (10, 1,  1)
+        ]
+        self.assertEqual(expected, all_flat)
+
+
+    def test_well_ordered_nesting(self):
+        self.assertTrue(self.m.all_nesting_well_ordered())
+
+        self.m.add_nested(self.outer1, 1, 1)
+
+        self.assertFalse(self.m.all_nesting_well_ordered())
+
+    def test_total_length(self):
+        self.assertEqual(self.m[0].total_length, 1)
+        self.assertEqual(self.m[1].total_length, 5)
+
+
+class Test_group_locks(unittest.TestCase):
+
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(25, 200)
+        self.t3 = tasks.SporadicTask(33, 33)
+        self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3])
+
+        r.initialize_nested_resource_model(self.ts)
+
+        self.t1.critical_sections.add_outermost(1, 1)
+        self.t2.critical_sections.add_outermost(2, 1)
+        self.t3.critical_sections.add_outermost(3, 1)
+
+    def test_trivial_groups(self):
+        groups = r.identify_group_locks(self.ts)
+
+        self.assertEqual(groups[1], set([1]))
+        self.assertEqual(groups[2], set([2]))
+        self.assertEqual(groups[3], set([3]))
+
+    def test_nested_groups(self):
+        self.t3.critical_sections.add_nested(self.t3.critical_sections[0], 2, 1)
+
+        groups = r.identify_group_locks(self.ts)
+
+        self.assertEqual(groups[1], set([1]))
+        self.assertEqual(groups[2], set([2, 3]))
+        self.assertEqual(groups[3], set([2, 3]))
+        self.assertIs(groups[3], groups[2])
+
+    def test_collapsed_groups(self):
+        self.t3.critical_sections.add_nested(self.t3.critical_sections[0], 2, 1)
+        self.t1.critical_sections.add_nested(self.t1.critical_sections[0], 2, 1)
+        groups = r.identify_group_locks(self.ts)
+
+        self.assertEqual(groups[1], set([1, 2, 3]))
+        self.assertEqual(groups[2], set([1, 2, 3]))
+        self.assertEqual(groups[3], set([1, 2, 3]))
+        self.assertIs(groups[3], groups[2])
+        self.assertIs(groups[1], groups[2])
+
+    def test_trivial_group_lock_model(self):
+        self.t1.critical_sections.add_outermost(1, 1)
+        self.t2.critical_sections.add_outermost(2, 1)
+        self.t3.critical_sections.add_outermost(3, 1)
+
+        self.t1.critical_sections.add_outermost(2, 1)
+        self.t2.critical_sections.add_outermost(3, 1)
+        self.t3.critical_sections.add_outermost(1, 1)
+
+        self.t1.critical_sections.add_outermost(2, 3)
+        self.t2.critical_sections.add_outermost(3, 3)
+        self.t3.critical_sections.add_outermost(1, 3)
+
+        groups = r.identify_group_locks(self.ts)
+        model = self.t1.critical_sections.get_group_lock_model(groups)
+        self.assertEqual(len(model), 2)
+        self.assertEqual(model[1].max_requests, 2)
+        self.assertEqual(model[1].max_length, 1)
+        self.assertEqual(model[2].max_requests, 2)
+        self.assertEqual(model[2].max_length, 3)
+
+        model = self.t2.critical_sections.get_group_lock_model(groups)
+        self.assertEqual(len(model), 2)
+        self.assertEqual(model[2].max_requests, 2)
+        self.assertEqual(model[2].max_length, 1)
+        self.assertEqual(model[3].max_requests, 2)
+        self.assertEqual(model[3].max_length, 3)
+
+    def test_group_lock_model(self):
+        self.t1.critical_sections.add_outermost(1, 1)
+        self.t2.critical_sections.add_outermost(2, 1)
+        self.t3.critical_sections.add_outermost(3, 1)
+
+        self.t1.critical_sections.add_outermost(2, 1)
+        self.t2.critical_sections.add_outermost(3, 1)
+        self.t3.critical_sections.add_outermost(1, 1)
+
+        self.t1.critical_sections.add_outermost(2, 3)
+        self.t2.critical_sections.add_outermost(3, 3)
+        self.t3.critical_sections.add_outermost(1, 3)
+
+        self.t3.critical_sections.add_nested(self.t3.critical_sections[0], 2, 1)
+        self.t3.critical_sections.add_nested(self.t3.critical_sections[-1], 3, 1)
+        self.t1.critical_sections.add_nested(self.t1.critical_sections[0], 2, 7)
+
+        groups = r.identify_group_locks(self.ts)
+
+        model = self.t1.critical_sections.get_group_lock_model(groups)
+        self.assertEqual(len(model), 1)
+        self.assertEqual(model[1].max_requests, 4)
+        self.assertEqual(model[1].max_length, 8)
+
+        model = self.t2.critical_sections.get_group_lock_model(groups)
+        self.assertEqual(len(model), 1)
+        self.assertEqual(model[1].max_requests, 4)
+        self.assertEqual(model[1].max_length, 3)
+
+        model = self.t3.critical_sections.get_group_lock_model(groups)
+        self.assertEqual(len(model), 1)
+        self.assertEqual(model[1].max_requests, 4)
+        self.assertEqual(model[1].max_length, 4)
+
+
+class Test_cpp_non_nested_analysis(unittest.TestCase):
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(10, 100)
+        self.t3 = tasks.SporadicTask(10, 100)
+        self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3])
+
+        r.initialize_nested_resource_model(self.ts)
+
+        self.t1.critical_sections.add_outermost(1, 1)
+
+        self.t2.critical_sections.add_outermost(1, 5)
+
+        self.t3.critical_sections.add_outermost(1, 7)
+
+        for i, t in enumerate(self.ts):
+            t.response_time = 20
+
+        self.t1.partition = 0
+        self.t2.partition = 1
+        self.t3.partition = 1
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    def test_classic_msrp(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_msrp_bounds(self.ts, 2)
+
+        self.assertEqual(self.t1.blocked, 0)
+        self.assertEqual(self.t2.blocked, 8)
+        self.assertEqual(self.t3.blocked, 0)
+
+        self.assertEqual(self.t1.remote_blocking, 7)
+        self.assertEqual(self.t2.remote_blocking, 1)
+        self.assertEqual(self.t3.remote_blocking, 1)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 7)
+        self.assertEqual(self.t2.blocked, 8)
+        self.assertEqual(self.t3.blocked, 1)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 7)
+        self.assertEqual(self.t2.blocked, 8)
+        self.assertEqual(self.t3.blocked, 1)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks2(self):
+        self.t2.critical_sections.add_outermost(1, 5)
+        self.t3.critical_sections.add_outermost(1, 7)
+
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 7)
+        self.assertEqual(self.t2.blocked, 8)
+        self.assertEqual(self.t3.blocked, 1)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo2(self):
+        self.t2.critical_sections.add_outermost(1, 5)
+        self.t3.critical_sections.add_outermost(1, 7)
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 7)
+        self.assertEqual(self.t2.blocked, 8)
+        self.assertEqual(self.t3.blocked, 1)
+
+
+class Test_cpp_non_nested_analysis2(unittest.TestCase):
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(10, 100)
+        self.t3 = tasks.SporadicTask(10, 100)
+        self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3])
+
+        r.initialize_nested_resource_model(self.ts)
+
+        self.t1.critical_sections.add_outermost(1, 1)
+
+        self.t2.critical_sections.add_outermost(1, 5)
+        self.t2.critical_sections.add_outermost(1, 5)
+
+        self.t3.critical_sections.add_outermost(1, 7)
+        self.t3.critical_sections.add_outermost(1, 7)
+
+        for i, t in enumerate(self.ts):
+            t.response_time = t.deadline
+            t.partition = i
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 5 + 7 )
+        self.assertEqual(self.t2.blocked, 1 + 1 + 7 + 7)
+        self.assertEqual(self.t3.blocked, 1 + 1 + 5 + 5)
+
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 5 + 7)
+        self.assertEqual(self.t2.blocked, 1 + 1 + 7 + 7)
+        self.assertEqual(self.t3.blocked, 1 + 1 + 5 + 5)
+
+class Test_cpp_nested_analysis_trivial1(unittest.TestCase):
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(10, 100)
+        self.t3 = tasks.SporadicTask(10, 100)
+        self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3])
+
+        r.initialize_nested_resource_model(self.ts)
+
+        cs = self.t1.critical_sections.add_outermost(1, 1)
+        self.t1.critical_sections.add_nested(cs, 2, 1)
+
+        cs = self.t2.critical_sections.add_outermost(1, 5)
+        self.t2.critical_sections.add_nested(cs, 2, 5)
+
+        cs = self.t3.critical_sections.add_outermost(1, 7)
+        self.t3.critical_sections.add_nested(cs, 2, 7)
+
+        for i, t in enumerate(self.ts):
+            t.response_time = t.deadline
+            t.partition = i
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 5 + 5 + 7 + 7)
+        self.assertEqual(self.t2.blocked, 1 + 1 + 7 + 7)
+        self.assertEqual(self.t3.blocked, 1 + 1 + 5 + 5)
+
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 5 + 5 + 7 + 7)
+        self.assertEqual(self.t2.blocked, 1 + 1 + 7 + 7)
+        self.assertEqual(self.t3.blocked, 1 + 1 + 5 + 5)
+
+
+class Test_cpp_nested_analysis_trivial2(unittest.TestCase):
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(10, 100)
+        self.t3 = tasks.SporadicTask(10, 100)
+        self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3])
+
+        r.initialize_nested_resource_model(self.ts)
+
+        # T1
+        cs = self.t1.critical_sections.add_outermost(1, 1)
+        self.t1.critical_sections.add_nested(cs, 2, 1)
+
+        # T2
+        cs = self.t2.critical_sections.add_outermost(2, 5)
+        self.t2.critical_sections.add_nested(cs, 3, 5)
+
+        # T3
+        self.t3.critical_sections.add_outermost(1, 20)
+        cs = self.t3.critical_sections.add_outermost(1, 7)
+        self.t3.critical_sections.add_nested(cs, 3, 7)
+
+
+
+        for i, t in enumerate(self.ts):
+            t.response_time = t.deadline
+            t.partition = i
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 5 + 5 + 20)
+        self.assertEqual(self.t2.blocked, 1 + 1 + 20)
+        self.assertEqual(self.t3.blocked, 2 * (1 + 1 + 5 + 5))
+
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 5 + 5 + 20)
+        self.assertEqual(self.t2.blocked, 1 + 7)
+        self.assertEqual(self.t3.blocked, (1 + 1) + 10 + (1 + 1) + 10)
+
+
+class Test_cpp_nested_analysis_double_indirect(unittest.TestCase):
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(10, 100)
+        self.t3 = tasks.SporadicTask(10, 100)
+        self.t4 = tasks.SporadicTask(10, 100)
+        self.t5 = tasks.SporadicTask(10, 100)
+        self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3, self.t4, self.t5])
+
+        r.initialize_nested_resource_model(self.ts)
+
+        # T1
+        cs = self.t1.critical_sections.add_outermost(1, 1)
+        self.t1.critical_sections.add_nested(cs, 2, 1)
+
+        # T2
+        cs = self.t2.critical_sections.add_outermost(2, 2)
+        self.t2.critical_sections.add_nested(cs, 3, 2)
+
+        # T3
+        cs = self.t3.critical_sections.add_outermost(3, 3)
+        self.t3.critical_sections.add_nested(cs, 4, 3)
+
+        # T4
+        self.t4.critical_sections.add_outermost(1, 10)
+        cs = self.t4.critical_sections.add_outermost(1, 4)
+        self.t4.critical_sections.add_nested(cs, 4, 4)
+
+
+        for i, t in enumerate(self.ts):
+            t.response_time = 40
+            t.partition = i
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    def extra_requests(self):
+        # T5
+        cs = self.t5.critical_sections.add_outermost(0, 5)
+        self.t5.critical_sections.add_nested(cs, 4, 5)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 4 + 6 + 10)
+
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        # Cannot block on T4's nested request via nested chain through T2, T3
+        # because of implicit synchronization through T1.
+        self.assertEqual(self.t1.blocked, 4 + 6 + 10)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks2(self):
+        self.extra_requests()
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 4 + 6 + 10 + 10)
+
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo2(self):
+        self.extra_requests()
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        # Cannot block on T4's nested request via nested chain through T2, T3
+        # because of implicit synchronization through T1.
+        # It can block on T5's nested request.
+        self.assertEqual(self.t1.blocked, 4 + 6 + 10 + 5)
+
+
+class Test_cpp_nested_analysis_trivial3(unittest.TestCase):
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(10, 100)
+        self.ts = tasks.TaskSystem([self.t1, self.t2])
+
+        r.initialize_nested_resource_model(self.ts)
+
+        cs = self.t1.critical_sections.add_outermost(1, 1)
+        self.t1.critical_sections.add_nested(cs, 3, 1)
+
+        cs = self.t2.critical_sections.add_outermost(1, 3)
+        cs = self.t2.critical_sections.add_nested(cs, 2, 3)
+        self.t2.critical_sections.add_nested(cs, 3, 3)
+
+        cs = self.t2.critical_sections.add_outermost(1, 5)
+        cs = self.t2.critical_sections.add_nested(cs, 3, 5)
+
+        for i, t in enumerate(self.ts):
+            t.response_time = 40
+            t.partition = i
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    def extra_requests(self):
+        self.t1.critical_sections.add_outermost(3, 1)
+        self.t2.critical_sections.add_outermost(3, 7)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks1(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 1 * 10)
+        self.assertEqual(self.t2.blocked, 1 * 2)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo1(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        # (1,1)-(3,1) of T1 directly blocks on (1,5)-(3,5) of T2.
+        expected = 5 + 5
+        # ...and on nothing else due to implicit serialization via resource 1
+        self.assertEqual(self.t1.blocked, expected)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks2(self):
+        self.extra_requests()
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 2 * 10)
+        self.assertEqual(self.t2.blocked, 2 * 2)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo2(self):
+        self.extra_requests()
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        # First, (1,1)-(3,1) of T1 directly blocks on (1,3)-(2,3)-(3,3) of T2
+        expected = 3 + 3 + 3
+        # then on (3, 7) of T2.
+        expected += 7
+        # Second, (3,1) of T1 directly blocks on the nested request of (1,5)-(3,5) of T2.
+        expected += 5
+        self.assertEqual(self.t1.blocked, expected)
+
+
+class Test_cpp_nested_analysis_implicitly_serialized_across_cores(unittest.TestCase):
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(10, 100)
+        self.t3 = tasks.SporadicTask(10, 100)
+        self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3])
+
+        r.initialize_nested_resource_model(self.ts)
+
+        cs = self.t1.critical_sections.add_outermost(2, 1)
+
+        cs = self.t2.critical_sections.add_outermost(1, 2)
+        self.t2.critical_sections.add_nested(cs, 2, 2)
+
+        cs = self.t3.critical_sections.add_outermost(1, 3)
+        self.t3.critical_sections.add_nested(cs, 2, 3)
+
+        for i, t in enumerate(self.ts):
+            t.response_time = 40
+            t.partition = i
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks1(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 1 * 4 + 1 * 6)
+        self.assertEqual(self.t2.blocked, 1 * 1 + 1 * 6)
+        self.assertEqual(self.t3.blocked, 1 * 1 + 1 * 4)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    # The actual expected blocking would be 3. However, due to pessimism
+    # in the analysis, it is actually reported as 5. This test case
+    # serves as a reminder of this scenario, so it's marked as an
+    # expected failure.
+    @unittest.expectedFailure
+    def test_fifo1(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        # (2,1) of T1 directly blocks on (1,3)-(2,3) of T3.
+        expected = 3
+        # ...and on nothing else due to implicit serialization via resource 1
+        self.assertEqual(self.t1.blocked, expected)
+
+
+class Test_cpp_nested_analysis_max_number_nested(unittest.TestCase):
+    def setUp(self):
+        self.n = 8
+        self.ts = tasks.TaskSystem(
+            [tasks.SporadicTask(10, 100) for i in xrange(self.n)])
+        r.initialize_nested_resource_model(self.ts)
+
+        for i, t in enumerate(self.ts):
+            t.response_time = t.deadline
+            t.partition = i
+            t.critical_sections.add_outermost(1, 1)
+
+        self.ts[1].critical_sections.add_nested(
+            self.ts[1].critical_sections[0], 2, 1)
+        self.ts[2].critical_sections.add_nested(
+            self.ts[2].critical_sections[0], 2, 1)
+
+        for i, t in enumerate(self.ts[1:]):
+            t.critical_sections.add_outermost(2, 2)
+            t.critical_sections.add_outermost(2, 2)
+            t.critical_sections.add_outermost(1, 1)
+            t.critical_sections.add_outermost(1, 1)
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.ts[0].blocked, (self.n - 1) * 2)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        self.assertEqual(self.ts[0].blocked, (self.n - 1) * 1 + 1 + 1 + (self.n - 2) * 2 * 2)
+
+
+class Test_cpp_np_fifo_no_loop_back(unittest.TestCase):
+    def setUp(self):
+        self.n = 8
+        self.ts = tasks.TaskSystem(
+            [tasks.SporadicTask(10, 100) for i in xrange(self.n)])
+        r.initialize_nested_resource_model(self.ts)
+
+        for i, t in enumerate(self.ts):
+            t.response_time = t.deadline
+            t.partition = i
+            t.critical_sections.add_outermost(1, i + 1)
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    def test_classic_msrp(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_msrp_bounds(self.ts, self.n)
+
+        for i, t in enumerate(self.ts):
+            self.assertEqual(t.remote_blocking,\
+                             sum([j + 1 for j in xrange(self.n) if j != i]))
+
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        for i, t in enumerate(self.ts):
+            self.assertEqual(t.blocked,\
+                             sum([j + 1 for j in xrange(self.n) if j != i]))
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        for i, t in enumerate(self.ts):
+            self.assertEqual(t.blocked,\
+                             sum([j + 1 for j in xrange(self.n) if j != i]))
+
+
+class Test_cpp_fifo_spin_locks_pcp(unittest.TestCase):
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(10, 120)
+        self.t3 = tasks.SporadicTask(10, 130)
+        self.t4 = tasks.SporadicTask(10, 140)
+        self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3, self.t4])
+
+        r.initialize_nested_resource_model(self.ts)
+
+        self.t1.critical_sections.add_outermost(1, 1)
+
+        self.t2.critical_sections.add_outermost(1, 5)
+
+        self.t3.critical_sections.add_outermost(1, 7)
+        self.t3.critical_sections.add_outermost(2, 10)
+
+        self.t4.critical_sections.add_outermost(2, 20)
+
+        for i, t in enumerate(self.ts):
+            t.response_time = 45
+
+        self.t1.partition = 0
+        self.t2.partition = 1
+        self.t3.partition = 1
+        self.t4.partition = 1
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_classic_msrp(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_msrp_bounds(self.ts, 2)
+
+        self.assertEqual(self.t1.blocked, 0)
+        self.assertEqual(self.t2.blocked, 8)
+        self.assertEqual(self.t3.blocked, 20)
+        self.assertEqual(self.t4.blocked, 0)
+
+        self.assertEqual(self.t1.remote_blocking, 7)
+        self.assertEqual(self.t2.remote_blocking, 1)
+        self.assertEqual(self.t3.remote_blocking, 1)
+        self.assertEqual(self.t4.remote_blocking, 0)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_group_locks(self):
+        r.convert_to_group_locks(self.ts)
+        res = lb.apply_pfp_lp_msrp_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 7)
+        self.assertEqual(self.t2.blocked, 8)
+        self.assertEqual(self.t3.blocked, 21)
+        self.assertEqual(self.t4.blocked, 1) # account for higher-prio spin delay
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_fifo(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 7)
+        self.assertEqual(self.t2.blocked, 8)
+        self.assertEqual(self.t3.blocked, 1 + 20)
+        self.assertEqual(self.t4.blocked, 1) # account for higher-prio spin delay
+
+class Test_cpp_nested_analysis(unittest.TestCase):
+    def setUp(self):
+        self.t1 = tasks.SporadicTask(10, 100)
+        self.t2 = tasks.SporadicTask(25, 100)
+        self.t3 = tasks.SporadicTask(33, 100)
+        self.ts = tasks.TaskSystem([self.t1, self.t2, self.t3])
+
+        r.initialize_nested_resource_model(self.ts)
+
+        self.t1.critical_sections.add_outermost(1, 1)
+        self.t1.critical_sections.add_nested(self.t1.critical_sections[0], 2, 7)
+        self.t1.critical_sections.add_outermost(1, 1)
+        self.t1.critical_sections.add_outermost(2, 1)
+        self.t1.critical_sections.add_outermost(2, 3)
+#        self.t1.critical_sections.add_outermost(4, 1)
+
+        self.t2.critical_sections.add_outermost(2, 1)
+        self.t2.critical_sections.add_outermost(2, 1)
+        self.t2.critical_sections.add_outermost(3, 1)
+        self.t2.critical_sections.add_outermost(3, 3)
+#        self.t2.critical_sections.add_outermost(4, 2)
+
+        self.t3.critical_sections.add_nested(self.t2.critical_sections[0], 3, 1)
+        self.t3.critical_sections.add_outermost(3, 1)
+        self.t3.critical_sections.add_outermost(3, 1)
+        self.t3.critical_sections.add_outermost(1, 1)
+        self.t3.critical_sections.add_outermost(1, 3)
+        self.t3.critical_sections.add_nested(self.t3.critical_sections[-1], 3, 1)
+#        self.t3.critical_sections.add_outermost(4, 3)
+
+
+        for i, t in enumerate(self.ts):
+            t.response_time = t.deadline
+            t.partition = i
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_cpp_model_generation(self):
+        # just check that it doesn't crash
+        model = lb.get_cpp_nested_cs_model(self.ts)
+        # lb.lp_cpp.dump(model)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_apply_nested_fifo_bounds(self):
+        res = lb.apply_pfp_nested_fifo_spinlock_bounds(self.ts)
+
+        self.assertEqual(self.t1.blocked, 21)
+        self.assertEqual(self.t2.blocked, 17)
+        self.assertEqual(self.t3.blocked, 27)

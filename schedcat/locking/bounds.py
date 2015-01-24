@@ -49,7 +49,7 @@ def is_reasonable_priority_assignment(num_cpus, taskset):
     return True
 
 # assumes mutex constraints
-def get_cpp_model(all_tasks, use_task_period=False, use_task_deadline=False):
+def get_cpp_model(all_tasks, use_task_period=False, use_task_deadline=False, no_requests=False):
     rsi = cpp.ResourceSharingInfo(len(all_tasks))
     for t in all_tasks:
         if use_task_period:
@@ -64,10 +64,12 @@ def get_cpp_model(all_tasks, use_task_period=False, use_task_deadline=False):
                      t.preemption_level, # mapped to fixed priorities in the C++ code
                      t.cost,
                      t.deadline)
-        for req in t.resmodel:
-            req = t.resmodel[req]
-            if req.max_requests > 0:
-                rsi.add_request(req.res_id, req.max_requests, req.max_length, req.priority)
+        if not no_requests:
+            for req in t.resmodel:
+                req = t.resmodel[req]
+                if req.max_requests > 0:
+                    rsi.add_request(req.res_id, req.max_requests, req.max_length,
+                                    req.priority)
     return rsi
 
 def get_cpp_model_rw(all_tasks, use_task_period=False):
@@ -305,6 +307,7 @@ def apply_msrp_bounds_holistic(all_tasks, dedicated_irq=cpp.NO_CPU):
 
     return res
 
+
 ### S-aware LP-based analysis of distributed locking protocols
 
 try:
@@ -313,6 +316,16 @@ try:
     lp_cpp_available = True
 except ImportError:
     lp_cpp_available = False
+
+def get_cpp_nested_cs_model(all_tasks):
+    model = lp_cpp.CriticalSectionsOfTaskset()
+
+    for t in all_tasks:
+        cs = model.new_task()
+        for (id, len, outer) in t.critical_sections.all_flat():
+            cs.add(id, len, outer)
+
+    return model
 
 def apply_lp_dflp_bounds(all_tasks, resource_mapping):
     model = get_cpp_model(all_tasks)
@@ -565,6 +578,14 @@ def apply_no_progress_priority_bounds(all_tasks, num_cpus):
         t.response_time = t.cost + res.get_blocking_term(i)
     return res
 
+def apply_pfp_nested_fifo_spinlock_bounds(all_tasks):
+    task_info    = get_cpp_model(all_tasks, no_requests=True)
+    nested_model = get_cpp_nested_cs_model(all_tasks)
+    res = lp_cpp.lp_nested_fifo_spinlock_bounds(task_info, nested_model)
+    for i, _ in enumerate(all_tasks):
+        all_tasks[i].blocked = res.get_blocking_term(i)
+    return res
+
 def pedf_msrp_is_schedulable(all_tasks):
     # LP-based schedulability analysis based processor-demand criterion (PDC) for MSRP
     model = get_cpp_model(all_tasks, use_task_deadline=True)
@@ -589,3 +610,5 @@ def pedf_msrp_classic_is_schedulable(all_tasks, num_cpus):
     # MSRP classic analysis based on QPA
     model = get_cpp_model(all_tasks, use_task_deadline=True)
     return cpp.pedf_msrp_classic_is_schedulable(model, num_cpus)
+
+

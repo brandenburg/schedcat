@@ -3,7 +3,7 @@
 import xml.etree.ElementTree as ET
 
 from .tasks import TaskSystem, SporadicTask
-from .resources import ResourceRequirement, ResourceRequirements
+from .resources import ResourceRequirement, ResourceRequirements, OutermostCriticalSections
 from schedcat.util.storage import storage
 
 EPSILON = 10**-7
@@ -49,6 +49,20 @@ def res_requirement(r, rmodel=None):
 
     return tag
 
+def nested_res_requirement(r, rmodel=None):
+    if rmodel is None:
+        tag = ET.Element('critical_section')
+    else:
+        tag = ET.SubElement(rmodel, 'critical_section')
+
+    set_attribute(tag, 'res_id', r)
+    set_attribute(tag, 'length', r)
+
+    for csn in r.nested:
+        nested_res_requirement(csn, tag)
+
+    return tag
+
 def task(t):
     tag = ET.Element('task')
     if not t.id is None:
@@ -72,6 +86,11 @@ def task(t):
         for cpu in t.affinity:
             xcpu = ET.SubElement(aff, 'cpu')
             xcpu.set('id', str(cpu))
+
+    nested_rmodel = subtag_for_attribute(tag, t, 'critical_sections')
+    if not nested_rmodel is None:
+        for cs in t.critical_sections:
+            nested_res_requirement(cs, nested_rmodel)
 
     tag.task = t
     task.xml = tag
@@ -109,6 +128,27 @@ def parse_resmodel(node):
     else:
         return None
 
+def parse_cs(node, ocs, outer):
+    res_id = maybe_int(node.get('res_id', 0))
+    length = maybe_int(node.get('length', 0))
+    if outer:
+        cs = ocs.add_nested(outer, res_id, length)
+    else:
+        cs = ocs.add_outermost(res_id, length)
+    for nd in list(node):
+        parse_cs(nd, ocs, cs)
+
+def parse_critical_sections(node):
+    all_cs = node.find('critical_sections')
+    if all_cs != None:
+        ocs = OutermostCriticalSections()
+        for nd in all_cs.findall('critical_section'):
+            parse_cs(nd, ocs, None)
+        return ocs
+    else:
+        return None
+
+
 def get_attribute(node, attr_name, obj, field_name=None, convert=lambda _: _):
     if field_name is None:
         field_name = attr_name
@@ -133,6 +173,9 @@ def parse_task(node):
     resmodel = parse_resmodel(node)
     if not resmodel is None:
         t.resmodel = resmodel
+    csmodel = parse_critical_sections(node)
+    if not csmodel is None:
+        t.critical_sections = csmodel
 
     affinity = parse_affinity(node)
     if affinity:
