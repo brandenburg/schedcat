@@ -23,12 +23,14 @@ enum blocking_type
 // s-oblivious analysis reuses BLOCKING_DIRECT as a catch-all blocking type.
 #define BLOCKING_SOB BLOCKING_DIRECT
 
-class VarMapper {
+class VarMapperBase {
+
 private:
 	hashmap<uint64_t, unsigned int> map;
 	unsigned int next_var;
 	bool sealed;
 
+protected:
 	void insert(uint64_t key)
 	{
 		assert(next_var < UINT_MAX);
@@ -38,30 +40,29 @@ private:
 		map[key] = idx;
 	}
 
-	static uint64_t encode_request(uint64_t task_id, uint64_t res_id, uint64_t req_id,
-		                       uint64_t blocking_type)
+	bool exists(uint64_t key) const
 	{
-		assert(task_id < (1 << 30));
-		assert(res_id < (1 << 10));
-		assert(req_id < (1 << 22));
-		assert(blocking_type < (1 << 2));
+		return map.count(key) > 0;
+	}
 
-		return (blocking_type << 62) | (task_id << 30) | (req_id << 10) | res_id;
+	unsigned int get(uint64_t key)
+	{
+		return map[key];
+	}
+
+	unsigned int var_for_key(uint64_t key)
+	{
+		if (!exists(key))
+			insert(key);
+		return get(key);
 	}
 
 public:
-	VarMapper(unsigned int start_var = 0)
+
+	VarMapperBase(unsigned int start_var = 0)
 		: next_var(start_var), sealed(false)
 	{}
 
-	unsigned int lookup(unsigned int task_id, unsigned int res_id, unsigned int req_id,
-	                    blocking_type type)
-	{
-		uint64_t key = encode_request(task_id, res_id, req_id, type);
-		if (!map.count(key))
-			insert(key);
-		return map[key];
-	}
 
 	// stop new IDs from being generated
 	void seal()
@@ -83,6 +84,35 @@ public:
 	{
 		return next_var;
 	}
+
+};
+
+class VarMapper : public VarMapperBase {
+private:
+
+	static uint64_t encode_request(uint64_t task_id, uint64_t res_id, uint64_t req_id,
+		                       uint64_t blocking_type)
+	{
+		assert(task_id < (1 << 30));
+		assert(res_id < (1 << 10));
+		assert(req_id < (1 << 22));
+		assert(blocking_type < (1 << 2));
+
+		return (blocking_type << 62) | (task_id << 30) | (req_id << 10) | res_id;
+	}
+
+public:
+	VarMapper(unsigned int start_var = 0)
+		: VarMapperBase(start_var)
+	{}
+
+	unsigned int lookup(unsigned int task_id, unsigned int res_id, unsigned int req_id,
+	                    blocking_type type)
+	{
+		uint64_t key = encode_request(task_id, res_id, req_id, type);
+		return var_for_key(key);
+	}
+
 };
 
 // spinlock analysis: re-use indirect for arrival
