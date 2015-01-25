@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "stl-helper.h"
 #include "stl-hashmap.h"
 
 class VarMapperBase {
@@ -37,6 +38,19 @@ protected:
 		if (!exists(key))
 			insert(key);
 		return get(key);
+	}
+
+	bool search_key_for_var(unsigned int var, uint64_t &key)
+	{
+		foreach(map, it)
+		{
+			if (it->second == var)
+			{
+				key = it->first;
+				return true;
+			}
+		}
+		return false;
 	}
 
 public:
