@@ -65,6 +65,13 @@ unsigned int TaskInfo::get_max_num_jobs(unsigned long interval) const
 	return num_jobs;
 }
 
+unsigned int TaskInfo::uni_fp_local_get_max_num_jobs(unsigned long interval) const
+{
+	unsigned long num_jobs;
+	num_jobs = divide_with_ceil(interval, get_period());
+	return num_jobs;
+}
+
 unsigned int RequestBound::get_max_num_requests(unsigned long interval) const
 {
 	return (unsigned int) (task->get_max_num_jobs(interval) * num_requests);

@@ -160,6 +160,9 @@ public:
 
 	unsigned int get_max_num_jobs(unsigned long interval) const;
 
+	// uniprocessor fixed-priority scheduling, only valid for local tasks
+	unsigned int uni_fp_local_get_max_num_jobs(unsigned long interval) const;
+
 	// Assuming EDF priorities,
 	// how many jobs of this tasks with lower priority (= later deadline) than pending_job
 	// can exist while pending_job is pending?
