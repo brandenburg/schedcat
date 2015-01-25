@@ -98,7 +98,7 @@ public:
 	void add_equality(LinearExpression *exp, double equal_to)
 	{
 		if (exp->has_terms())
-			inequalities.push_back(Constraint(exp, equal_to));
+			equalities.push_back(Constraint(exp, equal_to));
 		else
 			delete exp;
 	}
