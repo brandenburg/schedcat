@@ -122,7 +122,10 @@ public:
 	}
 
 	unsigned int get_id() const { return id; }
-	unsigned int  get_priority() const { return priority; }
+
+	/* NOTE: 0 == highest priority! */
+	unsigned int  get_priority() const { return priority; } // smaller integer <=> higher prio
+
 	unsigned long get_period() const { return period; }
 	unsigned long get_deadline() const { return deadline; }
 	unsigned long get_response() const { return response; }
