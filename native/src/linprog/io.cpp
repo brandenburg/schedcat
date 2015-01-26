@@ -1,9 +1,14 @@
 #include <iostream>
 
+#include "stl-hashmap.h"
+
 #include "linprog/solver.h"
 #include "linprog/io.h"
 
-std::ostream& operator<<(std::ostream &os, const LinearExpression &exp)
+std::ostream& pretty_print_linear_expression(
+	std::ostream &os,
+	const LinearExpression &exp,
+	hashmap<unsigned int, std::string> &var_names)
 {
 	bool first = true;
 	foreach (exp.get_terms(), term)
@@ -15,8 +20,39 @@ std::ostream& operator<<(std::ostream &os, const LinearExpression &exp)
 		else
 			os << term->first;
 
-		os <<  " X" << term->second << " ";
+		if (var_names.find(term->second) != var_names.end())
+			os << " " << var_names[term->second] << " ";
+		else
+			os <<  " X" << term->second << " ";
 		first = false;
+	}
+
+	return os;
+}
+
+std::ostream& operator<<(std::ostream &os, const LinearExpression &exp)
+{
+	hashmap<unsigned int, std::string> dummy_map;
+	return pretty_print_linear_expression(os, exp, dummy_map);
+}
+
+std::ostream& pretty_print_linear_program(
+	std::ostream &os,
+	const LinearProgram &lp,
+	hashmap<unsigned int, std::string> &var_names)
+{
+	os << "maximize ";
+	pretty_print_linear_expression(os, *lp.get_objective(), var_names);
+	os << " subject to:" << std::endl;
+	foreach (lp.get_equalities(), it)
+	{
+		pretty_print_linear_expression(os, *(it->first), var_names);
+		os << " = " << it->second << std::endl;
+	}
+	foreach (lp.get_inequalities(), it)
+	{
+		pretty_print_linear_expression(os, *(it->first), var_names);
+		os << " <= " << it->second << std::endl;
 	}
 
 	return os;
@@ -24,17 +60,8 @@ std::ostream& operator<<(std::ostream &os, const LinearExpression &exp)
 
 std::ostream& operator<<(std::ostream &os, const LinearProgram &lp)
 {
-	os << "maximize " << *lp.get_objective() << " subject to:" << std::endl;
-	foreach (lp.get_equalities(), it)
-	{
-		os << *(it->first) << " = " << it->second << std::endl;
-	}
-	foreach (lp.get_inequalities(), it)
-	{
-		os << *(it->first) << " <= " << it->second << std::endl;
-	}
-
-	return os;
+	hashmap<unsigned int, std::string> dummy_map;
+	return pretty_print_linear_program(os, lp, dummy_map);
 }
 
 void dump_lp_solution(
