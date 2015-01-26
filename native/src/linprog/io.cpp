@@ -13,17 +13,21 @@ std::ostream& pretty_print_linear_expression(
 	bool first = true;
 	foreach (exp.get_terms(), term)
 	{
-		if (term->first < 0)
-			os << "- " << -term->first;
+		if (term->first == -1)
+			os << "- ";
+		else if (term->first < 0)
+			os << "- " << -term->first << " ";
+		else if (!first && term->first == 1)
+			os << "+ ";
 		else if (!first)
-			os << "+ " << term->first;
-		else
-			os << term->first;
+			os << "+ " << term->first << " ";
+		else if (term->first != 1)
+			os << term->first << " ";
 
 		if (var_names.find(term->second) != var_names.end())
-			os << " " << var_names[term->second] << " ";
+			os << var_names[term->second] << " ";
 		else
-			os <<  " X" << term->second << " ";
+			os <<  "X" << term->second << " ";
 		first = false;
 	}
 
