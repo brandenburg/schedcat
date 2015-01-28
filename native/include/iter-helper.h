@@ -62,6 +62,14 @@
 	foreach_remote_task(tasks, reference_task, task_iter)		   \
 	if (task_iter->get_priority() < (reference_task).get_priority())
 
+#define foreach_task_in_cluster(tasks, cluster, task_iter) \
+	foreach(tasks, task_iter) \
+	if (task_iter->get_cluster() == (cluster))
+
+#define foreach_task_not_in_cluster(tasks, cluster, task_iter) \
+	foreach(tasks, task_iter) \
+	if (task_iter->get_cluster() != (cluster))
+
 #define foreach_local_task(tasks, local_task, task_iter)	\
 	foreach(tasks, task_iter)				\
 	if (task_iter->get_cluster() == (local_task).get_cluster())
