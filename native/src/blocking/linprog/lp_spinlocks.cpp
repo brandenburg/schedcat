@@ -467,7 +467,7 @@ void add_common_atmostonce_local_arrival_constraints(
 		if (exp_per_res->has_terms())
 		{
 			unsigned int var_id = vars.lookup_arrival_enabled(*resource);
-			exp_per_res->add_term(-1, var_id);
+			exp_per_res->sub_var(var_id);
 			lp.add_inequality(exp_per_res, 0);
 		}
 		else

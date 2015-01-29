@@ -84,7 +84,7 @@ void add_msrp_max_direct_blocking_constraints(
 				if (preemptive)
 				{
 					unsigned int var_id = vars.lookup_max_preemptions(*resource);
-					exp->add_term(-1, var_id);
+					exp->sub_var(var_id);
 				}
 				lp.add_inequality(exp, niql);
 			}
@@ -132,7 +132,7 @@ void add_msrp_atmostonce_remote_arrival_constraints(
 			if (exp->has_terms())
 			{
 				unsigned int var_id = vars.lookup_arrival_enabled(*resource);
-				exp->add_term(-1, var_id);
+				exp->sub_var(var_id);
 				lp.declare_variable_binary(var_id);
 				lp.add_inequality(exp, 0);
 			}

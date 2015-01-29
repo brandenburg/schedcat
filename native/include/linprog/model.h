@@ -21,15 +21,20 @@ public:
 		terms.push_back(Term(coefficient, variable_index));
 	}
 
+	void sub_term(double pos_coefficient, unsigned int variable_index)
+	{
+		add_term(-pos_coefficient, variable_index);
+	}
+
 	// by default, assumes coefficient == 1
 	void add_var(unsigned int variable_index)
 	{
-		add_term(1.0, variable_index);
+		add_term(1, variable_index);
 	}
 
 	void sub_var(unsigned int variable_index)
 	{
-		add_term(-1, variable_index);
+		sub_term(1, variable_index);
 	}
 
 	const Terms& get_terms(void) const

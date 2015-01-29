@@ -347,14 +347,14 @@ void add_prio_blocking_LP_constraints(
 			if (preemptive)
 			{
 				unsigned int var_id = vars.lookup_max_preemptions(*resource);
-				exp_direct->add_term(-1, var_id); // Constraint 25
+				exp_direct->sub_var(var_id); // Constraint 25
 			}
 			lp.add_inequality(exp_direct, ncs); // Constraint 13/25
 			if (!preemptive)
 			{
 				assert(exp_arrival->has_terms());
 				unsigned int var_id = vars.lookup_arrival_enabled(*resource);
-				exp_arrival->add_term(-1, var_id); //Constraint 14
+				exp_arrival->sub_var(var_id); //Constraint 14
 				lp.add_inequality(exp_arrival, 0);
 			}
 		}
@@ -416,7 +416,7 @@ bool add_prio_arrival_blocking_HP_constraints(
 				if (exp->has_terms())
 				{
 					unsigned int var_id = vars.lookup_arrival_enabled(*resource);
-					exp->add_term(-1 * max_num_reqs, var_id);
+					exp->sub_term(max_num_reqs, var_id);
 					lp.add_inequality(exp, 0);
 				}
 				else

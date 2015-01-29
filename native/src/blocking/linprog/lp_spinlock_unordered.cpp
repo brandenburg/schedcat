@@ -129,7 +129,7 @@ bool add_unordered_direct_blocking_constraints(
 					{
 						assert(exp_arrival->has_terms());
 						unsigned int var_id = vars.lookup_arrival_enabled(*resource);
-						exp_arrival->add_term(-1 * max_num_reqs, var_id);
+						exp_arrival->sub_term(max_num_reqs, var_id);
 						lp.add_inequality(exp_arrival, 0);
 					}
 				}
