@@ -69,7 +69,7 @@ void add_per_segment_once_constraints(
 				exp->add_var(var_id);
 			}
 		}
-		lp.add_equality(exp, num_segments);
+		lp.add_inequality(exp, num_segments);
 	}
 }
 
@@ -105,7 +105,7 @@ void add_total_preemption_limit_constraints(
 				exp->add_var(var_id);
 			}
 		}
-		lp.add_equality(exp, lower_prio_jobs * requests_per_job);
+		lp.add_inequality(exp, lower_prio_jobs * requests_per_job);
 	}
 }
 
@@ -139,7 +139,7 @@ void add_resource_preemption_limit_constraints(
 						     BLOCKING_PREEMPT);
 				exp->add_var(var_id);
 			}
-			lp.add_equality(exp, lower_prio_jobs * request->get_num_requests());
+			lp.add_inequality(exp, lower_prio_jobs * request->get_num_requests());
 		}
 	}
 }
