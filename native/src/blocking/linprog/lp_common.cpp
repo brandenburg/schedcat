@@ -1,4 +1,67 @@
+#include <sstream>
+#include <iostream>
+
 #include "lp_common.h"
+
+std::string VarMapperBase::var2str(unsigned int var) const
+{
+	uint64_t key;
+
+	if (search_key_for_var(var, key))
+	{
+		return key2str(key, var);
+	}
+	else
+		return "<?>";
+}
+
+std::string VarMapperBase::key2str(uint64_t key, unsigned int var) const
+{
+	std::ostringstream buf;
+	buf << "X" << var;
+	return buf.str();
+}
+
+hashmap<unsigned int, std::string> VarMapperBase::get_translation_table() const
+{
+	hashmap<unsigned int, std::string> table;
+
+	foreach(map, kv)
+	{
+		table[kv->second] = key2str(kv->first, kv->second);
+	}
+
+	return table;
+}
+
+std::string VarMapper::key2str(uint64_t key, unsigned int var) const
+{
+	std::ostringstream buf;
+
+	switch (get_type(key))
+	{
+		case BLOCKING_DIRECT:
+			buf << "Xd[";
+			break;
+		case BLOCKING_INDIRECT:
+			buf << "Xi[";
+			break;
+		case BLOCKING_PREEMPT:
+			buf << "Xp[";
+			break;
+		case BLOCKING_OTHER:
+			buf << "Xo[";
+			break;
+		default:
+			buf << "X?[";
+	}
+
+	buf << get_task(key) << ", "
+		<< get_res_id(key) << ", "
+		<< get_req_id(key) << "]";
+
+	return buf.str();
+}
 
 // LP-based analysis of semaphore protocols.
 // Based on the paper:
@@ -14,7 +77,7 @@ void set_blocking_objective(
 	LinearExpression *local_obj,
 	LinearExpression *remote_obj)
 {
-        LinearExpression *obj;
+	LinearExpression *obj;
 
 	obj = lp.get_objective();
 
@@ -76,7 +139,7 @@ void set_blocking_objective_part_shm(
 	LinearExpression *local_obj,
 	LinearExpression *remote_obj)
 {
-        LinearExpression *obj;
+	LinearExpression *obj;
 
 	obj = lp.get_objective();
 

@@ -37,6 +37,26 @@ private:
 		return (blocking_type << 62) | (task_id << 30) | (req_id << 10) | res_id;
 	}
 
+	static uint64_t get_task(uint64_t var)
+	{
+		return (var >> 30) & (uint64_t) 0x3fffffff;
+	}
+
+	static uint64_t get_type(uint64_t var)
+	{
+		return (var >> 62) & (uint64_t) 0xf;
+	}
+
+	static uint64_t get_req_id(uint64_t var)
+	{
+		return (var >> 10) & (uint64_t) 0xfffff;
+	}
+
+	static uint64_t get_res_id(uint64_t var)
+	{
+		return var & (uint64_t) 0x3ff;
+	}
+
 public:
 	VarMapper(unsigned int start_var = 0)
 		: VarMapperBase(start_var)
@@ -49,6 +69,7 @@ public:
 		return var_for_key(key);
 	}
 
+	std::string key2str(uint64_t key, unsigned int var) const;
 };
 
 // spinlock analysis: re-use indirect for arrival

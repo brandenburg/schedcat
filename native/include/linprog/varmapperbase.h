@@ -40,7 +40,7 @@ protected:
 		return get(key);
 	}
 
-	bool search_key_for_var(unsigned int var, uint64_t &key)
+	bool search_key_for_var(unsigned int var, uint64_t &key) const
 	{
 		foreach(map, it)
 		{
@@ -76,6 +76,15 @@ public:
 		return next_var;
 	}
 
+
+	// debugging support
+
+	std::string var2str(unsigned int var) const;
+
+	// should be overridden by children
+	virtual std::string key2str(uint64_t key, unsigned int var) const;
+
+	hashmap<unsigned int, std::string> get_translation_table() const;
 };
 
 
