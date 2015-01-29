@@ -27,6 +27,11 @@ public:
 		add_term(1.0, variable_index);
 	}
 
+	void sub_var(unsigned int variable_index)
+	{
+		add_term(-1, variable_index);
+	}
+
 	const Terms& get_terms(void) const
 	{
 		return terms;
