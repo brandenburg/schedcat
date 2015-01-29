@@ -18,6 +18,7 @@ private:
 	unsigned int num_coeffs;
 	const bool is_mip;
 
+	int simplex_code;
 	bool solved;
 
 	void solve(double var_lb, double var_ub);
@@ -31,6 +32,8 @@ public:
 		     double var_lb = 0.0, double var_ub = 1.0);
 
 	~GLPKSolution();
+
+	void show_error();
 
 	double get_value(unsigned int var) const
 	{
@@ -125,7 +128,8 @@ void GLPKSolution::solve(double var_lb, double var_ub)
 		glpk_params.pricing  = GLP_PT_STD;
 		glpk_params.r_test   = GLP_RT_STD;
 
-		solved = glp_simplex(glpk, &glpk_params) == 0 &&
+		simplex_code = glp_simplex(glpk, &glpk_params);
+		solved = simplex_code == 0 &&
 			glp_get_status(glpk) == GLP_OPT;
 	}
 
@@ -244,6 +248,79 @@ void GLPKSolution::set_column_types()
 	}
 }
 
+void GLPKSolution::show_error()
+{
+	if (!solved)
+	{
+		std::cerr << "NOT SOLVED => status: "
+			<< glp_get_status(glpk)
+			<< " (";
+		switch (glp_get_status(glpk))
+		{
+			case GLP_OPT:
+				std::cerr << "GLP_OPT";
+				break;
+			case GLP_FEAS:
+				std::cerr << "GLP_FEAS";
+				break;
+			case GLP_INFEAS:
+				std::cerr << "GLP_INFEAS";
+				break;
+			case GLP_NOFEAS:
+				std::cerr << "GLP_NOFEAS";
+				break;
+			case GLP_UNBND:
+				std::cerr << "GLP_UNBND";
+				break;
+			case GLP_UNDEF:
+				std::cerr << "GLP_UNDEF";
+				break;
+			default:
+				std::cerr << "???";
+		}
+		std::cerr << ") simplex: " << simplex_code << " (";
+		switch (glp_get_status(glpk))
+		{
+			case GLP_EBADB:
+				std::cerr << "GLP_EBADB";
+				break;
+			case GLP_ESING:
+				std::cerr << "GLP_ESING";
+				break;
+			case GLP_ECOND:
+				std::cerr << "GLP_ECOND";
+				break;
+			case GLP_EBOUND:
+				std::cerr << "GLP_EBOUND";
+				break;
+			case GLP_EFAIL:
+				std::cerr << "GLP_EFAIL";
+				break;
+			case GLP_EOBJLL:
+				std::cerr << "GLP_EOBJLL";
+				break;
+			case GLP_EOBJUL:
+				std::cerr << "GLP_EOBJUL";
+				break;
+			case GLP_EITLIM:
+				std::cerr << "GLP_EITLIM";
+				break;
+			case GLP_ENOPFS:
+				std::cerr << "GLP_ENOPFS";
+				break;
+			case GLP_ENODFS:
+				std::cerr << "GLP_ENODFS";
+				break;
+			default:
+				std::cerr << "???";
+		}
+
+		std::cerr << ")" << std::endl;
+
+	}
+}
+
+
 Solution *glpk_solve(const LinearProgram& lp, unsigned int max_num_vars)
 {
 	GLPKSolution *sol =  new GLPKSolution(lp, max_num_vars);
@@ -251,6 +328,7 @@ Solution *glpk_solve(const LinearProgram& lp, unsigned int max_num_vars)
 		return sol;
 	else
 	{
+		sol->show_error();
 		delete sol;
 		return NULL;
 	}
