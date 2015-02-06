@@ -27,6 +27,8 @@
 # ARISING IN ANY  WAY OUT OF THE USE  OF THIS SOFTWARE, EVEN IF  ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from collections import defaultdict
+
 from schedcat.model.tasks import TaskSystem
 
 import schedcat.sched.native as native
@@ -34,7 +36,7 @@ import schedcat.sched
 
 qpa = native.QPATest(1)
 
-def qpa_does_it_fit(partition):
+def qpa_it_fits(partition):
     return qpa.is_schedulable(schedcat.sched.get_native_taskset(partition))
 
 def sorted_by_decreasing_difficulty(tasks):
@@ -62,7 +64,7 @@ def edf_first_fit_decreasing_difficulty(tasks, all_cores=None):
         for t in sorted_by_decreasing_difficulty(
                         (t for t in unassigned if core in t.affinity) ):
             ts.append(t)
-            if qpa_does_it_fit(ts):
+            if qpa_it_fits(ts):
                 # ok, placed
                 unassigned.remove(t)
             else:
@@ -79,6 +81,33 @@ def edf_first_fit_decreasing_difficulty(tasks, all_cores=None):
 
     for t in tasks:
         t.affinity = t.orig_affinity
+
+    return (unassigned, assignments)
+
+
+
+def edf_worst_fit_decreasing_difficulty(tasks):
+    assignments = defaultdict(TaskSystem)
+    unassigned = set()
+
+    for t in sorted_by_decreasing_difficulty(tasks):
+        # find all cores on which it would fit
+        candidates = []
+        for core in t.affinity:
+            ts = assignments[core]
+            ts.append(t)
+            if qpa_it_fits(ts):
+                # ok, would fit
+                candidates.append((ts.density(), core))
+            # pop it off
+            ts.pop()
+        if not candidates:
+            unassigned.add(t)
+        else:
+            candidates.sort()
+            (_, best) = candidates[0]
+            assignments[best].append(t)
+            assert qpa_it_fits(assignments[best])
 
     return (unassigned, assignments)
 

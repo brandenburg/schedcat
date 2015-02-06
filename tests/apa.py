@@ -77,3 +77,28 @@ class PartitioningHeuristics(unittest.TestCase):
         self.assertEqual(mapping[2], [self.ts[2], self.ts[1]])
         self.assertEqual(mapping[1], [self.ts[0], self.ts[3]])
         self.assertEqual(mapping[3], [self.ts[4]])
+
+
+    def test_worst_fit(self):
+        failed, mapping = apa.edf_worst_fit_decreasing_difficulty(self.ts)
+
+        self.assertEqual(failed, set())
+        self.assertEqual(len(mapping), 3)
+        self.assertEqual(mapping[1], [self.ts[0], self.ts[1]])
+        self.assertEqual(mapping[2], [self.ts[2]])
+        self.assertEqual(mapping[3], [self.ts[3]])
+
+        # give it one more to place
+        self.ts.append(tasks.SporadicTask(19, 31))
+        self.ts[-1].affinity = set([2, 3])
+
+        failed, mapping = apa.edf_worst_fit_decreasing_difficulty(self.ts)
+
+        self.assertEqual(len(mapping), 3)
+        self.assertEqual(mapping[1], [self.ts[0], self.ts[1]])
+        self.assertEqual(mapping[2], [self.ts[2]])
+        self.assertEqual(mapping[3], [self.ts[4]])
+
+        self.assertEqual(failed, set([self.ts[3]]))
+
+
