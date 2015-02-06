@@ -24,6 +24,7 @@ class PartitioningHeuristics(unittest.TestCase):
         self.ts[1].affinity = set([1, 2])
         self.ts[2].affinity = set([2, 3])
         self.ts[3].affinity = set([1, 2, 3])
+        self.ts.assign_ids()
 
         self.cores = set([1, 2, 3])
 
@@ -56,7 +57,6 @@ class PartitioningHeuristics(unittest.TestCase):
         self.assertEqual(mapping[2], [self.ts[3]])
         self.assertEqual(mapping[3], [self.ts[2]])
 
-
         failed, mapping = apa.edf_first_fit_decreasing_difficulty(self.ts, [2, 1, 3])
 
         self.assertEqual(failed, set())
@@ -69,6 +69,7 @@ class PartitioningHeuristics(unittest.TestCase):
         # give it one more to place
         self.ts.append(tasks.SporadicTask(19, 31))
         self.ts[-1].affinity = set([2, 3])
+        self.ts.assign_ids()
 
         failed, mapping = apa.edf_first_fit_decreasing_difficulty(self.ts, [1, 2, 3])
         self.assertEqual(failed, set([self.ts[-1]]))
@@ -80,6 +81,19 @@ class PartitioningHeuristics(unittest.TestCase):
         self.assertEqual(mapping[2], [self.ts[2], self.ts[1]])
         self.assertEqual(mapping[1], [self.ts[0], self.ts[3]])
         self.assertEqual(mapping[3], [self.ts[4]])
+
+        # give it yet another more to place
+        self.ts.append(tasks.SporadicTask(40, 50))
+        self.ts[-1].affinity = set([1, 2, 3])
+        self.ts.assign_ids()
+
+        failed, mapping = apa.edf_first_fit_decreasing_difficulty(self.ts, [2, 1, 3])
+
+        self.assertEqual(failed, set([self.ts[4]]))
+        self.assertEqual(len(mapping), 3)
+        self.assertEqual(mapping[1], [self.ts[0], self.ts[5]])
+        self.assertEqual(mapping[2], [self.ts[2], self.ts[1]])
+        self.assertEqual(mapping[3], [self.ts[3]])
 
 
     def test_worst_fit(self):
@@ -94,6 +108,7 @@ class PartitioningHeuristics(unittest.TestCase):
         # give it one more to place
         self.ts.append(tasks.SporadicTask(19, 31))
         self.ts[-1].affinity = set([2, 3])
+        self.ts.assign_ids()
 
         failed, mapping = apa.edf_worst_fit_decreasing_difficulty(self.ts)
 
@@ -104,6 +119,15 @@ class PartitioningHeuristics(unittest.TestCase):
 
         self.assertEqual(failed, set([self.ts[3]]))
 
+    def test_first_fit_with_split(self):
+        failed, mapping = apa.edf_first_fit_decreasing_difficulty(self.ts,
+            [1, 2, 3], with_splits=True)
+
+        self.assertEqual(failed, set())
+        self.assertEqual(len(mapping), 3)
+        self.assertEqual(mapping[1][0], self.ts[0])
+#        self.assertEqual(mapping[2], [self.ts[3]])
+#        self.assertEqual(mapping[3], [self.ts[2]])
 
 
 class CEqualDHeuristic(unittest.TestCase):
@@ -113,6 +137,11 @@ class CEqualDHeuristic(unittest.TestCase):
             tasks.SporadicTask(66, 100),
             tasks.SporadicTask(66, 100),
         ])
+
+        for t in self.ts1:
+            t.affinity = set([1, 2])
+
+        self.ts1.assign_ids()
 
         self.ts2 = tasks.TaskSystem([
             tasks.SporadicTask(14, 40),
@@ -155,4 +184,57 @@ class CEqualDHeuristic(unittest.TestCase):
         max_wcet = native.qpa_get_max_C_equal_D_cost(
             ts, 21, 30)
         self.assertEqual(max_wcet, 16)
+
+    def test_first_fit_with_splits(self):
+        failed, mapping = apa.edf_first_fit_decreasing_difficulty(self.ts1,
+                            [1, 2], with_splits=True)
+
+        self.assertEqual(failed, set())
+        self.assertEqual(len(mapping), 2)
+        self.assertEqual(mapping[1][0].cost, 66)
+        self.assertEqual(mapping[1][1].cost, 34)
+        self.assertEqual(mapping[2][0].cost, 66)
+        self.assertEqual(mapping[2][1].cost, 32)
+
+    def test_worst_fit_with_splits(self):
+        failed, mapping = apa.edf_worst_fit_decreasing_difficulty(self.ts1,
+                            with_splits=True)
+
+        self.assertEqual(failed, set())
+        self.assertEqual(len(mapping), 2)
+        self.assertEqual(mapping[1][0].cost, 66)
+        self.assertEqual(mapping[1][1].cost, 34)
+        self.assertEqual(mapping[2][0].cost, 66)
+        self.assertEqual(mapping[2][1].cost, 32)
+
+    def test_first_fit_with_splits2(self):
+        self.ts1.append(tasks.SporadicTask(31, 100))
+        self.ts1[-1].affinity = set([1, 2])
+        failed, mapping = apa.edf_first_fit_decreasing_difficulty(self.ts1,
+                            [1, 2], with_splits=True)
+
+        self.assertNotEqual(failed, set())
+        self.assertEqual(failed.pop().id, self.ts1[-1].id)
+        self.assertEqual(len(mapping), 2)
+        self.assertEqual(mapping[1][0].cost, 66)
+        self.assertEqual(mapping[1][1].cost, 34)
+        self.assertEqual(mapping[2][0].cost, 66)
+        self.assertEqual(mapping[2][1].cost, 32)
+        self.assertEqual(mapping[2][2].cost, 2)
+
+
+    def test_worst_fit_with_splits2(self):
+        self.ts1.append(tasks.SporadicTask(31, 100))
+        self.ts1[-1].affinity = set([1, 2])
+        failed, mapping = apa.edf_worst_fit_decreasing_difficulty(self.ts1,
+                            with_splits=True)
+
+        self.assertNotEqual(failed, set())
+        self.assertEqual(failed.pop().id, self.ts1[-1].id)
+        self.assertEqual(len(mapping), 2)
+        self.assertEqual(mapping[1][0].cost, 66)
+        self.assertEqual(mapping[1][1].cost, 34)
+        self.assertEqual(mapping[2][0].cost, 66)
+        self.assertEqual(mapping[2][1].cost, 32)
+        self.assertEqual(mapping[2][2].cost, 2)
 
