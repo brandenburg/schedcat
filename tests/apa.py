@@ -8,6 +8,9 @@ import schedcat.mapping.binpack as bp
 import schedcat.mapping.apa as apa
 import schedcat.model.tasks as tasks
 
+import schedcat.sched.native as native
+import schedcat.sched as sched
+
 class PartitioningHeuristics(unittest.TestCase):
     def setUp(self):
         self.ts = tasks.TaskSystem([
@@ -101,4 +104,55 @@ class PartitioningHeuristics(unittest.TestCase):
 
         self.assertEqual(failed, set([self.ts[3]]))
 
+
+
+class CEqualDHeuristic(unittest.TestCase):
+    def setUp(self):
+        self.ts1 = tasks.TaskSystem([
+            tasks.SporadicTask(66, 100),
+            tasks.SporadicTask(66, 100),
+            tasks.SporadicTask(66, 100),
+        ])
+
+        self.ts2 = tasks.TaskSystem([
+            tasks.SporadicTask(14, 40),
+            tasks.SporadicTask(16, 48),
+        ])
+
+        self.ts3 = tasks.TaskSystem([
+            tasks.SporadicTask(1, 16, deadline=11),
+            tasks.SporadicTask(6, 15),
+            tasks.SporadicTask(9, 20),
+        ])
+
+        self.ts4 = tasks.TaskSystem([
+            tasks.SporadicTask(10, 100),
+            tasks.SporadicTask(30, 100),
+        ])
+
+
+
+    def test_qpa_get_max_C_equal_D_cost_1(self):
+        ts = sched.get_native_taskset(self.ts1[:1])
+        max_wcet = native.qpa_get_max_C_equal_D_cost(
+            ts, self.ts1[1].cost, self.ts1[1].period)
+        self.assertEqual(max_wcet, 34)
+
+    def test_qpa_get_max_C_equal_D_cost_2(self):
+        ts = sched.get_native_taskset(self.ts2)
+        max_wcet = native.qpa_get_max_C_equal_D_cost(
+            ts, 6, 16)
+        self.assertEqual(max_wcet, 5)
+
+    def test_qpa_get_max_C_equal_D_cost_3(self):
+        ts = sched.get_native_taskset(self.ts3)
+        max_wcet = native.qpa_get_max_C_equal_D_cost(
+            ts, 6, 12)
+        self.assertEqual(max_wcet, 1)
+
+    def test_qpa_get_max_C_equal_D_cost_4(self):
+        ts = sched.get_native_taskset(self.ts4)
+        max_wcet = native.qpa_get_max_C_equal_D_cost(
+            ts, 21, 30)
+        self.assertEqual(max_wcet, 16)
 

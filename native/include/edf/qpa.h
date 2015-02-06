@@ -10,4 +10,11 @@ class QPATest : public SchedulabilityTest
 
 };
 
+// support for C=D semi-partitioning assignment heuristic
+unsigned long qpa_get_max_C_equal_D_cost(
+	const TaskSet &ts,
+	unsigned long wcet,
+	unsigned long period);
+
+
 #endif

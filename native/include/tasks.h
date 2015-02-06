@@ -52,6 +52,10 @@ class Task
     unsigned long get_self_suspension() const { return self_suspension; };
     unsigned long get_tardiness_threshold() const { return tardiness_threshold; };
 
+    void set_deadline(unsigned long dl) { deadline = dl; }
+    void set_wcet(unsigned long e) { wcet = e; }
+
+
     /* properties */
 
     bool has_implicit_deadline() const
