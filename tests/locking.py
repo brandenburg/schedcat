@@ -114,6 +114,7 @@ class ApplyBounds(unittest.TestCase):
         lb.apply_part_fmlp_bounds(self.ts, preemptive=True)
         self.saw_non_zero_blocking()
 
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_generalized_fmlp1(self):
         lb.apply_generalized_fmlp_bounds(self.ts, 1, True)
         self.saw_non_zero_blocking()
@@ -121,6 +122,7 @@ class ApplyBounds(unittest.TestCase):
         lb.apply_generalized_fmlp_bounds(self.ts, 1, False)
         self.saw_non_zero_blocking()
 
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_generalized_fmlp2(self):
         lb.apply_generalized_fmlp_bounds(self.ts, 2, True)
         self.saw_non_zero_blocking()
