@@ -46,6 +46,8 @@ class Task
     /* getter / setter */
     unsigned long get_period() const { return period;   }
     unsigned long get_wcet() const   { return wcet;     }
+    double get_utilization() const { return wcet / (double) period; }
+
     /* defaults to implicit deadline */
     unsigned long get_deadline() const {return deadline; }
     unsigned long get_prio_pt() const { return prio_pt; }
