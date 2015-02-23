@@ -238,3 +238,69 @@ class CEqualDHeuristic(unittest.TestCase):
         self.assertEqual(mapping[2][1].cost, 32)
         self.assertEqual(mapping[2][2].cost, 2)
 
+
+class FeasibilityLP(unittest.TestCase):
+    def setUp(self):
+        self.ts = tasks.TaskSystem([
+            tasks.SporadicTask( 7, 10),
+            tasks.SporadicTask( 6, 10),
+            tasks.SporadicTask(10, 20),
+        ])
+
+        self.ts[0].affinity = set([1])
+        self.ts[1].affinity = set([2])
+        self.ts[2].affinity = set([1, 2])
+
+        self.ts.assign_ids()
+
+
+    @unittest.skipIf(not sched.using_linprog, "no LP solver available")
+    def test_feasible(self):
+        aff = sched.get_native_affinities(self.ts)
+        ts  = sched.get_native_taskset(self.ts)
+
+        sol = sched.native.apa_implicit_deadline_feasible(ts, aff)
+
+        self.assertIsNotNone(sol)
+        self.assertEqual(sol.get_fraction(0, 1), 1)
+        self.assertEqual(sol.get_fraction(0, 2), 0)
+        self.assertEqual(sol.get_fraction(1, 1), 0)
+        self.assertEqual(sol.get_fraction(1, 2), 1)
+        self.assertAlmostEqual(sol.get_fraction(2, 1), 0.6)
+        self.assertAlmostEqual(sol.get_fraction(2, 2), 0.4)
+
+
+    @unittest.skipIf(not sched.using_linprog, "no LP solver available")
+    def test_infeasible(self):
+        self.ts.append(tasks.SporadicTask(30, 100))
+        self.ts[3].affinity = set([1, 2])
+        aff = sched.get_native_affinities(self.ts)
+        ts  = sched.get_native_taskset(self.ts)
+
+        sol = sched.native.apa_implicit_deadline_feasible(ts, aff)
+
+        self.assertIsNone(sol)
+
+    @unittest.skipIf(not sched.using_linprog, "no LP solver available")
+    def test_feasible_extra_task(self):
+        self.ts.append(tasks.SporadicTask(100, 100))
+        self.ts[3].affinity = set([1, 2, 3])
+        aff = sched.get_native_affinities(self.ts)
+        ts  = sched.get_native_taskset(self.ts)
+
+        sol = sched.native.apa_implicit_deadline_feasible(ts, aff)
+
+        self.assertIsNotNone(sol)
+
+    @unittest.skipIf(not sched.using_linprog, "no LP solver available")
+    def test_infeasible_bad_task(self):
+        self.ts.append(tasks.SporadicTask(110, 100))
+        self.ts[3].affinity = set([1, 2, 3])
+        aff = sched.get_native_affinities(self.ts)
+        ts  = sched.get_native_taskset(self.ts)
+
+        sol = sched.native.apa_implicit_deadline_feasible(ts, aff)
+
+        self.assertIsNone(sol)
+
+

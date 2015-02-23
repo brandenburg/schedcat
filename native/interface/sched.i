@@ -15,6 +15,11 @@
 #include "edf/gel_pl.h"
 #include "edf/qpa.h"
 #include "edf/la.h"
+
+#ifdef CONFIG_HAVE_LP
+#include "apa_feas.h"
+#endif
+
 %}
 
 %ignore Task::get_utilization(fractional_t &util) const;
@@ -45,3 +50,13 @@
 #include "edf/gel_pl.h"
 #include "edf/qpa.h"
 #include "edf/la.h"
+
+#ifdef CONFIG_HAVE_LP
+%ignore APAFeasibleSolution::set_fraction;
+%ignore AffinityRestrictions::get_affinities;
+
+%newobject apa_implicit_deadline_feasible;
+
+#include "apa_feas.h"
+
+#endif

@@ -61,7 +61,7 @@ ${info Linking with CPLEX installation in $(CPLEX_DIR).}
 # Add headers, libraries, and definitions.
 INCLUDES += -I$(CPLEX_PATH)/include/
 LIBS     += -lilocplex -lcplex -lconcert -lpthread
-DEFS     += -DCONFIG_HAVE_CPLEX
+DEFS     += -DCONFIG_HAVE_CPLEX -DCONFIG_HAVE_LP
 endif
 
 
@@ -83,8 +83,10 @@ ifneq ($(GLPK_PATH),)
 ${info Linking with GLPK installed at prefix=$(GLPK_DIR).}
 INCLUDES += -I$(GLPK_PATH)/include
 LIBS     += -L$(GLPK_PATH)/lib -lglpk
-DEFS     += -DCONFIG_HAVE_GLPK
+DEFS     += -DCONFIG_HAVE_GLPK -DCONFIG_HAVE_LP
 endif
+
+SWIG_DEFS := ${DEFS}
 
 # #### Debug support ####
 ifeq ($(DEBUG),y)
@@ -100,7 +102,7 @@ endif
 
 CXXFLAGS  = -Wall -Wextra $(DISABLED_WARNINGS) -fPIC $(INCLUDES) $(DEFS)
 LDFLAGS   = $(LIBS)
-SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude
+SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude ${SWIG_DEFS}
 
 vpath %.cc interface
 vpath %.cpp src src/edf src/blocking src/blocking/linprog src/linprog src/canbus
@@ -133,13 +135,18 @@ LP_OBJ   += lp_global.o lp_global_pip.o lp_ppcp.o lp_sa_gfmlp.o lp_global_fmlpp.
 LP_OBJ   += lp_no_progress_priority.o lp_no_progress_fifo.o
 LP_OBJ   += lp_global_no.o lp_global_pi.o lp_global_rsb.o lp_global_prio.o lp_global_fifo.o
 
+APA_OBJ += apa_feas.o varmapperbase.o
+
 ifneq ($(CPLEX_PATH),)
-LP_OBJ   += cplex.o cpx.o
+LP_SOLVER_OBJ = cplex.o cpx.o
 endif
 
 ifneq ($(GLPK_PATH),)
-LP_OBJ   += glpk.o
+LP_SOLVER_OBJ = glpk.o
 endif
+
+LP_OBJ  += ${LP_SOLVER_OBJ}
+APA_OBJ += ${LP_SOLVER_OBJ}
 
 ALL += _lp_analysis.so
 endif
@@ -163,7 +170,7 @@ interface/%_wrap.cc: interface/%.i
 interface/%_wrap.o: interface/%_wrap.cc
 	$(CXX) $(DEFS) -fPIC $(PYTHON_INC) -c -o $@ $+ $(INCLUDES)
 
-_sched.so: ${CORE_OBJ} ${EDF_OBJ} interface/sched_wrap.o
+_sched.so: ${CORE_OBJ} ${EDF_OBJ} ${APA_OBJ} interface/sched_wrap.o
 	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
 
 _locking.so: ${SYNC_OBJ} interface/locking_wrap.o
