@@ -50,6 +50,8 @@ from schedcat.model.tasks import SporadicTask
 from schedcat.util.time import ms2us
 from schedcat.overheads.jlfp import quantize_params
 
+import random
+
 NAMED_PERIODS = {
                     'uni-short'     : (3, 33),
                     'uni-moderate'  : (10, 100),
@@ -125,8 +127,17 @@ def gen_periods(n, nsets, min, max, gran, dist):
         periods = numpy.exp(numpy.random.uniform(low=numpy.log(min), high=numpy.log(max+gran), size=(nsets,n)))
     elif dist == "unif":
         periods = numpy.random.uniform(low=min, high=(max+gran), size=(nsets,n))
+    elif type(dist) == list:
+        # Interpret as set of pre-defined periods to choose from.
+        assert nsets == 1
+        # avoid numpy.random.choice() because we need to be compatible with 1.6.X
+        periods = [random.choice(dist) for _ in xrange(n)]
+        # wrap in numpy types
+        periods = numpy.array(periods)
+        periods.shape = (1, n)
     else:
         return None
+
     periods = numpy.floor(periods / gran) * gran
 
     return periods
