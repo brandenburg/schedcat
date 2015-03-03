@@ -38,7 +38,7 @@ def subtag_for_attribute(tag, obj, field_name, tag_name=None):
 def res_requirement(r, rmodel=None):
     if rmodel is None:
         tag = ET.Element('requirement')
-    else: 
+    else:
         tag = ET.SubElement(rmodel, 'requirement')
 
     set_attribute(tag, 'res_id', r)
@@ -67,11 +67,28 @@ def task(t):
         for res_id in t.resmodel:
             res_requirement(t.resmodel[res_id], rmodel)
 
+    aff = subtag_for_attribute(tag, t, 'affinity')
+    if not aff is None:
+        for cpu in t.affinity:
+            xcpu = ET.SubElement(aff, 'cpu')
+            xcpu.set('id', str(cpu))
+
     tag.task = t
     task.xml = tag
     return tag
 
 
+def parse_affinity(node):
+    aff = node.find('affinity')
+    if aff != None:
+        affinity = set()
+        for n in aff.findall('cpu'):
+            cpu = maybe_int(n.get('id', None))
+            if not cpu is None:
+                affinity.add(cpu)
+        return affinity
+    else:
+        return None
 
 def parse_request(req_node):
     return ResourceRequirement(
@@ -117,6 +134,10 @@ def parse_task(node):
     if not resmodel is None:
         t.resmodel = resmodel
 
+    affinity = parse_affinity(node)
+    if affinity:
+        t.affinity = affinity
+
     t.xml = node
     node.task = t
     return t
@@ -126,7 +147,7 @@ def taskset(ts):
 
     prop = ET.SubElement(tag, 'properties')
     prop.set('utilization', str(ts.utilization()))
-    prop.set('utilization_q', str(ts.utilization_q()))    
+    prop.set('utilization_q', str(ts.utilization_q()))
     prop.set('density_q', str(ts.density_q()))
     prop.set('density', str(ts.density()))
     prop.set('count', str(len(ts)))
