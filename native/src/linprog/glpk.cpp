@@ -160,6 +160,10 @@ void GLPKSolution::set_bounds(double col_lb, double col_ub)
 {
 	unsigned int r = 1;
 
+	// This implementation currently doesn't deal correctly with non-default bounds.
+	if (!linprog.get_non_default_variable_ranges().empty())
+		abort(); // unsupported configuration
+
 	foreach(linprog.get_equalities(), equ)
 	{
 		glp_set_row_bnds(glpk, r++, GLP_FX,

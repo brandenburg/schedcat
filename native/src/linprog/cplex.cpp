@@ -70,6 +70,10 @@ void CPLEXSolution::solve_model(unsigned int max_num_vars,
 {
 	try
 	{
+		// This implementation currently doesn't deal correctly with non-default bounds.
+		if (!linprog.get_non_default_variable_ranges().empty())
+			abort(); // unsupported configuration
+
 #if DEBUG_LP_OVERHEADS >= 3
 		static DEFINE_CPU_CLOCK(model_costs);
 		static DEFINE_CPU_CLOCK(solver_costs);

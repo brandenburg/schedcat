@@ -156,6 +156,10 @@ bool CPXSolution::setup_objective(double lb, double ub)
 
 	assert(obj->get_terms().size() <= num_cols);
 
+	// This implementation currently doesn't deal correctly with non-default bounds.
+	if (!linprog.get_non_default_variable_ranges().empty())
+		abort(); // unsupported configuration
+
 	for (unsigned int i = 0; i < num_cols; i++)
 	{
 		vals[i] = 0;
