@@ -18,6 +18,10 @@
 
 #include "lp_analysis.h"
 
+#include "linprog/model.h"
+#include "linprog/solver.h"
+#include "linprog/io.h"
+
 #include "event.h"
 #include "schedule_sim.h"
 
@@ -519,10 +523,79 @@ void test_la()
     cout << "G-EDF schedulable?  : " << GlobalEDF(2).is_schedulable(ts) << endl;
 }
 
+void test_linprog()
+{
+	LinearProgram lp;
+
+	unsigned int v1 = 0, v2 = 1, v3 = 2, v4 = 3;
+
+	LinearExpression *exp = lp.get_objective();
+
+	exp->add_var(v1);
+	exp->add_term(2, v2);
+	exp->add_term(3, v3);
+
+	exp = new LinearExpression();
+
+	exp->add_var(v1);
+	exp->add_var(v2);
+	exp->add_var(v3);
+	lp.add_inequality(exp, 2);
+
+	Solution *sol = linprog_solve(lp, 3);
+
+	cout << lp << endl;
+	cout << "obj = " << sol->evaluate(*lp.get_objective()) << endl;
+	cout << "v1 = " << sol->get_value(v1) << endl;
+	cout << "v2 = " << sol->get_value(v2) << endl;
+	cout << "v3 = " << sol->get_value(v3) << endl;
+
+	delete sol;
+	cout << "****" << endl;
+
+	lp.declare_variable_bounds(v3, true, 0, false, 0);
+	sol = linprog_solve(lp, 3);
+
+	cout << lp << endl;
+	cout << "obj = " << sol->evaluate(*lp.get_objective()) << endl;
+	cout << "v1 = " << sol->get_value(v1) << endl;
+	cout << "v2 = " << sol->get_value(v2) << endl;
+	cout << "v3 = " << sol->get_value(v3) << endl;
+
+	delete sol;
+	cout << "****" << endl;
+
+	lp.get_objective()->add_var(v4);
+
+	lp.declare_variable_bounds(v4, true, 0, true, 2.5);
+	sol = linprog_solve(lp, 4);
+
+	cout << lp << endl;
+	cout << "obj = " << sol->evaluate(*lp.get_objective()) << endl;
+	cout << "v1 = " << sol->get_value(v1) << endl;
+	cout << "v2 = " << sol->get_value(v2) << endl;
+	cout << "v3 = " << sol->get_value(v3) << endl;
+	cout << "v4 = " << sol->get_value(v4) << endl;
+
+	delete sol;
+	cout << "****" << endl;
+
+	lp.declare_variable_bounds(v1, true, 0.5, false, 0);
+	sol = linprog_solve(lp, 4);
+
+	cout << lp << endl;
+	cout << "obj = " << sol->evaluate(*lp.get_objective()) << endl;
+	cout << "v1 = " << sol->get_value(v1) << endl;
+	cout << "v2 = " << sol->get_value(v2) << endl;
+	cout << "v3 = " << sol->get_value(v3) << endl;
+	cout << "v4 = " << sol->get_value(v4) << endl;
+
+}
+
 
 int main(int argc, char** argv)
 {
-    test_la();
+    test_linprog();
     return 0;
 }
 
