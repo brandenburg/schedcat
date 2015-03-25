@@ -156,19 +156,30 @@ bool CPXSolution::setup_objective(double lb, double ub)
 
 	assert(obj->get_terms().size() <= num_cols);
 
-	// This implementation currently doesn't deal correctly with non-default bounds.
-	if (!linprog.get_non_default_variable_ranges().empty())
-		abort(); // unsupported configuration
-
 	for (unsigned int i = 0; i < num_cols; i++)
 	{
 		vals[i] = 0;
+		// set default ranges
 		lbs[i]  = lb;
 		ubs[i]  = ub;
 	}
 
+	// set coefficients
 	foreach(obj->get_terms(), term)
 		vals[term->second] = term->first;
+
+	// set non-default upper and lower bounds
+	foreach(linprog.get_non_default_variable_ranges(), bnds)
+	{
+		unsigned int i = bnds->variable_id;
+		lbs[i] = bnds->lower_bound;
+		ubs[i] = bnds->upper_bound;
+
+		if (!bnds->has_lower)
+			lbs[i] = -CPX_INFBOUND;
+		if (!bnds->has_upper)
+			ubs[i] = CPX_INFBOUND;
+	}
 
 	CPXchgobjsen(env, lp, CPX_MAX);
 	err = CPXnewcols(env, lp, num_cols, vals, lbs, ubs, NULL, NULL);
