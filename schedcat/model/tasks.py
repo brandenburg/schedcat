@@ -97,6 +97,18 @@ class SporadicTask(object):
             pts = takewhile(lambda pt: pt <= max_t, pts)
         return pts
 
+    def period_transform(self, num_subjobs, want_integer=True):
+        self.period   = self.period   / num_subjobs
+        self.cost     = self.cost     / num_subjobs
+        self.deadline = self.deadline / num_subjobs
+        if want_integer:
+            self.period   = int(floor(self.period))
+            self.cost     = int(ceil(self.cost))
+            self.deadline = int(floor(self.deadline))
+
+    def is_feasible(self):
+        return self.cost <= min(self.deadline, self.period)
+
     def __repr__(self):
         idstr = ", id=%s" % self.id if self.id is not None else ""
         dstr  = ", deadline=%s" % self.deadline if self.deadline != self.period else ""
