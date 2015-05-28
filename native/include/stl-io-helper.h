@@ -48,18 +48,10 @@ std::ostream& operator<<(std::ostream &os, const std::map<K,V> &s)
 template <typename T>
 std::ostream& operator<<(std::ostream &os, const hashset<T> &s)
 {
-	bool first = true;
-	os << "{";
-	foreach(s, e)
-	{
-		if (!first)
-			os << ", ";
-		os << *e;
-		first = false;
-	}
-	os << "}";
+	std::set<T> t;
 
-	return os;
+	t.insert(s.begin(), s.end());
+	return os << t;
 }
 
 template <typename K, typename V>
