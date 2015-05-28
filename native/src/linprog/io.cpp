@@ -8,11 +8,16 @@
 std::ostream& pretty_print_linear_expression(
 	std::ostream &os,
 	const LinearExpression &exp,
-	hashmap<unsigned int, std::string> &var_names)
+	hashmap<unsigned int, std::string> &var_names,
+	const Solution *solution,
+	bool skip_zero_vars)
 {
 	bool first = true;
 	foreach (exp.get_terms(), term)
 	{
+		if (skip_zero_vars && solution && !solution->get_value(term->second))
+			continue;
+
 		if (term->first == -1)
 			os << "- ";
 		else if (term->first < 0)
@@ -28,8 +33,15 @@ std::ostream& pretty_print_linear_expression(
 			os << var_names[term->second] << " ";
 		else
 			os <<  "X" << term->second << " ";
+
+		if (solution)
+			os << "(=" << solution->get_value(term->second) << ") ";
+
 		first = false;
 	}
+
+	if (solution && !first)
+		os << "{=" << solution->evaluate(exp) << "} ";
 
 	return os;
 }
@@ -37,25 +49,30 @@ std::ostream& pretty_print_linear_expression(
 std::ostream& operator<<(std::ostream &os, const LinearExpression &exp)
 {
 	hashmap<unsigned int, std::string> dummy_map;
-	return pretty_print_linear_expression(os, exp, dummy_map);
+	return pretty_print_linear_expression(os, exp, dummy_map, NULL, false);
 }
 
 std::ostream& pretty_print_linear_program(
 	std::ostream &os,
 	const LinearProgram &lp,
-	hashmap<unsigned int, std::string> &var_names)
+	hashmap<unsigned int, std::string> &var_names,
+	const Solution *solution,
+	bool skip_zero_vars)
 {
 	os << "maximize ";
-	pretty_print_linear_expression(os, *lp.get_objective(), var_names);
+	pretty_print_linear_expression(os, *lp.get_objective(), var_names,
+	                               solution, skip_zero_vars);
 	os << " subject to:" << std::endl;
 	foreach (lp.get_equalities(), it)
 	{
-		pretty_print_linear_expression(os, *(it->first), var_names);
+		pretty_print_linear_expression(os, *(it->first), var_names,
+	                                   solution, skip_zero_vars);
 		os << " = " << it->second << std::endl;
 	}
 	foreach (lp.get_inequalities(), it)
 	{
-		pretty_print_linear_expression(os, *(it->first), var_names);
+		pretty_print_linear_expression(os, *(it->first), var_names,
+	                                   solution, skip_zero_vars);
 		os << " <= " << it->second << std::endl;
 	}
 

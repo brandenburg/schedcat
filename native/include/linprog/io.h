@@ -10,12 +10,16 @@
 std::ostream& pretty_print_linear_expression(
 	std::ostream &os,
 	const LinearExpression &exp,
-	hashmap<unsigned int, std::string> &var_names);
+	hashmap<unsigned int, std::string> &var_names,
+	const Solution *solution, /* may be NULL */
+	bool skip_zero_vars);
 
 std::ostream& pretty_print_linear_program(
 	std::ostream &os,
 	const LinearProgram &lp,
-	hashmap<unsigned int, std::string> &var_names);
+	hashmap<unsigned int, std::string> &var_names,
+	const Solution *solution = NULL, /* may be NULL */
+	bool skip_zero_vars = false);
 
 std::ostream& operator<<(std::ostream &os, const LinearExpression &exp);
 std::ostream& operator<<(std::ostream &os, const LinearProgram &lp);
