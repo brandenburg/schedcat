@@ -99,4 +99,12 @@ std::ostream& operator<<(std::ostream &os, const std::vector<T> &s)
 }
 
 
+#define NYI() \
+	{ \
+		std::cerr << std::endl \
+			<< __FUNCTION__ << " in " << __FILE__ \
+			<< ": NOT YET IMPLEMENTED!" << std::endl; \
+			abort(); \
+	}
+
 #endif
