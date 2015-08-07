@@ -2,7 +2,7 @@ from __future__ import division # use sane division semantics
 
 import copy
 
-from math   import floor, ceil
+from math   import floor, ceil, sqrt
 from schedcat.util.math    import lcm
 from schedcat.util.quantor import forall
 
@@ -94,6 +94,22 @@ class TaskSystem(list):
 
     def sort_by_deadline(self):
         self.sort(key=lambda t: t.deadline)
+
+    def sort_by_tkc(self, m):
+        """Sort task set by Andersson and Jonsson's TkC heuristic.
+        See: B. Andersson, J. Jonsson, "Fixed-priority preemptive
+        multiprocessor scheduling: to partition or not to partition",
+        RTCSA'00. """
+        k = (m - 1 + sqrt(5 * m**2 - 6 * m + 1)) / (2 * m)
+        self.sort(key=lambda t: t.period - k*t.cost)
+
+    def sort_by_dkc(self, m):
+        """Sort task set by Davis and Burn's DkC heuristic.
+        See: R. Davis, A. Burns, "Priority Assignment for Global Fixed
+        Priority Pre-emptive Scheduling in Multiprocessor Real-Time
+        Systems", RTSS'09. """
+        k = (m - 1 + sqrt(5 * m**2 - 6 * m + 1)) / (2 * m)
+        self.sort(key=lambda t: t.deadline - k * t.cost)
 
     def utilization(self, heaviest=None):
         u = [t.utilization() for t in self]
