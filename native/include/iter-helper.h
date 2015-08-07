@@ -28,6 +28,11 @@
 	if (task_iter->get_priority() >= (reference_task).get_priority() &&    \
 		task_iter->get_id() != (reference_task).get_id())
 
+// iterate only over tasks with higher priority than 'reference task', excluding 'excluded_task'
+#define foreach_higher_priority_task_except(tasks, reference_task, excluded_task, task_iter) \
+	foreach(tasks, task_iter)				      \
+	if (task_iter->get_priority() < (reference_task).get_priority() &&    \
+		task_iter->get_id() != (excluded_task).get_id())
 
 // iterate only over tasks with higher priority
 #define foreach_higher_priority_task(tasks, reference_task, task_iter) \
