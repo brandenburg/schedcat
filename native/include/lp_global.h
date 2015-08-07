@@ -197,4 +197,19 @@ public:
 	void declare_interference_variables();
 };
 
+class GlobalFIFOQueuesLP : virtual public GlobalSuspensionAwareLP
+{
+private:
+	//	------- FIFO queuing --------------
+	// Constraint 8
+	void add_fifo_direct_constraints();
+
+public:
+	GlobalFIFOQueuesLP(
+		const ResourceSharingInfo& info,
+		unsigned int task_index,
+		unsigned int number_of_cpus);
+};
+
+
 #endif
