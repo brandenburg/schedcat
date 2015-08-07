@@ -441,3 +441,88 @@ def apply_omip_bounds(all_tasks, num_cpus, procs_per_cluster):
     res = lp_cpp.lp_omip_bounds(model, num_cpus, procs_per_cluster)
     apply_suspension_oblivious(all_tasks, res)
     return res
+
+def apply_pip_bounds(all_tasks, num_cpus):
+    # LP-based analysis of the PIP under global scheduling
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_global_pip_bounds(model, num_cpus)
+
+    for i,t in enumerate(all_tasks):
+        # Note: this is a response-time bound, not just
+        # blocking. Returns ULONG_MAX if LP could not be 
+        # solved.  
+        t.response_time = t.cost + res.get_blocking_term(i)
+    return res
+
+def apply_ppcp_bounds(all_tasks, num_cpus):
+    # LP-based analysis of the PPCP under global scheduling
+    model = get_cpp_model(all_tasks)
+    reasonable = is_reasonable_priority_assignment(num_cpus, all_tasks)
+    res = lp_cpp.lp_ppcp_bounds(model, num_cpus, reasonable)
+
+    for i,t in enumerate(all_tasks):
+        # Note: this is a response-time bound, not just
+        # blocking. Returns ULONG_MAX if LP could not be 
+        # solved. 
+        t.response_time = t.cost + res.get_blocking_term(i)
+    return res
+
+def apply_sa_gfmlp_bounds(all_tasks, num_cpus):
+    # LP-based s-aware analysis of the FMLP under global scheduling
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_sa_gfmlp_bounds(model, num_cpus)
+
+    for i,t in enumerate(all_tasks):
+        # Note: this is a response-time bound, not just
+        # blocking. Returns ULONG_MAX if LP could not be 
+        # solved. 
+        t.response_time = t.cost + res.get_blocking_term(i)
+    return res
+
+def apply_global_fmlpp_bounds(all_tasks, num_cpus):
+    # LP-based s-aware analysis of the FMLP+ under global scheduling
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_global_fmlpp_bounds(model, num_cpus)
+
+    for i,t in enumerate(all_tasks):
+        # Note: this is a response-time bound, not just
+        # blocking. Returns ULONG_MAX if LP could not be 
+        # solved. 
+        t.response_time = t.cost + res.get_blocking_term(i)
+    return res
+
+def apply_prsb_bounds(all_tasks, num_cpus):
+    # LP-based s-aware analysis of the PRSB under global scheduling
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_prsb_bounds(model, num_cpus)
+
+    for i,t in enumerate(all_tasks):
+        # Note: this is a response-time bound, not just
+        # blocking. Returns ULONG_MAX if LP could not be 
+        # solved. 
+        t.response_time = t.cost + res.get_blocking_term(i)
+    return res
+
+def apply_no_progress_fifo_bounds(all_tasks, num_cpus):
+    # LP-based s-aware analysis for no progress and fifo queuing under global scheduling
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_no_progress_fifo_bounds(model, num_cpus)
+
+    for i,t in enumerate(all_tasks):
+        # Note: this is a response-time bound, not just
+        # blocking. Returns ULONG_MAX if LP could not be 
+        # solved. 
+        t.response_time = t.cost + res.get_blocking_term(i)
+    return res
+
+def apply_no_progress_priority_bounds(all_tasks, num_cpus):
+    # LP-based s-aware analysis for no progress and priority queuing under global scheduling
+    model = get_cpp_model(all_tasks)
+    res = lp_cpp.lp_no_progress_priority_bounds(model, num_cpus)
+
+    for i,t in enumerate(all_tasks):
+        # Note: this is a response-time bound, not just
+        # blocking. Returns ULONG_MAX if LP could not be 
+        # solved. 
+        t.response_time = t.cost + res.get_blocking_term(i)
+    return res

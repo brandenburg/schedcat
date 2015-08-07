@@ -18,6 +18,14 @@
 
 %newobject lp_pfp_baseline_spinlock_bounds;
 
+%newobject lp_global_pip_bounds;
+%newobject lp_ppcp_bounds;
+%newobject lp_global_fmlpp_bounds;
+%newobject lp_sa_gfmlp_bounds;
+%newobject lp_prsb_bounds;
+%newobject lb_no_progress_fifo_bounds;
+%newobject lb_no_progress_priority_bounds;
+
 %newobject dummy_bounds;
 
 %include "sharedres_types.i"

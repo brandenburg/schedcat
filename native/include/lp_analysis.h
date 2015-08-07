@@ -80,4 +80,47 @@ BlockingBounds* lp_pfp_prio_fifo_spinlock_bounds(
 	const ResourceSharingInfo& info,
 	bool preemptive = false);
 
+/* Suspension-aware analysis of the priority inheritance protocol under
+ * global scheduling.
+ */
+BlockingBounds* lp_global_pip_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int number_of_cpus);
+
+/* Suspension-aware analysis of the parallel priority ceiling protocol (P-PCP)
+ * under global scheduling */
+BlockingBounds* lp_ppcp_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int number_of_cpus,
+	bool reasonable_priority_assignment = false);
+
+/* Suspension-aware analysis of the flexible multiprocessor locking protocol
+ * (FMLP) under global scheduling */
+BlockingBounds* lp_sa_gfmlp_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int number_of_cpus);
+
+/* Suspension-aware analysis of the generalized FIFO multiprocessor locking
+ * protocol (FMLP+) under global scheduling */
+BlockingBounds* lp_global_fmlpp_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int number_of_cpus);
+
+/* Suspension-aware analysis of the Priority-based Restricted Segment Boosting
+ * (PRSB) protocol under global scheduling*/
+BlockingBounds* lp_prsb_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int number_of_cpus);
+
+/* Suspension-aware analysis for no progress mechanism and FIFO queuing under
+ * global scheduling */
+BlockingBounds* lp_no_progress_fifo_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int number_of_cpus);
+
+/* Suspension-aware analysis for no progress mechanism and priority queuing
+ * under global scheduling */
+BlockingBounds* lp_no_progress_priority_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int number_of_cpus);
 #endif /* LP_ANALYSYS_H_ */

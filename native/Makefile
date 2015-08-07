@@ -123,6 +123,9 @@ LP_OBJ    = lp_common.o io.o lp_dflp.o lp_dpcp.o lp_mpcp.o lp_fmlp.o lp_omip.o
 LP_OBJ   += lp_spinlocks.o lp_spinlock_msrp.o lp_spinlock_unordered.o
 LP_OBJ   += lp_spinlock_prio.o lp_spinlock_prio_fifo.o
 LP_OBJ   += lp_gfmlp.o
+LP_OBJ   += lp_global.o lp_global_pip.o lp_ppcp.o lp_sa_gfmlp.o lp_global_fmlpp.o lp_prsb.o
+LP_OBJ   += lp_no_progress_priority.o lp_no_progress_fifo.o
+LP_OBJ   += lp_global_no.o lp_global_pi.o lp_global_rsb.o lp_global_prio.o lp_global_fifo.o
 
 ifneq ($(CPLEX_PATH),)
 LP_OBJ   += cplex.o cpx.o
