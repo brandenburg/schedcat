@@ -34,6 +34,11 @@
 	foreach(tasks, task_iter)				       \
 	if (task_iter->get_priority() < (reference_task).get_priority())
 
+// iterate only over tasks with lower priority
+#define foreach_lower_priority_task(tasks, reference_task, task_iter) \
+	foreach(tasks, task_iter)				       \
+	if (task_iter->get_priority() > (reference_task).get_priority())
+
 // iterate over requests not in the local cluster
 #define foreach_remote_request(requests, locality, task_ti, request_iter) \
 	foreach(requests, request_iter)					\
