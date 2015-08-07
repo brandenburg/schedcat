@@ -197,6 +197,36 @@ public:
 	void declare_interference_variables();
 };
 
+
+class GlobalPrioInheritanceLP : virtual public GlobalSuspensionAwareLP
+{
+private:
+
+	//	------------- PI --------------
+	// Constraint 6
+	void add_pi_no_co_boosting_interference();
+
+	// Constraint 7
+	void add_pi_m_highest_constraint();
+
+protected:
+	// Constraint 11
+	void add_pip_fmlp_no_stalling_interference();
+
+	// Constraint 12
+	void add_pip_ppcp_indirect_preemption_constraints();
+
+	unsigned long resource_hold_time(unsigned int tx_id, unsigned int res_id);
+
+	const PriorityCeilings prio_ceilings;
+
+public:
+	GlobalPrioInheritanceLP(
+		const ResourceSharingInfo& info,
+		unsigned int task_index,
+		unsigned int number_of_cpus);
+};
+
 class GlobalFIFOQueuesLP : virtual public GlobalSuspensionAwareLP
 {
 private:
