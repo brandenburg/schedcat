@@ -227,6 +227,26 @@ public:
 		unsigned int number_of_cpus);
 };
 
+class GlobalNoProgressMechanismLP : virtual public GlobalSuspensionAwareLP
+{
+private:
+	//	---------- no-progress -----------
+	// Constraint 14
+	void add_no_progress_constraints();
+
+	// Constraint 15
+	void add_no_progress_no_stalling_interference();
+
+protected:
+	unsigned long resource_hold_time(unsigned int tx_id, unsigned int res_id);
+
+public:
+	GlobalNoProgressMechanismLP(
+		const ResourceSharingInfo& info,
+		unsigned int task_index,
+		unsigned int number_of_cpus);
+};
+
 class GlobalFIFOQueuesLP : virtual public GlobalSuspensionAwareLP
 {
 private:
