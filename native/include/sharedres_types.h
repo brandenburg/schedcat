@@ -162,6 +162,14 @@ public:
 		return 0;
 	}
 
+	unsigned int get_request_length(unsigned int res_id) const
+	{
+		foreach(requests, it)
+			if (it->get_resource_id() == res_id)
+				return it->get_request_length();
+		return 0;
+	}
+
 	unsigned int get_max_num_jobs(unsigned long interval) const;
 
 	// uniprocessor fixed-priority scheduling, only valid for local tasks
