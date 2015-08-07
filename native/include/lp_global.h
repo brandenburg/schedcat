@@ -227,6 +227,43 @@ public:
 		unsigned int number_of_cpus);
 };
 
+
+class GlobalRestrictedSegmentBoostingLP : virtual public GlobalSuspensionAwareLP
+{
+private:
+	//	------------- RSB --------------
+	// Constraint 16
+	void add_rsb_co_boosting_stalling_interference_to_csl();
+
+	// Constraint 17
+	void add_rsb_total_co_boosting_stalling_interference();
+
+	// Constraint 18
+	void add_rsb_co_boosting_interference();
+
+	// Constraint 19
+	void add_rsb_total_co_boosting_interference();
+
+	// Constraint 20
+	void add_rsb_no_stalling_interference();
+
+	// Constraint 21
+	void add_rsb_m_highest_constraint();
+
+	// Constraint 22
+	void add_rsb_indirect_constraint();
+
+protected:
+	unsigned long resource_hold_time(unsigned int tx_id, unsigned int res_id);
+
+public:
+	GlobalRestrictedSegmentBoostingLP(
+		const ResourceSharingInfo& info,
+		unsigned int task_index,
+		unsigned int number_of_cpus);
+};
+
+
 class GlobalNoProgressMechanismLP : virtual public GlobalSuspensionAwareLP
 {
 private:
