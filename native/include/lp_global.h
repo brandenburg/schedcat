@@ -247,6 +247,46 @@ public:
 		unsigned int number_of_cpus);
 };
 
+
+class GlobalPriorityQueuesLP : virtual public GlobalSuspensionAwareLP
+{
+private:
+	//	------- priority queuing -----------
+	// Constraint 9
+	void add_prio_lower_direct_constraints();
+
+	// Constraint 10
+	void add_prio_higher_direct_constraints();
+
+protected:
+	void add_constraints_post_ctor();
+
+private:
+	unsigned long wait_lower_prio(unsigned int res_id);
+
+	unsigned long wait_higher_prio(
+		unsigned int res_id,
+		unsigned long interval);
+
+	unsigned int higher_direc_num_req(
+		unsigned int tx_id,
+		unsigned int res_id);
+
+protected:
+
+	//Bounding the maximum time that Ti spends on
+	//waiting for the resource with id "res_id"
+	unsigned long resource_wait_time(
+		unsigned int res_id);
+
+public:
+	GlobalPriorityQueuesLP(
+		const ResourceSharingInfo& info,
+		unsigned int task_index,
+		unsigned int number_of_cpus);
+};
+
+
 class GlobalFIFOQueuesLP : virtual public GlobalSuspensionAwareLP
 {
 private:
