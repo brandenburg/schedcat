@@ -112,6 +112,7 @@ SYNC_OBJ += fmlp_plus.o  global-fmlp.o msrp.o
 SYNC_OBJ += global-omlp.o part-omlp.o clust-omlp.o
 SYNC_OBJ += rw-phase-fair.o rw-task-fair.o
 SYNC_OBJ += msrp-holistic.o
+SYNC_OBJ += global-pip.o
 
 # #### Targets ####
 
