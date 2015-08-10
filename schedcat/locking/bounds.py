@@ -1,3 +1,5 @@
+from itertools import izip
+
 import schedcat.locking.native as cpp
 
 # The blocking analysis needs to know which task can be preempted by which
@@ -30,7 +32,21 @@ def assign_fp_preemption_levels(all_tasks):
     for i, t in enumerate(all_tasks):
         t.preemption_level = i
 
+def is_reasonable_priority_assignment(num_cpus, taskset):
+    """Check whether the tasks in taskset have been given 'reasonable'
+    priorities, according to the def. of Easwaran and Andersson.
 
+    "A priority-assignment to tasks is reasonable if D_i <= D_j for
+    every pair (T_i, T_j) such that T_i and T_j are two of the n-m lowest
+    base-priority tasks and T_i has higher base-priority than T_j."
+    """
+    # Look for any two 'neighboring' tasks that do not satisfy the
+    # "reasonable order". Ignore the m highest-priority tasks.
+    relevant_tasks = taskset[num_cpus:]
+    for (ti, tj) in izip(relevant_tasks, relevant_tasks[1:]):
+        if ti.deadline > tj.deadline:
+            return False
+    return True
 
 # assumes mutex constraints
 def get_cpp_model(all_tasks, use_task_period=False):
