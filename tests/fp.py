@@ -38,3 +38,47 @@ class UniprocessorRTA(unittest.TestCase):
 
 
 # TODO: add tests with blocking and self-suspensions
+
+class MultiprocessorRTA(unittest.TestCase):
+    def setUp(self):
+        self.ts = tasks.TaskSystem([
+                tasks.SporadicTask(1,  4),
+                tasks.SporadicTask(1,  5),
+                tasks.SporadicTask(3,  9),
+                tasks.SporadicTask(9, 18),
+            ])
+
+    def test_procs(self):
+        self.assertFalse(fp.is_schedulable(1, self.ts))
+        self.assertTrue(fp.is_schedulable(2, self.ts))
+
+    def test_bound_is_integral(self):
+        self.assertTrue(fp.is_schedulable(2, self.ts))
+        self.assertTrue(is_integral(self.ts[0].response_time))
+        self.assertTrue(is_integral(self.ts[1].response_time))
+        self.assertTrue(is_integral(self.ts[2].response_time))
+        self.assertTrue(is_integral(self.ts[3].response_time))
+
+    def test_times(self):
+        self.assertTrue(fp.is_schedulable(2, self.ts))
+
+        self.assertEqual(self.ts[0].response_time,  1)
+        self.assertEqual(self.ts[1].response_time,  1)
+        self.assertEqual(self.ts[2].response_time,  4)
+        self.assertEqual(self.ts[3].response_time, 15)
+
+    def test_times2(self):
+        self.assertTrue(fp.bound_response_times(2, self.ts))
+
+        self.assertEqual(self.ts[0].response_time,  1)
+        self.assertEqual(self.ts[1].response_time,  1)
+        self.assertEqual(self.ts[2].response_time,  4)
+        self.assertEqual(self.ts[3].response_time, 15)
+
+    def test_times3(self):
+        self.assertTrue(fp.bound_response_times(3, self.ts))
+
+        self.assertEqual(self.ts[0].response_time,  1)
+        self.assertEqual(self.ts[1].response_time,  1)
+        self.assertEqual(self.ts[2].response_time,  3)
+        self.assertEqual(self.ts[3].response_time, 12)
