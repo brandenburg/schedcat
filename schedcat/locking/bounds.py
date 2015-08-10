@@ -168,6 +168,23 @@ def apply_classic_pip_bounds(all_tasks, num_cpus):
 
     return res
 
+def apply_classic_ppcp_bounds(all_tasks, num_cpus):
+    # Classic analysis of the PPCP under global scheduling
+    model = get_cpp_model(all_tasks)
+    reasonable = is_reasonable_priority_assignment(num_cpus, all_tasks)
+    res = cpp.ppcp_bounds(model, num_cpus, reasonable)
+
+    for i,t in enumerate(all_tasks):
+         # hp_blocked <=> blocking workload from higher-priority tasks
+        t.blocked  = res.get_blocking_term(i)
+
+        # Hack: we need to know hp_direct_blocked (which Easwaran
+        # and Anderson named Ihp_i_dsr) for the response-time analysis.
+        # The C++ code is sticking this into the local blocking field,
+        # for lack of a better place.
+        t.hp_direct_blocked = res.get_local_blocking(i)
+
+    return res
 # S-oblivious bounds
 
 def apply_suspension_oblivious(all_tasks, res):

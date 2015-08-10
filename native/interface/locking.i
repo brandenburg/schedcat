@@ -21,6 +21,7 @@
 %newobject msrp_bounds;
 
 %newobject global_pip_bounds;
+%newobject ppcp_bounds;
 
 %include "sharedres_types.i"
 
