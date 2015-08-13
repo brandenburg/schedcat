@@ -88,7 +88,17 @@ def rta_schedulable(i, taskset, num_cpus, dont_use_slack=False):
         # bound exists as a task attribute.
         if 'hp_direct_blocked' in task.__dict__:
             hp_interference -= task.hp_direct_blocked
-            assert hp_interference > 0 # shouldn't ever be zero or negative
+            
+            # The direct blocking from higher-priority tasks cannot exceed
+            # the regular interference. Hence, hp_interference is set to at
+            # least 0. Otherwise, hp_interference can potentially become
+            # negative if the task.response_time is manually set to 
+            # task.deadline, the blocking analysis determines a blocking
+            # bound using task.response_time as a basis, while this analysis
+            # here calculates the interference based on the response-time
+            # it computed itself, hence ignoring the response-time set
+            # manually.
+            hp_interference = max(hp_interference, 0)
 
         hp_interference = int(floor(hp_interference / num_cpus))
 
