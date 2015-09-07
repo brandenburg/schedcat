@@ -62,7 +62,7 @@ ifneq ($(CPLEX_PATH),)
 ${info Linking with CPLEX installation in $(CPLEX_DIR).}
 # Add headers, libraries, and definitions.
 INCLUDES += -I$(CPLEX_PATH)/include/
-LIBS     += -lilocplex -lcplex -lconcert
+LIBS     += -lilocplex -lcplex -lconcert -lpthread
 DEFS     += -DCONFIG_HAVE_CPLEX
 endif
 
