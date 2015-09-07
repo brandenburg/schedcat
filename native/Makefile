@@ -69,7 +69,13 @@ endif
 
 # #### GLPK Support ####
 
+# first try system libraries
+GLPK := ${realpath ${shell find /usr/include/ /usr/local/include/ -iname 'glpk.h'}}
+ifeq ($(GLPK),)
+# ok, try finding the frontend binary
 GLPK := ${realpath ${shell which glpsol}}
+endif
+
 ifneq ($(GLPK),)
 GLPK_DIR :=${realpath ${dir $(GLPK)}/..}
 GLPK_PATH ?= $(GLPK_DIR)
