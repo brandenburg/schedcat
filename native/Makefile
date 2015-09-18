@@ -105,12 +105,13 @@ LDFLAGS   = $(LIBS)
 SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude
 
 vpath %.cc interface
-vpath %.cpp src src/edf src/blocking src/blocking/linprog src/linprog
+vpath %.cpp src src/edf src/blocking src/blocking/linprog src/linprog src/canbus
 
 # #### Common C++ source files ####
 
 EDF_OBJ   = baker.o baruah.o gfb.o bcl.o bcl_iterative.o rta.o
 EDF_OBJ  += ffdbf.o gedf.o gel_pl.o load.o cpu_time.o qpa.o la.o
+CAN_OBJ   = msgs.o
 SCHED_OBJ = sim.o schedule_sim.o
 CORE_OBJ  = tasks.o
 SYNC_OBJ  = sharedres.o dpcp.o mpcp.o
@@ -122,7 +123,7 @@ SYNC_OBJ += global-pip.o ppcp.o
 
 # #### Targets ####
 
-ALL = testmain _sched.so _locking.so _sim.so
+ALL = testmain _sched.so _locking.so _sim.so _can.so
 
 # Compile LP-based code only if we have a solver.
 ifneq ($(CPLEX_PATH)$(GLPK_PATH),)
@@ -175,3 +176,5 @@ _sim.so: ${CORE_OBJ} ${SCHED_OBJ} interface/sim_wrap.o
 
 _lp_analysis.so: ${LP_OBJ} sharedres.o mpcp.o cpu_time.o interface/lp_analysis_wrap.o
 	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
+
+_can.so: ${CAN_OBJ}
