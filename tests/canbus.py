@@ -2,6 +2,7 @@ import unittest
 
 import schedcat.model.canbus as c
 import schedcat.sched.canbus.broster as b
+import schedcat.sched.canbus.prio_assign as pa
 
 class CANMessage1(unittest.TestCase):
     def setUp(self):
@@ -173,3 +174,15 @@ class CANMessage3(unittest.TestCase):
         self.ms.add_replicas(self.ms[1], 2)
         self.assertEqual(self.ms.get_replication_factor(self.ms[0]), 1)
         self.assertEqual(self.ms.get_replication_factor(self.ms[1]), 4)
+
+    def test_david_and_burns_priority_assignment(self):
+        pa.set_priorities_david_and_burns(self.ms)
+        for mi in self.ms:
+            self.assertTrue(mi.id > 0)
+            for mk in self.ms:
+                self.assertTrue(mi == mk or mi.id != mk.id)
+
+    def test_prob_poisson(self):
+        self.assertEqual(round(b.get_prob_poisson(1, 10, 0.01), 15), 0.090483741803596)
+        self.assertEqual(round(b.get_prob_poisson(4, 10, 0.0001), 27), 4.1625020826391e-14)
+        self.assertEqual(round(b.get_prob_poisson(4, 1, 0.001), 27), 4.1625020826391e-14)
