@@ -4,6 +4,7 @@ import schedcat.model.canbus as c
 import schedcat.sched.canbus.broster as b
 import schedcat.sched.canbus.prio_assign as pa
 import schedcat.sched.canbus.prob_success as ps
+import schedcat.cansim.canbus as sim
 
 class CANMessage1(unittest.TestCase):
     def setUp(self):
@@ -200,3 +201,54 @@ class CANMessage4(unittest.TestCase):
         self.assertEqual(ps.get_prob_correct_async(3, 0, 1), 1)
         self.assertEqual(ps.get_prob_correct_async(3, 0.25, 1), 0.984375)
         self.assertAlmostEqual(ps.get_prob_correct_async(4, 0.05, 3), 0.98598125)
+
+class CANMessage5(unittest.TestCase):
+    def setUp(self):
+        ms = [  c.CANMessage(8, 3, tid = 1, id = 1), \
+                c.CANMessage(8, 5, tid = 2, id = 2), \
+                c.CANMessage(8, 7, tid = 3, id = 3) ]
+        self.ms = c.CANMessageSet(ms)
+        self.ms.busrate = 250 # bits / ms
+        self.ms.tau = 1.0 / self.ms.busrate
+        self.ms.inter_frame_space = 3 * self.ms.tau
+        self.ms.max_error_frame_size = 29 * self.ms.tau
+        self.ms.po = 0
+        self.ms.pc = 0
+        self.ms.mfr = 0
+        self.ms.rprime = 1
+        #pa.set_priorities_david_and_burns(self.ms)
+
+    def test_job_completion(self):
+        sim_len_ms = 20 # ms
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 1, 1, 1), 132)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 1, 1, 2), 882)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 2, 2, 1), 267)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 2, 2, 2), 1382)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 3, 3, 1), 402)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 3, 3, 2), 1882)
+
+class CANMessage6(unittest.TestCase):
+    def setUp(self):
+        ms = [  c.CANMessage(8, 1, tid = 1, id = 1), \
+                c.CANMessage(8, 2, tid = 2, id = 2), \
+                c.CANMessage(8, 3, tid = 3, id = 3) ]
+        self.ms = c.CANMessageSet(ms)
+        self.ms.busrate = 250 # bits / ms
+        self.ms.tau = 1.0 / self.ms.busrate
+        self.ms.inter_frame_space = 3 * self.ms.tau
+        self.ms.max_error_frame_size = 29 * self.ms.tau
+        self.ms.po = 0
+        self.ms.pc = 0
+        self.ms.mfr = 0
+        self.ms.rprime = 1
+
+    def test_job_completion(self):
+        sim_len_ms = 20 # ms
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 1, 1, 1), 132)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 1, 1, 2), 402)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 1, 1, 3), 672)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 1, 1, 4), 942)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 2, 2, 1), 267)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 2, 2, 2), 807)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 3, 3, 1), 537)
+        self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 3, 3, 2), 1077)

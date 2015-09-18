@@ -111,8 +111,8 @@ vpath %.cpp src src/edf src/blocking src/blocking/linprog src/linprog src/canbus
 
 EDF_OBJ   = baker.o baruah.o gfb.o bcl.o bcl_iterative.o rta.o
 EDF_OBJ  += ffdbf.o gedf.o gel_pl.o load.o cpu_time.o qpa.o la.o
-CAN_OBJ   = msgs.o can_sim.o
 SCHED_OBJ = sim.o schedule_sim.o
+CAN_OBJ   = msgs.o can_sim.o job_completion_stats.o schedule_sim.o
 CORE_OBJ  = tasks.o
 SYNC_OBJ  = sharedres.o dpcp.o mpcp.o
 SYNC_OBJ += fmlp_plus.o  global-fmlp.o msrp.o
@@ -123,7 +123,7 @@ SYNC_OBJ += global-pip.o ppcp.o
 
 # #### Targets ####
 
-ALL = testmain _sched.so _locking.so _sim.so _can.so
+ALL = testmain _sched.so _locking.so _sim.so _cansim.so
 
 # Compile LP-based code only if we have a solver.
 ifneq ($(CPLEX_PATH)$(GLPK_PATH),)
@@ -174,7 +174,8 @@ _locking.so: ${SYNC_OBJ} interface/locking_wrap.o
 _sim.so: ${CORE_OBJ} ${SCHED_OBJ} interface/sim_wrap.o
 	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
 
-_lp_analysis.so: ${LP_OBJ} sharedres.o mpcp.o cpu_time.o interface/lp_analysis_wrap.o
+_cansim.so: ${CORE_OBJ} ${CAN_OBJ} interface/cansim_wrap.o
 	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
 
-_can.so: ${CAN_OBJ}
+_lp_analysis.so: ${LP_OBJ} sharedres.o mpcp.o cpu_time.o interface/lp_analysis_wrap.o
+	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)

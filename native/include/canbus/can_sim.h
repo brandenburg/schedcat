@@ -1,5 +1,5 @@
-#ifndef CAN_SIM_H
-#define CAN_SIM_H
+#ifndef CANBUS_SIM_H
+#define CANBUS_SIM_H
 
 #include "canbus/msgs.h"
 #include "schedule_sim.h"
