@@ -3,6 +3,7 @@ import unittest
 import schedcat.model.canbus as c
 import schedcat.sched.canbus.broster as b
 import schedcat.sched.canbus.prio_assign as pa
+import schedcat.sched.canbus.prob_success as ps
 
 class CANMessage1(unittest.TestCase):
     def setUp(self):
@@ -186,3 +187,16 @@ class CANMessage3(unittest.TestCase):
         self.assertEqual(round(b.get_prob_poisson(1, 10, 0.01), 15), 0.090483741803596)
         self.assertEqual(round(b.get_prob_poisson(4, 10, 0.0001), 27), 4.1625020826391e-14)
         self.assertEqual(round(b.get_prob_poisson(4, 1, 0.001), 27), 4.1625020826391e-14)
+
+class CANMessage4(unittest.TestCase):
+    def test_get_prob_correct_sync(self):
+        self.assertEqual(ps.get_prob_correct_sync(3, 1), 0)
+        self.assertEqual(ps.get_prob_correct_sync(3, 0), 1)
+        self.assertEqual(ps.get_prob_correct_sync(3, 0.25), 0.84375)
+        self.assertAlmostEqual(ps.get_prob_correct_sync(4, 0.05), 0.98598125)
+
+    def test_get_prob_correct_async(self):
+        self.assertEqual(ps.get_prob_correct_async(3, 1, 1), 0)
+        self.assertEqual(ps.get_prob_correct_async(3, 0, 1), 1)
+        self.assertEqual(ps.get_prob_correct_async(3, 0.25, 1), 0.984375)
+        self.assertAlmostEqual(ps.get_prob_correct_async(4, 0.05, 3), 0.98598125)
