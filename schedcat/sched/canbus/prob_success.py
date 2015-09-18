@@ -114,3 +114,19 @@ def get_prob_schedulable(msgs, mi, boot_time, sync = True):
         prob_success += prob_omitted * prob_time_correct
 
     return min(prob_success, 1)
+
+def get_fit_rate(mi, prob_success):
+    if (prob_success == 1):
+        return 0
+
+    lna = mpmath.log(prob_success)
+    lnasq = mpmath.fmul(lna, lna)
+
+    term1 = mpmath.fdiv((mpmath.fsub(1, prob_success)), prob_success)
+    term2 = mpmath.fdiv(term1, lnasq)
+
+    mabf = term2
+    mtbf = mpmath.fdiv(mpmath.fmul(mabf, mi.period), 3600000)
+
+    fitrate = mpmath.fdiv(1000000000, mtbf)
+    return fitrate
