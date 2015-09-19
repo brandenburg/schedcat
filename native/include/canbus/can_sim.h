@@ -16,7 +16,6 @@
 
 #define IFS 3 // interframe space = 3 bit-time
 #define EFS 29 // max error frame size = 29 bit-time
-#define BOOT_TIME 2500 // ms
 
 #define BIG_RAND_MAX ((((double)RAND_MAX + 1) * ((double)RAND_MAX + 1)) - 1)
 #define BIG_RAND ((rand() * ((double)RAND_MAX + 1)) + rand())
@@ -51,8 +50,8 @@ class CANJob : public Job {
  
     void reset_params();
     void init_retransmission(simtime_t when);
-    bool gen_host_faults(double rate, int max);
-    bool is_omission();
+    bool gen_host_faults(double rate, int max, int boot_time);
+    bool is_omission(simtime_t boot_time);
     bool is_commission(int start, int end);
 };
 
@@ -125,7 +124,8 @@ class CANBusScheduler : public CANBusScheduleSimulation
 
     EventQueue events;
     ReadyQueue pending;
-    simtime_t  current_time;
+    simtime_t current_time;
+    simtime_t boot_time;
 
     CANBus* processor;
 
@@ -158,6 +158,7 @@ class CANBusScheduler : public CANBusScheduleSimulation
     unsigned long get_pending_size() { return pending.size(); }
     simtime_t get_current_time() { return current_time; }
     void set_current_time(simtime_t t) { current_time = t; }
+    void set_boot_time(simtime_t t) { boot_time = t; }
     bool is_aborted() { return aborted; }
     void abort() { aborted = true; }
     void reset_current_time() { current_time = 0; }

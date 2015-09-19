@@ -52,7 +52,7 @@ void run_periodic_simulation(CANBusScheduleSimulation& sim,
     delete [] jobs;
 }
 
-bool CANJob::gen_host_faults(double rate, int max)
+bool CANJob::gen_host_faults(double rate, int max, int boot_time)
 {
     if (rate == 0)
         return true;
@@ -61,10 +61,10 @@ bool CANJob::gen_host_faults(double rate, int max)
     // then it will overlfow.
 
     for (int next = (((-1) * log(1 - PROB_RANDOM)) / rate);
-         next < max + (BOOT_TIME * 2);
+         next < max + (boot_time * 2);
          next += (((-1) * log(1 - PROB_RANDOM)) / rate))
     {
-        host_faults.push_back(next - (BOOT_TIME * 2));
+        host_faults.push_back(next - (boot_time * 2));
     }
 
     if (DEBUG_MODE)
@@ -78,10 +78,10 @@ bool CANJob::gen_host_faults(double rate, int max)
     return host_faults.empty();
 }
 
-bool CANJob::is_omission()
+bool CANJob::is_omission(simtime_t boot_time)
 {
     int  end = release;
-    int  start = release - BOOT_TIME; 
+    int  start = release - boot_time; 
 
     while(!host_faults.empty())
     {
@@ -225,7 +225,7 @@ void CANBusScheduler::add_ready(CANJob *job)
     Timeout<simtime_t> ev(job->get_deadline(), handler);
     events.push(ev);
 
-    if (job->get_task().is_critical() && job->is_omission())
+    if (job->get_task().is_critical() && job->is_omission(boot_time))
     {
         // notify simulation callback
         job_omitted(job);

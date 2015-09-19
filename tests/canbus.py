@@ -252,3 +252,30 @@ class CANMessage6(unittest.TestCase):
         self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 2, 2, 2), 807)
         self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 3, 3, 1), 537)
         self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 3, 3, 2), 1077)
+
+"""
+class CANMessage7(unittest.TestCase):
+    def setUp(self):
+        ms = [  c.CANMessage(8, 5, tid = 1, id = 1),
+                c.CANMessage(4, 10, tid = 2, id = 2),
+                c.CANMessage(4, 10, tid = 3, id = 3),
+                c.CANMessage(4, 10, tid = 4, id = 4),
+                c.CANMessage(4, 10, tid = 5, id = 5),
+                c.CANMessage(4, 10, tid = 6, id = 6) ]
+        self.ms = c.CANMessageSet(ms)
+        self.ms.busrate = 250 # bits / ms
+        self.ms.tau = 1.0 / self.ms.busrate
+        self.ms.inter_frame_space = 3 * self.ms.tau
+        self.ms.max_error_frame_size = 29 * self.ms.tau
+        self.ms.po = 0.2
+        self.ms.pc = 0.2
+        self.ms.mfr = 0.2
+
+    def test_tardiness(self):
+        #self.ms.add_replicas(self.ms[0], 3)
+        self.ms.rprime = 2#2
+        pa.set_priorities_david_and_burns(self.ms)
+        sim_len_ms = 10 # ms
+        boot_time_ms = 10 # ms
+        sim.observe_tardiness(self.ms, sim_len_ms, boot_time_ms, 1000)
+"""

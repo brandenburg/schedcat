@@ -112,7 +112,7 @@ vpath %.cpp src src/edf src/blocking src/blocking/linprog src/linprog src/canbus
 EDF_OBJ   = baker.o baruah.o gfb.o bcl.o bcl_iterative.o rta.o
 EDF_OBJ  += ffdbf.o gedf.o gel_pl.o load.o cpu_time.o qpa.o la.o
 SCHED_OBJ = sim.o schedule_sim.o
-CAN_OBJ   = msgs.o can_sim.o job_completion_stats.o schedule_sim.o
+CAN_OBJ   = msgs.o can_sim.o schedule_sim.o job_completion_stats.o tardiness_stats.o
 CORE_OBJ  = tasks.o
 SYNC_OBJ  = sharedres.o dpcp.o mpcp.o
 SYNC_OBJ += fmlp_plus.o  global-fmlp.o msrp.o
