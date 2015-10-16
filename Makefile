@@ -1,6 +1,6 @@
 
 # default tools
-PYTHON ?= python
+PYTHON ?= python2
 SCONS  ?= scons
 ETAGS  ?= etags
 
@@ -40,7 +40,7 @@ TAGS:
 	find . -type f -and  -iname '*.py' | xargs ${ETAGS}
 	find cpp/include -type f -and  -iname '*.h' | xargs ${ETAGS} -a
 	find cpp/src -type f -and  -iname '*.cpp' | xargs ${ETAGS} -a
-	${ETAGS} -l python -a run_exp
+	${ETAGS} -l ${PYTHON} -a run_exp
 
 # Vim Tags
 tags:

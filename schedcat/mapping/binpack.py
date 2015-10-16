@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 # Copyright (c) 2007,2008,2009, Bjoern B. Brandenburg <bbb [at] cs.unc.edu>
 #
