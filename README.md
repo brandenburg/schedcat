@@ -121,7 +121,7 @@ Alternatively, you can simply create a symlink from your experiment directory to
 
 ## Dependencies & Compilation
 
-Python 2.7 is required. Schedcat further depends on the [GNU arbitrary precision library GMP](http://gmplib.org/) (most recent versions, including 4.3.2 and 5.0.4, work just fine) and the GMP C++ wrapper. During compilation, [Swig](http://www.swig.org/) is needed to generate a Python API for the C++ core (Swig 2.0.4 and Swig 1.3.40 are known to work).
+Python 2.7 is required. Schedcat further depends on the [GNU arbitrary precision library GMP](http://gmplib.org/) (most recent versions, including 4.3.2 and 5.0.4, work just fine) and the GMP C++ wrapper. During compilation, [Swig](http://www.swig.org/) is needed to generate a Python API for the C++ core (Swig 2.0.4 and Swig 1.3.40 are known to work). Some functions require an LP-solver to be installed before the compilation ([CPLEX](http://www-01.ibm.com/software/commerce/optimization/cplex-optimizer/) and [GLPK](https://www.gnu.org/software/glpk/) are supported).
 
 ### Linux
 
