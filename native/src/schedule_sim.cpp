@@ -25,6 +25,7 @@ void Job::init_next(simtime_t cost,
     seqno++;
 }
 
+template<>
 void PeriodicJobSequence::completed(simtime_t when, int proc)
 {
     init_next();

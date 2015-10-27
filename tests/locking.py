@@ -850,3 +850,21 @@ class Test_linprog(unittest.TestCase):
         self.assertEqual(self.ts_no_req[2].blocked, 0)
         self.assertEqual(self.ts_no_req[2].suspended, 0)
 
+
+class Test_reasonble_priority(unittest.TestCase):
+
+    def setUp(self):
+        self.ts = tasks.TaskSystem([
+            tasks.SporadicTask(x * 10, x * 100) for x in xrange(1, 10)
+            ])
+
+    def test_is_reasonable_priority_assignment(self):
+        self.assertTrue(lb.is_reasonable_priority_assignment(1, self.ts))
+
+    def test_is_not_reasonable_priority_assignment(self):
+        self.ts[2].deadline = 150
+        self.assertFalse(lb.is_reasonable_priority_assignment(1, self.ts))
+
+    def test_skip_top_m_tasks(self):
+        self.ts[2].deadline = 150
+        self.assertTrue(lb.is_reasonable_priority_assignment(2, self.ts))

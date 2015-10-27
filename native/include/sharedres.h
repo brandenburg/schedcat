@@ -58,6 +58,15 @@ BlockingBounds* dpcp_bounds(const ResourceSharingInfo& info,
 BlockingBounds* msrp_bounds(const ResourceSharingInfo& info,
 				unsigned int num_cpus);
 
+BlockingBounds* global_pip_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int number_of_cpus);
+
+BlockingBounds* ppcp_bounds(
+	const ResourceSharingInfo& info,
+	unsigned int number_of_cpus,
+	bool reasonable_priority_assignment = false);
+
 
 // Still missing:
 // ==============

@@ -11,8 +11,10 @@ import tests.edf
 import tests.fp
 import tests.binpack
 import tests.locking
+import tests.global_locking_analysis
 import tests.sim
 import tests.overheads
+import tests.canbus
 import tests.example_end_to_end
 
 suite = unittest.TestSuite(
@@ -26,8 +28,10 @@ suite = unittest.TestSuite(
       tests.fp,
       tests.binpack,
       tests.locking,
+      tests.global_locking_analysis,
       tests.sim,
       tests.overheads,
+      tests.canbus,
       tests.example_end_to_end]
     ])
 

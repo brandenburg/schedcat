@@ -16,12 +16,14 @@ links: clean-links cpp
 	cd schedcat/locking; ln -s ../../native/_locking.so; ln -s ../../native/locking.py native.py
 	cd schedcat/locking/linprog; ln -s ../../../native/_lp_analysis.so; ln -s ../../../native/lp_analysis.py native.py
 	cd schedcat/sim; ln -s ../../native/_sim.so; ln -s ../../native/sim.py native.py
+	cd schedcat/cansim; ln -s ../../native/_cansim.so; ln -s ../../native/cansim.py native.py
 
 clean-links:
 	cd schedcat/sched; rm -f _sched.so native.py
 	cd schedcat/locking;  rm -f _locking.so native.py
 	cd schedcat/locking/linprog;  rm -f  _lp_analysis.so native.py
 	cd schedcat/sim;  rm -f _sim.so native.py;
+	cd schedcat/cansim;  rm -f _cansim.so native.py;
 
 clean: clean-links
 	find . -iname '*.py[oc]' -exec rm '{}' ';'

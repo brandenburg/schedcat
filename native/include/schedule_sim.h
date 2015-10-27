@@ -10,7 +10,7 @@
 typedef unsigned long simtime_t;
 
 class Job {
-  private:
+  protected:
     const Task  &task;
     simtime_t release;
     simtime_t cost;
@@ -30,6 +30,16 @@ class Job {
     simtime_t get_allocation() const { return allocation; }
     unsigned long get_seqno() const { return seqno; }
 
+    void set_release(simtime_t release)
+    {
+        this->release = release;
+    }
+
+    void set_allocation(simtime_t allocation)
+    {
+        this->allocation = allocation;
+    }
+
     void increase_allocation(simtime_t service_time)
     {
         allocation += service_time;
@@ -45,16 +55,14 @@ class Job {
         return cost - allocation;
     }
 
-    void init_next(simtime_t cost = 0,
-                   simtime_t inter_arrival_time = 0);
+    void init_next(simtime_t cost = 0, simtime_t inter_arrival_time = 0);
 
     // callbacks
     virtual void completed(simtime_t when, int proc) {};
 };
 
-class SimJob;
-
-class ScheduleSimulation
+template <typename Job, typename SimJob>
+class ScheduleSimulationTemplate
 {
   public:
     virtual void simulate_until(simtime_t end_of_simulation) = 0;
@@ -62,6 +70,10 @@ class ScheduleSimulation
     virtual void add_release(SimJob *job) = 0;
     virtual void add_ready(Job *job) = 0;
 };
+
+class SimJob;
+
+typedef ScheduleSimulationTemplate<Job, SimJob> ScheduleSimulation;
 
 class SimJob : public Job, public Event<simtime_t>
 {
@@ -80,16 +92,18 @@ class SimJob : public Job, public Event<simtime_t>
     }
 };
 
-class PeriodicJobSequence : public SimJob
+template <typename SimJob, typename Task>
+class PeriodicJobSequenceTemplate : public SimJob
 {
   public:
-    PeriodicJobSequence(Task& tsk) : SimJob(tsk) {};
-    virtual ~PeriodicJobSequence() {};
+    PeriodicJobSequenceTemplate(Task& tsk) : SimJob(tsk) {};
+    virtual ~PeriodicJobSequenceTemplate() {};
 
     // simulator callback
     virtual void completed(simtime_t when, int proc);
 };
 
+typedef PeriodicJobSequenceTemplate<SimJob, Task> PeriodicJobSequence;
 
 class EarliestDeadlineFirst {
   public:
@@ -106,13 +120,14 @@ class EarliestDeadlineFirst {
 
 // periodic job sequence
 
-class Processor
+template <typename Job>
+class ProcessorTemplate
 {
   private:
     Job*      scheduled;
 
   public:
-    Processor() : scheduled(NULL) {}
+    ProcessorTemplate() : scheduled(NULL) {}
 
     Job* get_scheduled() const { return scheduled; };
     void schedule(Job* new_job) { scheduled = new_job; }
@@ -131,8 +146,10 @@ class Processor
     }
 };
 
-template <typename JobPriority>
-class PreemptionOrder
+typedef ProcessorTemplate<Job> Processor;
+
+template <typename JobPriority, typename Processor>
+class PreemptionOrderTemplate
 {
   public:
     bool operator()(const Processor& a, const Processor& b)
@@ -141,7 +158,6 @@ class PreemptionOrder
         return higher_prio(a.get_scheduled(), b.get_scheduled());
     }
 };
-
 
 typedef std::priority_queue<Timeout<simtime_t>,
                             std::vector<Timeout<simtime_t> >,
@@ -164,7 +180,7 @@ class GlobalScheduler : public ScheduleSimulation
     int num_procs;
 
     JobPriority                   lower_prio;
-    PreemptionOrder<JobPriority>  first_to_preempt;
+    PreemptionOrderTemplate<JobPriority, Processor>  first_to_preempt;
 
     Event<simtime_t> dummy;
 

@@ -48,8 +48,15 @@ public:
 	}
 };
 
+struct VariableRange {
+	unsigned int variable_id;
+	bool has_upper, has_lower;
+	double upper_bound, lower_bound;
+};
+
 typedef std::pair<LinearExpression *, double> Constraint;
 typedef std::vector<Constraint> Constraints;
+typedef std::vector<VariableRange> VariableRanges;
 
 // builds a maximization problem piece-wise
 class LinearProgram
@@ -68,6 +75,10 @@ class LinearProgram
 
 	// set of binary variables
 	std::set<unsigned int> variables_binary;
+
+	// By default all variables have a lower bound of zero and an upper bound of one.
+	// Exceptional cases are stored in this (unsorted) vector.
+	VariableRanges non_default_bounds;
 
 public:
 	LinearProgram() : objective(new LinearExpression()) {};
@@ -89,6 +100,18 @@ public:
 	void declare_variable_binary(unsigned int variable_index)
 	{
 		variables_binary.insert(variable_index);
+	}
+
+	void declare_variable_bounds(unsigned int variable_id,
+		bool has_lower, double lower, bool has_upper, double upper)
+	{
+		VariableRange b;
+		b.variable_id = variable_id;
+		b.has_lower = has_lower;
+		b.has_upper = has_upper;
+		b.lower_bound = lower;
+		b.upper_bound = upper;
+		non_default_bounds.push_back(b);
 	}
 
 	void set_objective(LinearExpression *exp)
@@ -162,6 +185,12 @@ public:
 	{
 		return inequalities;
 	}
+
+	const VariableRanges& get_non_default_variable_ranges() const
+	{
+		return non_default_bounds;
+	}
+
 };
 
 #endif

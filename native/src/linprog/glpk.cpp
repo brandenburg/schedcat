@@ -178,6 +178,25 @@ void GLPKSolution::set_bounds(double col_lb, double col_ub)
 
 	for (unsigned int c = 1; c <= num_cols; c++)
 		glp_set_col_bnds(glpk, c, GLP_DB, col_lb, col_ub);
+
+	foreach(linprog.get_non_default_variable_ranges(), bnds)
+	{
+		unsigned int c = bnds->variable_id + 1;
+		int col_type;
+		col_lb = bnds->lower_bound;
+		col_ub = bnds->upper_bound;
+
+		if (bnds->has_upper && bnds->has_lower)
+			col_type = GLP_DB;
+		else if (!bnds->has_upper && !bnds->has_lower)
+			col_type = GLP_FR;
+		else if (bnds->has_upper)
+			col_type = GLP_UP;
+		else
+			col_type = GLP_LO;
+
+		glp_set_col_bnds(glpk, c, col_type, col_lb, col_ub);
+	}
 }
 
 void GLPKSolution::set_coefficients()
