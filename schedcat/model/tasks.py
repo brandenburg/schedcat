@@ -47,6 +47,13 @@ class SporadicTask(object):
         """
         return max(0, self.response_time - self.deadline)
 
+    def slack(self):
+        """Return this task's slack time.
+        Note: this function can only be called after some test
+        established a response time bound (response_time must be defined)!
+        """
+        return self.deadline - self.response_time
+
     def maxjobs(self, interval_length):
         """Compute the maximum number of jobs that can execute during
         some interval.

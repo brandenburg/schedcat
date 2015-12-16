@@ -12,6 +12,7 @@ import schedcat.sched.edf.da as da
 import schedcat.sched.edf.ffdbf as ffdbf
 import schedcat.sched.edf.gfb as gfb
 import schedcat.sched.edf.rta as rta
+import schedcat.sched.edf.gy_rta as gy_rta
 import schedcat.sched.edf as edf
 
 import schedcat.sched as sched
@@ -187,3 +188,53 @@ class Test_QPA(unittest.TestCase):
             tasks.SporadicTask(1113, 83000, deadline=10683),
             ])
         self.assertFalse(qpa.is_schedulable(sched.get_native_taskset(ts2)))
+
+class Test_gy_rta(unittest.TestCase):
+    def setUp(self):
+        self.ts1 = tasks.TaskSystem([tasks.SporadicTask(3,12), tasks.SporadicTask(2,4)])
+        self.ts2 = tasks.TaskSystem([tasks.SporadicTask(3,12), tasks.SporadicTask(2,3), tasks.SporadicTask(2,4)])
+        self.ts3 = tasks.TaskSystem([tasks.SporadicTask(2,9), tasks.SporadicTask(3,12), tasks.SporadicTask(2,4)])
+        self.ts4 = tasks.TaskSystem([tasks.SporadicTask(1,4), tasks.SporadicTask(1,12), tasks.SporadicTask(3,16)])
+        self.ts5 = tasks.TaskSystem([tasks.SporadicTask(1,4), tasks.SporadicTask(2,4)])
+
+    def test_approx_wcrt(self):
+        gy_rta.approx_wcrt(self.ts1)
+        self.assertEqual(self.ts1[0].response_time, 2)
+        self.assertEqual(self.ts1[1].response_time, 9)
+
+        self.assertFalse(gy_rta.approx_wcrt(self.ts2))
+
+        gy_rta.approx_wcrt(self.ts3)
+        self.assertEqual(self.ts3[0].response_time, 3)
+        self.assertEqual(self.ts3[1].response_time, 8)
+        self.assertEqual(self.ts3[2].response_time, 11)
+
+        gy_rta.approx_wcrt(self.ts4)
+        self.assertEqual(self.ts4[0].response_time, 1)
+        self.assertEqual(self.ts4[1].response_time, 4)
+        self.assertEqual(self.ts4[2].response_time, 8)
+
+        gy_rta.approx_wcrt(self.ts5)
+        self.assertEqual(self.ts5[0].response_time, 3)
+        self.assertEqual(self.ts5[1].response_time, 3)
+
+    def test_exact_wcrt(self):
+        gy_rta.exact_wcrt(self.ts1)
+        self.assertEqual(self.ts1[0].response_time, 2)
+        self.assertEqual(self.ts1[1].response_time, 7)
+
+        self.assertFalse(gy_rta.exact_wcrt(self.ts2))
+
+        gy_rta.exact_wcrt(self.ts3)
+        self.assertEqual(self.ts3[0].response_time, 3)
+        self.assertEqual(self.ts3[1].response_time, 8)
+        self.assertEqual(self.ts3[2].response_time, 11)
+
+        gy_rta.exact_wcrt(self.ts4)
+        self.assertEqual(self.ts4[0].response_time, 1)
+        self.assertEqual(self.ts4[1].response_time, 2)
+        self.assertEqual(self.ts4[2].response_time, 6)
+
+        gy_rta.exact_wcrt(self.ts5)
+        self.assertEqual(self.ts5[0].response_time, 3)
+        self.assertEqual(self.ts5[1].response_time, 3)
