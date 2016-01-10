@@ -208,3 +208,4 @@ class TaskSystem(list):
         """
          # assumption: lower id == higher priority
         return (task for task in self if task.id > upper.id)
+

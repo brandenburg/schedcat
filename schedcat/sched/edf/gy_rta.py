@@ -11,6 +11,10 @@ from __future__ import division
 
 from math import floor
 
+from itertools import count
+
+from heapq import merge
+
 def dbf_i(tsk, t):
     """
     Demand bound function for task tsk in time interval t.
@@ -66,11 +70,13 @@ def find_L_prime(tskset, sbf):
     """
     Returns L' at which rbf(L') <= sbf(L').
     """
-    l = 0
+    l_prime = 0
     while True:
-        if(rbf(tskset, l) <= sbf(l)):
-            return l
-        l += 1
+        rbf_val = rbf(tskset, l_prime)
+        sbf_val = sbf(l_prime)
+        if rbf_val <= sbf_val:
+            return l_prime
+        l_prime += (rbf_val - sbf_val)
 
 def find_L(tskset, sbf):
     """
@@ -83,13 +89,15 @@ def delta_values(tskset, sbf):
     Yields valid values of delta as required by the proposed algorithms.
     """
     L = find_L(tskset, sbf)
-    delta = min(tsk.deadline for tsk in tskset)
-    while delta <= L:
-        for tsk in tskset:
-            if delta % tsk.deadline == 0:
-                yield delta
-                break
-        delta += 1
+    deltas = merge(*[count(tsk.deadline, tsk.period) for tsk in tskset])
+    prev_delta = 0
+    for delta in deltas:
+        if delta > L:
+            break
+        if prev_delta == delta:
+            continue
+        prev_delta = delta
+        yield delta
 
 def approx_wcrt(tskset,
                 sbf = sbf_uniprocessor,
@@ -105,12 +113,12 @@ def approx_wcrt(tskset,
 
     s = [float("inf")] * len(tskset)
     i = 0
-    delta = tskset[0].deadline
     for delta in delta_values(tskset, sbf):
-        if i >= len(tskset)-1:
-            break
-        if delta >= tskset[i+1].deadline:
-            i += 1
+        try:
+            if delta >= tskset[i+1].deadline:
+                i += 1
+        except IndexError:
+            pass
         s[i] = min(s[i], delta - sbf_pseudo_inverse(dbf(tskset, delta)))
     for i in xrange(len(tskset)-1, -1, -1):
         tskset[i].response_time = tskset[i].deadline - s[i]
@@ -147,12 +155,12 @@ def exact_wcrt(tskset,
 
     s = [float("inf")] * len(tskset)
     i = 0
-    delta = tskset[0].deadline
     for delta in delta_values(tskset, sbf):
-        if i >= len(tskset)-1:
-            break
-        if delta >= tskset[i+1].deadline:
-            i += 1
+        try:
+            if delta >= tskset[i+1].deadline:
+                i += 1
+        except IndexError:
+            pass
         if delta - sbf_pseudo_inverse(dbf(tskset, delta)) < s[i]:
             gamma_old = 0
             gamma_new = sbf_pseudo_inverse(mbf(tskset, delta, 0))
@@ -164,3 +172,4 @@ def exact_wcrt(tskset,
         tskset[i].response_time = tskset[i].deadline - s[i]
         if i == 0: break
         s[i-1] = min(s[i], s[i-1])
+

@@ -196,6 +196,8 @@ class Test_gy_rta(unittest.TestCase):
         self.ts3 = tasks.TaskSystem([tasks.SporadicTask(2,9), tasks.SporadicTask(3,12), tasks.SporadicTask(2,4)])
         self.ts4 = tasks.TaskSystem([tasks.SporadicTask(1,4), tasks.SporadicTask(1,12), tasks.SporadicTask(3,16)])
         self.ts5 = tasks.TaskSystem([tasks.SporadicTask(1,4), tasks.SporadicTask(2,4)])
+        self.ts6 = tasks.TaskSystem([tasks.SporadicTask(2,5,4), tasks.SporadicTask(3,6,5)])
+        self.ts7 = tasks.TaskSystem([tasks.SporadicTask(2,4,3), tasks.SporadicTask(3,12,10), tasks.SporadicTask(2,9,7)])
 
     def test_approx_wcrt(self):
         gy_rta.approx_wcrt(self.ts1)
@@ -218,6 +220,15 @@ class Test_gy_rta(unittest.TestCase):
         self.assertEqual(self.ts5[0].response_time, 3)
         self.assertEqual(self.ts5[1].response_time, 3)
 
+        gy_rta.approx_wcrt(self.ts6)
+        self.assertEqual(self.ts6[0].response_time, 4)
+        self.assertEqual(self.ts6[1].response_time, 5) 
+
+        gy_rta.approx_wcrt(self.ts7)
+        self.assertEqual(self.ts7[0].response_time, 3)
+        self.assertEqual(self.ts7[1].response_time, 7)
+        self.assertEqual(self.ts7[2].response_time, 10)
+
     def test_exact_wcrt(self):
         gy_rta.exact_wcrt(self.ts1)
         self.assertEqual(self.ts1[0].response_time, 2)
@@ -238,3 +249,13 @@ class Test_gy_rta(unittest.TestCase):
         gy_rta.exact_wcrt(self.ts5)
         self.assertEqual(self.ts5[0].response_time, 3)
         self.assertEqual(self.ts5[1].response_time, 3)
+
+        gy_rta.exact_wcrt(self.ts6)
+        self.assertEqual(self.ts6[0].response_time, 4)
+        self.assertEqual(self.ts6[1].response_time, 5)
+
+        gy_rta.exact_wcrt(self.ts7)
+        self.assertEqual(self.ts7[0].response_time, 3)
+        self.assertEqual(self.ts7[1].response_time, 7)
+        self.assertEqual(self.ts7[2].response_time, 10)
+
