@@ -1,11 +1,20 @@
 import unittest
 
-import schedcat.model.canbus as c
-import schedcat.sched.canbus.broster as b
-import schedcat.sched.canbus.prio_assign as pa
-import schedcat.sched.canbus.prob_success as ps
-import schedcat.cansim.canbus as sim
+try:
+    # required dependency
+    import mpmath
+except ImportError:
+    mpmath = False
 
+if mpmath:
+    import schedcat.sched.canbus.broster as b
+    import schedcat.sched.canbus.prio_assign as pa
+    import schedcat.sched.canbus.prob_success as ps
+    import schedcat.model.canbus as c
+    import schedcat.cansim.canbus as sim
+
+
+@unittest.skipIf(not mpmath, "mpmath library not available")
 class CANMessage1(unittest.TestCase):
     def setUp(self):
         self.m1 = c.CANMessage(8, 10)
@@ -41,10 +50,12 @@ class CANMessage1(unittest.TestCase):
         self.assertEqual(round(self.m3.utilization(self.tau), 4), 0.0224)
         self.assertEqual(round(self.m4.utilization(self.tau), 5), 0.00816)
 
+
+@unittest.skipIf(not mpmath, "mpmath library not available")
 class CANMessage2(unittest.TestCase):
     def setUp(self):
         """The taskset is taken from Broster et al.'s 2002 paper, "Probabilistic
-        Analysis of CAN with Faults". Unlike the paper, where 12 is the highest 
+        Analysis of CAN with Faults". Unlike the paper, where 12 is the highest
         priority, and 1 the lowest, we assume 1 as the highest priority and
         12 as the highest priority for this taskset.
         """
@@ -81,7 +92,7 @@ class CANMessage2(unittest.TestCase):
         self.assertEqual(round(self.ms.get_wctt(self.ms[9], 0), 3), 4.448)
         self.assertEqual(round(self.ms.get_wctt(self.ms[10], 0), 3), 4.708)
         self.assertEqual(round(self.ms.get_wctt(self.ms[11], 0), 3), 4.720)
-    
+
     def test_wctts_w_faults(self):
         self.assertEqual(round(self.ms.get_wctt(self.ms[0], 0), 3), 1.028)
         self.assertEqual(round(self.ms.get_wctt(self.ms[0], 1), 3), 1.672)
@@ -104,7 +115,7 @@ class CANMessage2(unittest.TestCase):
         self.assertEqual(round(self.ms.get_wctt(self.ms[7], 8), 3), 8.800)
         self.assertEqual(round(self.ms.get_wctt(self.ms[7], 9), 3), 9.444)
         self.assertEqual(round(self.ms.get_wctt(self.ms[7], 10), 3), 10.088)
-    
+
     def test_wctts_fast_w_faults(self):
         self.assertEqual(round(self.ms.get_wctt_fast(self.ms[0], 0), 3), 1.028)
         self.assertEqual(round(self.ms.get_wctt_fast(self.ms[0], 1), 3), 1.672)
@@ -144,6 +155,8 @@ class CANMessage2(unittest.TestCase):
         self.assertEqual(round(b.get_prob_schedulable(self.ms, self.ms[7], 5), 11), 1.33758e-06)
         self.assertEqual(round(b.get_prob_schedulable(self.ms, self.ms[7], 6), 12), 7.0527e-08)
 
+
+@unittest.skipIf(not mpmath, "mpmath library not available")
 class CANMessage3(unittest.TestCase):
     def setUp(self):
         ms = [  c.CANMessage(8, 10, tid=1, id=1), \
@@ -161,7 +174,7 @@ class CANMessage3(unittest.TestCase):
         len_old = len(self.ms)
         for i in range(0, len(self.ms)):
             self.ms.add_replicas(self.ms[i], 1)
-        self.assertEqual(len(self.ms), len_old * 2) 
+        self.assertEqual(len(self.ms), len_old * 2)
         self.ms.add_replicas(self.ms[0], 1)
         self.assertEqual(len(self.ms), (len_old * 2) + 1)
         self.ms.add_replicas(self.ms[0], 4)
@@ -189,6 +202,8 @@ class CANMessage3(unittest.TestCase):
         self.assertEqual(round(b.get_prob_poisson(4, 10, 0.0001), 27), 4.1625020826391e-14)
         self.assertEqual(round(b.get_prob_poisson(4, 1, 0.001), 27), 4.1625020826391e-14)
 
+
+@unittest.skipIf(not mpmath, "mpmath library not available")
 class CANMessage4(unittest.TestCase):
     def test_get_prob_correct_sync(self):
         self.assertEqual(ps.get_prob_correct_sync(3, 1), 0)
@@ -202,6 +217,8 @@ class CANMessage4(unittest.TestCase):
         self.assertEqual(ps.get_prob_correct_async(3, 0.25, 1), 0.984375)
         self.assertAlmostEqual(ps.get_prob_correct_async(4, 0.05, 3), 0.98598125)
 
+
+@unittest.skipIf(not mpmath, "mpmath library not available")
 class CANMessage5(unittest.TestCase):
     def setUp(self):
         ms = [  c.CANMessage(8, 3, tid = 1, id = 1), \
@@ -227,6 +244,8 @@ class CANMessage5(unittest.TestCase):
         self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 3, 3, 1), 402)
         self.assertEqual(sim.completion_time(self.ms, sim_len_ms, 3, 3, 2), 1882)
 
+
+@unittest.skipIf(not mpmath, "mpmath library not available")
 class CANMessage6(unittest.TestCase):
     def setUp(self):
         ms = [  c.CANMessage(8, 1, tid = 1, id = 1), \
