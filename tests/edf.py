@@ -43,6 +43,21 @@ class DA(unittest.TestCase):
 
         self.assertFalse(da.bound_response_times(1, self.ts))
 
+class Test_bar(unittest.TestCase):
+    def setUp(self):
+        self.ts = tasks.TaskSystem([
+            tasks.SporadicTask(10, 100),
+            tasks.SporadicTask(33, 200),
+            tasks.SporadicTask(10, 300, 100),
+        ])
+
+    def test_basic_functionality(self):
+        self.assertTrue(bar.is_schedulable(1, self.ts))
+
+        self.ts.append(tasks.SporadicTask(27, 28))
+        self.assertFalse(bar.is_schedulable(1, self.ts))
+        self.assertTrue(bar.is_schedulable(2, self.ts))
+
 class Test_ffdbf(unittest.TestCase):
 
     def setUp(self):
@@ -222,7 +237,7 @@ class Test_gy_rta(unittest.TestCase):
 
         gy_rta.approx_wcrt(self.ts6)
         self.assertEqual(self.ts6[0].response_time, 4)
-        self.assertEqual(self.ts6[1].response_time, 5) 
+        self.assertEqual(self.ts6[1].response_time, 5)
 
         gy_rta.approx_wcrt(self.ts7)
         self.assertEqual(self.ts7[0].response_time, 3)

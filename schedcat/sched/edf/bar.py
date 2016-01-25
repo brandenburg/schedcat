@@ -13,39 +13,6 @@ from math      import floor, ceil
 from itertools import izip
 from schedcat.util.quantor   import forall
 from schedcat.util.math      import topsum
-from schedcat.util.iter      import imerge, uniq
-
-def dbf(tsk, t):
-    """Demand bound function for task tsk at time t."""
-    if t <= 0:
-        return 0
-    return  max(0, (int(floor((t - tsk.deadline) / tsk.period)) + 1) * tsk.cost)
-
-def brute_force_dbf_points_of_change(tsk, max_t, d_k):
-    for t in xrange(0, max_t + 1):
-        cur = dbf(tsk, t + d_k)
-        lst = dbf(tsk, t - 1 + d_k)
-        if cur != lst:
-            yield t
-
-def dbf_points_of_change(tsk, max_t):
-    """Return iterator over t where dbf(tsk, t) changes."""
-    yield 0
-    t = tsk.deadline
-    while t <= max_t:
-        yield t
-        t += tsk.period
-
-def dbf_points_of_change_dk(tsk, max_t, dk):
-    """Return iterator over t where dbf(tsk, t) changes."""
-    for pt in dbf_points_of_change(tsk, max_t + dk):
-        offset = pt - dk
-        if offset >= 0:
-            yield offset
-
-def all_dbf_points_of_change_dk(all_tsks, max_t, dk):
-    all_points = [dbf_points_of_change_dk(t, max_t, dk) for t in all_tsks]
-    return uniq(imerge(lambda x,y: x < y, *all_points))
 
 # The definition of I1() and I2() diverge from the one given in the
 # RTSS'07 paper. According to S. Baruah: "The second term in the min --
@@ -60,9 +27,9 @@ def I1(tsk_i, tsk_k, a_k):
     d_k = tsk_k.deadline
     c_k = tsk_k.cost
     if tsk_k == tsk_i:
-        return min(dbf(tsk_i, a_k + d_k) - c_k, a_k)
+        return min(tsk_i.dbf(a_k + d_k) - c_k, a_k)
     else:
-        return min(dbf(tsk_i, a_k + d_k), a_k + d_k - (c_k - 1))
+        return min(tsk_i.dbf(a_k + d_k), a_k + d_k - (c_k - 1))
 
 def dbf_(tsk, t):
     """dbf() for carry-in scenario"""
@@ -101,7 +68,7 @@ def is_schedulable(m, tasks):
     if tasks.utilization() >= m or not forall(tasks)(lambda t: t.constrained_deadline()):
         return False
     for (tsk_k, a_k_bound) in izip(tasks, ak_bounds(tasks, m)):
-        for a_k in all_dbf_points_of_change_dk(tasks, a_k_bound, tsk_k.deadline):
+        for a_k in tasks.dbf_points_of_change(a_k_bound, offset=tsk_k.deadline):
             if not task_schedulable_for_offset(tasks, tsk_k, a_k, m):
                 return False
     return True

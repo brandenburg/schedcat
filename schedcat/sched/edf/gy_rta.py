@@ -15,45 +15,6 @@ from itertools import count
 
 from heapq import merge
 
-def dbf_i(tsk, t):
-    """
-    Demand bound function for task tsk in time interval t.
-    """
-    # Based on the dbf used in Baruah's schedulability test
-    if t <= 0:
-        return 0
-    return max(0, (int(floor((t - tsk.deadline) / tsk.period)) + 1) * tsk.cost)
-
-def rbf_i(tsk, t):
-    """
-    Request bound function for task tsk in time interval t.
-    """
-    if t < 0:
-        return 0
-    return dbf_i(tsk, t + tsk.deadline)
-
-def dbf(tskset, t):
-    """
-    Demand bound function of the system with taskset tskset in time interval t.
-    """
-    if t <= 0:
-        return 0
-    demand = 0
-    for tsk in tskset:
-        demand += dbf_i(tsk, t)
-    return demand
-
-def rbf(tskset, t):
-    """
-    Request bound function of the system with taskset tskset in time interval t.
-    """
-    if t < 0:
-        return 0
-    request = 0
-    for tsk in tskset:
-        request += rbf_i(tsk, t)
-    return request
-
 def sbf_uniprocessor(t):
     """
     Supply bound function of the system in time interval t for a uniprocessor.
@@ -72,7 +33,7 @@ def find_L_prime(tskset, sbf):
     """
     l_prime = 0
     while True:
-        rbf_val = rbf(tskset, l_prime)
+        rbf_val = tskset.rbf(l_prime)
         sbf_val = sbf(l_prime)
         if rbf_val <= sbf_val:
             return l_prime
@@ -82,22 +43,14 @@ def find_L(tskset, sbf):
     """
     Returns L defined in the paper, L = L' + max(D_i)
     """
-    return find_L_prime(tskset, sbf) + max(tsk.deadline for tsk in tskset)
+    return find_L_prime(tskset, sbf) + tskset.max_deadline()
 
 def delta_values(tskset, sbf):
     """
     Yields valid values of delta as required by the proposed algorithms.
     """
     L = find_L(tskset, sbf)
-    deltas = merge(*[count(tsk.deadline, tsk.period) for tsk in tskset])
-    prev_delta = 0
-    for delta in deltas:
-        if delta > L:
-            break
-        if prev_delta == delta:
-            continue
-        prev_delta = delta
-        yield delta
+    return tskset.dbf_points_of_change(max_t=L)
 
 def approx_wcrt(tskset,
                 sbf = sbf_uniprocessor,
@@ -119,7 +72,7 @@ def approx_wcrt(tskset,
                 i += 1
         except IndexError:
             pass
-        s[i] = min(s[i], delta - sbf_pseudo_inverse(dbf(tskset, delta)))
+        s[i] = min(s[i], delta - sbf_pseudo_inverse(tskset.dbf(delta)))
     for i in xrange(len(tskset)-1, -1, -1):
         tskset[i].response_time = tskset[i].deadline - s[i]
         if i == 0: break
@@ -129,7 +82,7 @@ def mbf_i(tsk, delta, gamma):
     """
     Mixed bound function for task tsk with parameters delta and gamma.
     """
-    return min(dbf_i(tsk, delta), rbf_i(tsk, gamma))
+    return min(tsk.dbf(delta), tsk.rbf(gamma))
 
 def mbf(tskset, delta, gamma):
     """
@@ -161,7 +114,7 @@ def exact_wcrt(tskset,
                 i += 1
         except IndexError:
             pass
-        if delta - sbf_pseudo_inverse(dbf(tskset, delta)) < s[i]:
+        if delta - sbf_pseudo_inverse(tskset.dbf(delta)) < s[i]:
             gamma_old = 0
             gamma_new = sbf_pseudo_inverse(mbf(tskset, delta, 0))
             while gamma_new != gamma_old:

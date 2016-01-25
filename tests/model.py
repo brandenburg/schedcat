@@ -8,6 +8,20 @@ import schedcat.model.tasks as m
 import schedcat.model.serialize as s
 import schedcat.model.resources as r
 
+def brute_force_dbf_points_of_change(tsk, max_t, offset):
+    for t in xrange(-1, max_t + 1):
+        cur = tsk.dbf(t + offset)
+        lst = tsk.dbf(t - 1 + offset)
+        if cur != lst:
+            yield t
+
+def brute_force_rbf_points_of_change(tsk, max_t, offset):
+    for t in xrange(-1, max_t + 1):
+        cur = tsk.rbf(t + offset)
+        lst = tsk.rbf(t - 1 + offset)
+        if cur != lst:
+            yield t
+
 class Tasks(unittest.TestCase):
     def setUp(self):
         self.t1 = m.SporadicTask(10, 100)
@@ -65,9 +79,61 @@ class Tasks(unittest.TestCase):
         t.response_time = 6
         self.assertEqual(t.tardiness(), 4)
 
-# TODO: Write tests for TaskSystem
+    def test_dbf_points_of_change(self):
+        self.assertEqual(list(self.t1.dbf_points_of_change(1000, 0)),
+                         list(brute_force_dbf_points_of_change(self.t1, 1000, 0)))
 
-class Tasks(unittest.TestCase):
+        self.assertEqual(list(self.t2.dbf_points_of_change(1000, 0)),
+                         list(brute_force_dbf_points_of_change(self.t2, 1000, 0)))
+
+        self.assertEqual(list(self.t3.dbf_points_of_change(1000, 0)),
+                         list(brute_force_dbf_points_of_change(self.t3, 1000, 0)))
+
+        self.assertEqual(list(self.t1.dbf_points_of_change(1000, 27)),
+                         list(brute_force_dbf_points_of_change(self.t1, 1000, 27)))
+
+        self.assertEqual(list(self.t2.dbf_points_of_change(1000, 27)),
+                         list(brute_force_dbf_points_of_change(self.t2, 1000, 27)))
+
+        self.assertEqual(list(self.t3.dbf_points_of_change(1000, 27)),
+                         list(brute_force_dbf_points_of_change(self.t3, 1000, 27)))
+
+    def test_rbf_points_of_change(self):
+        self.assertEqual(list(self.t1.rbf_points_of_change(1000, 0)),
+                         list(brute_force_rbf_points_of_change(self.t1, 1000, 0)))
+
+        self.assertEqual(list(self.t2.rbf_points_of_change(1000, 0)),
+                         list(brute_force_rbf_points_of_change(self.t2, 1000, 0)))
+
+        self.assertEqual(list(self.t3.rbf_points_of_change(1000, 0)),
+                         list(brute_force_rbf_points_of_change(self.t3, 1000, 0)))
+
+        self.assertEqual(list(self.t1.rbf_points_of_change(1000, 27)),
+                         list(brute_force_rbf_points_of_change(self.t1, 1000, 27)))
+
+        self.assertEqual(list(self.t2.rbf_points_of_change(1000, 27)),
+                         list(brute_force_rbf_points_of_change(self.t2, 1000, 27)))
+
+        self.assertEqual(list(self.t3.rbf_points_of_change(1000, 27)),
+                         list(brute_force_rbf_points_of_change(self.t3, 1000, 27)))
+
+class TaskSystem(unittest.TestCase):
+    def setUp(self):
+        self.ts = m.TaskSystem([
+            m.SporadicTask(10, 100),
+            m.SporadicTask(33, 200),
+            m.SporadicTask(10, 300, 100),
+        ])
+
+    def test_dbf_points_of_change(self):
+        self.assertEqual(list(self.ts.dbf_points_of_change(1000, 0)),
+                         range(100, 1001, 100))
+
+    def test_rbf_points_of_change(self):
+        self.assertEqual(list(self.ts.rbf_points_of_change(1000, 0)),
+                         range(0, 1001, 100))
+
+class Resmodel(unittest.TestCase):
     def setUp(self):
         pass
 

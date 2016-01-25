@@ -2,6 +2,10 @@ from __future__ import division # use sane division semantics
 
 import copy
 
+from itertools import count, takewhile, dropwhile
+from schedcat.util.iter import uniq
+from heapq import merge
+
 from math   import floor, ceil, sqrt
 from schedcat.util.math    import lcm
 from schedcat.util.quantor import forall
@@ -61,6 +65,37 @@ class SporadicTask(object):
         established a response time bound (response_time must be defined)!
         """
         return int(ceil((interval_length + self.response_time) / self.period))
+
+    def dbf(self, t):
+        """Baruah's Demand Bound Function"""
+        if t <= 0:
+            return 0
+        return max(0, (int(floor((t - self.deadline) / self.period)) + 1)
+                      * self.cost)
+
+    def rbf(self, t):
+        """Request Bound Function"""
+        if t < 0:
+            return 0
+        return (int(floor(t / self.period)) + 1) * self.cost
+
+    def dbf_points_of_change(self, max_t = None, offset = 0):
+        """Return iterator over t where tsk.dbf(t) changes."""
+        pts = count(self.deadline - offset, self.period)
+        if offset > 0:
+            pts = dropwhile(lambda pt: pt < 0, pts)
+        if not max_t is None:
+            pts = takewhile(lambda pt: pt <= max_t, pts)
+        return pts
+
+    def rbf_points_of_change(self, max_t = None, offset = 0):
+        """Return iterator over t where tsk.rbf(t) changes."""
+        pts = count(-offset, self.period)
+        if offset > 0:
+            pts = dropwhile(lambda pt: pt < 0, pts)
+        if not max_t is None:
+            pts = takewhile(lambda pt: pt <= max_t, pts)
+        return pts
 
     def __repr__(self):
         idstr = ", id=%s" % self.id if self.id is not None else ""
@@ -157,6 +192,26 @@ class TaskSystem(list):
     def density_q(self):
         return sum([t.density_q() for t in self])
 
+    def dbf(self, delta):
+        """
+        Demand bound function of the system in time interval delta.
+        """
+        return sum((t.dbf(delta) for t in self))
+
+    def rbf(self, delta):
+        """
+        Request bound function of the system in time interval delta.
+        """
+        return sum((t.rbf(delta) for t in self))
+
+    def dbf_points_of_change(self, max_t = None, offset = 0):
+        all_pts = [t.dbf_points_of_change(max_t, offset) for t in self]
+        return uniq(merge(*all_pts))
+
+    def rbf_points_of_change(self, max_t = None, offset = 0):
+        all_pts = [t.rbf_points_of_change(max_t, offset) for t in self]
+        return uniq(merge(*all_pts))
+
     def hyperperiod(self):
         return lcm(*[t.period for t in self])
 
@@ -176,7 +231,10 @@ class TaskSystem(list):
         return max([t.period for t in self])
 
     def min_deadline(self):
-        return min([t.deadline for t in self])
+        return min((t.deadline for t in self))
+
+    def max_deadline(self):
+        return max((t.deadline for t in self))
 
     def max_wss(self):
         "Assumes t.wss has been initialized for each task."
