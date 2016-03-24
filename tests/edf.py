@@ -184,7 +184,7 @@ class Test_QPA(unittest.TestCase):
         qpa = edf.native.QPATest(1)
         self.assertFalse(qpa.is_schedulable(sched.get_native_taskset(self.ts)))
 
-    def test_edf_schedulable(self):
+    def test_edf_not_schedulable(self):
         self.ts.append(tasks.SporadicTask(   10,    100, deadline=15))
         self.assertFalse(edf.is_schedulable(1, self.ts))
 
