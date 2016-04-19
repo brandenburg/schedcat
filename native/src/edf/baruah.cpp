@@ -238,7 +238,7 @@ void BaruahGedf::get_max_test_points(const TaskSet &ts,
             / m_minus_u;
     }
 
-    delete wcet;
+    delete[] wcet;
 }
 
 bool BaruahGedf::is_schedulable(const TaskSet &ts,
