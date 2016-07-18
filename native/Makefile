@@ -15,6 +15,8 @@ GMP_PATH ?= /usr
 DISABLED_WARNINGS  = -Wno-unused-parameter # Too much noise.
 
 INCLUDES = -Iinclude -I${GMP_PATH}/include
+# on Cygwin it is required to have -lpython2.7
+# and it cannot be before the -L on its path
 LIBS     = -L${GMP_PATH}/lib -lgmp -lgmpxx
 DEFS    ?=
 
@@ -32,10 +34,18 @@ ifeq ($(OS),Darwin)
 PYTHON_FRAMEWORK_DIR ?= ${shell echo ${PYTHON_HEADER_DIR} | sed 's|/Python.framework.*||'}
 PYTHON_LIB ?= -F${PYTHON_FRAMEWORK_DIR} -framework Python
 SOFLAGS     = -dynamiclib
+PIC_FLAG    = -fPIC
+else ifneq (,$(findstring CYGWIN,$(OS)))
+# Cygwin
+PYTHON_INC ?= -I${shell ${PYTHON} -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()" }
+PYTHON_LIB ?= -lpython2.7
+SOFLAGS     = -shared
+PIC_FLAG    =
 else
 # Default/Linux: No special linking required.
 PYTHON_LIB ?=
 SOFLAGS     = -shared
+PIC_FLAG    = -fPIC
 endif
 ${info Linking with ${PYTHON_VER} (headers: ${PYTHON_INC}).}
 
@@ -91,8 +101,9 @@ endif
 
 ifneq ($(GLPK_PATH),)
 ${info Linking with GLPK installed at prefix=$(GLPK_DIR).}
-INCLUDES += -I$(GLPK_PATH)/include
-LIBS     += -L$(GLPK_PATH)/lib -lglpk
+# wildcard avoid to include non-existent directories (cygwin)
+INCLUDES += -I$(wildcard $(GLPK_PATH)/include)
+LIBS     += -L$(wildcard $(GLPK_PATH)/lib) -lglpk
 DEFS     += -DCONFIG_HAVE_GLPK -DCONFIG_HAVE_LP
 endif
 
@@ -110,9 +121,9 @@ ifeq ($(DEBUG),n)
 DEFS += -DNDEBUG
 endif
 
-CXXFLAGS  = --std=c++14 -Wall -Wextra $(DISABLED_WARNINGS) -fPIC $(INCLUDES) $(DEFS)
+CXXFLAGS  = --std=c++14 -Wall -Wextra $(DISABLED_WARNINGS) $(PIC_FLAG)  $(INCLUDES) $(DEFS)
 LDFLAGS   = $(LIBS)
-SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude ${SWIG_DEFS}
+SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude $(INCLUDES) ${SWIG_DEFS}
 
 vpath %.cc interface
 vpath %.cpp src src/edf src/blocking src/blocking/linprog src/linprog src/canbus
@@ -169,7 +180,7 @@ clean:
 	rm -f interface/*.cc interface/*.o *.py
 	rm -f *.o ${ALL}
 
-testmain: testmain.o ${CORE_OBJ} ${SYNC_OBJ} ${EDF_OBJ} ${SCHED_OBJ} ${LP_OBJ}
+testmain: testmain.o ${CORE_OBJ} ${EDF_OBJ} ${SYNC_OBJ} ${SCHED_OBJ} ${LP_OBJ}
 	$(CXX) -o $@ $+ $(LDFLAGS)
 
 # #### Python libraries ####
@@ -178,19 +189,19 @@ interface/%_wrap.cc: interface/%.i
 	$(SWIG) $(SWIGFLAGS) -o $@ $<
 
 interface/%_wrap.o: interface/%_wrap.cc
-	$(CXX) $(CXXFLAGS) $(DEFS) -fPIC $(PYTHON_INC) -c -o $@ $+ $(INCLUDES)
+	$(CXX) $(CXXFLAGS) $(DEFS) $(PIC_FLAG) $(PYTHON_INC) -c -o $@ $+ $(INCLUDES)
 
 _sched.so: ${CORE_OBJ} ${EDF_OBJ} ${APA_OBJ} interface/sched_wrap.o
-	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
+	$(CXX) $(SOFLAGS) -o $@ $+ $(LDFLAGS) $(PYTHON_LIB)
 
 _locking.so: ${SYNC_OBJ} interface/locking_wrap.o
-	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
+	$(CXX) $(SOFLAGS) -o $@ $+ $(LDFLAGS) $(PYTHON_LIB)
 
 _sim.so: ${CORE_OBJ} ${SCHED_OBJ} interface/sim_wrap.o
-	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
+	$(CXX) $(SOFLAGS) -o $@ $+ $(LDFLAGS) $(PYTHON_LIB)
 
 _cansim.so: ${CORE_OBJ} ${CAN_OBJ} interface/cansim_wrap.o
-	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
+	$(CXX) $(SOFLAGS) -o $@ $+ $(LDFLAGS) $(PYTHON_LIB)
 
 _lp_analysis.so: ${LP_OBJ} sharedres.o mpcp.o cpu_time.o interface/lp_analysis_wrap.o
-	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
+	$(CXX) $(SOFLAGS) -o $@ $+ $(LDFLAGS) $(PYTHON_LIB)
