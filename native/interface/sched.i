@@ -36,6 +36,9 @@
 %ignore TaskSet::get_max_density const;
 %ignore TaskSet::approx_load const;
 
+%ignore QPATest::get_demand(integral_t interval, const TaskSet &ts);
+%ignore QPATest::get_max_interval(const TaskSet &ts, const fractional_t& util);
+
 #include "tasks.h"
 #include "schedulability.h"
 #include "edf/baker.h"

@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "stl-helper.h"
+#include "math-helper.h"
 #endif
 
 typedef enum {
@@ -175,6 +176,27 @@ public:
 	}
 
 	unsigned int get_max_num_jobs(unsigned long interval) const;
+
+	unsigned long get_pedf_max_num_remote_jobs(unsigned long interval) const
+	{
+		unsigned long num_jobs;
+		num_jobs = divide_with_ceil(interval + (long)get_deadline(), (long)get_period());
+		return num_jobs;
+	}
+
+	unsigned long get_pedf_PDC_max_num_local_jobs(unsigned long interval) const
+	{
+		unsigned long num_jobs;
+		num_jobs = divide_with_floor(interval +(long)get_period() - (long)get_deadline(), (long)get_period());
+		return (num_jobs > 0 ? num_jobs : 0);
+	}
+
+	unsigned long get_pedf_AC_max_num_local_jobs(unsigned long interval) const
+	{
+		unsigned long num_jobs;
+		num_jobs = divide_with_ceil(interval, get_period());
+		return num_jobs;
+	}
 
 	// uniprocessor fixed-priority scheduling, only valid for local tasks
 	unsigned int uni_fp_local_get_max_num_jobs(unsigned long interval) const;

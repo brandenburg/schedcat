@@ -8,6 +8,8 @@ class QPATest : public SchedulabilityTest
 
     bool is_schedulable(const TaskSet &ts, bool check_preconditions = true);
 
+    virtual integral_t get_demand(integral_t interval, const TaskSet &ts);
+    virtual integral_t get_max_interval(const TaskSet &ts, const fractional_t& util);
 };
 
 // support for C=D semi-partitioning assignment heuristic

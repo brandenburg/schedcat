@@ -14,6 +14,8 @@
 
 #include "edf/qpa.h"
 
+#include <iostream>
+
 QPATest::QPATest(unsigned int num_processors)
 {
 	if (num_processors != 1)
@@ -30,19 +32,19 @@ static integral_t edf_busy_interval(const TaskSet &ts)
 	integral_t total_cost = 0;
 
 	// initial guess: sum of all costs.
-        for (unsigned int i = 0; i < ts.get_task_count(); i++)
-		interval += ts[i].get_wcet();
+	for (unsigned int i = 0; i < ts.get_task_count(); i++)
+	interval += ts[i].get_wcet();
 
 	total_cost = interval;
 	do {
 		interval = total_cost;
 		total_cost = 0;
-	        for (unsigned int i = 0; i < ts.get_task_count(); i++)
-	        {
+		for (unsigned int i = 0; i < ts.get_task_count(); i++)
+		{
 			integral_t jobs;
 			jobs = divide_with_ceil(interval, ts[i].get_period());
 			total_cost += jobs * ts[i].get_wcet();
-	        }
+		}
 	} while (interval != total_cost);
 
 	return interval;
@@ -56,16 +58,16 @@ static integral_t zhang_burns_interval(const TaskSet &ts)
 
 	ts.get_utilization(total_util);
 
-        for (unsigned int i = 0; i < ts.get_task_count(); i++)
-        {
-	        integral_t dl  = ts[i].get_deadline();
-	        integral_t per = ts[i].get_period();
-	        integral_t delta = dl - per;
+	for (unsigned int i = 0; i < ts.get_task_count(); i++)
+	{
+		integral_t dl  = ts[i].get_deadline();
+		integral_t per = ts[i].get_period();
+		integral_t delta = dl - per;
 
 		interval = std::max(interval, delta);
 
-	        fractional_t util;
-	        ts[i].get_utilization(util);
+		fractional_t util;
+		ts[i].get_utilization(util);
 		total_scaled_delta += (per - dl) * util;
 	}
 
@@ -81,17 +83,17 @@ std::set<unsigned long> get_testpoints(const TaskSet &ts,
 {
 	std::set<unsigned long> points;
 
-        // determine all test points
-        for (unsigned int i = 0; i < ts.get_task_count(); i++)
-        {
-	        unsigned long time = ts[i].get_deadline();
+	// determine all test points
+	for (unsigned int i = 0; i < ts.get_task_count(); i++)
+	{
+		unsigned long time = ts[i].get_deadline();
 
 		for (unsigned long j = 0; time < max_time; j++)
 		{
 			points.insert(time);
 			time += ts[i].get_period();
 		}
-        }
+	}
 	return points;
 }
 
@@ -110,10 +112,10 @@ static unsigned long min_relative_deadline(const TaskSet &ts)
 {
 	unsigned long dl = ULONG_MAX;
 
-        for (unsigned int i = 0; i < ts.get_task_count(); i++)
-        	dl = std::min(dl, ts[i].get_deadline());
+	for (unsigned int i = 0; i < ts.get_task_count(); i++)
+		dl = std::min(dl, ts[i].get_deadline());
 
-        return dl;
+	return dl;
 }
 
 static integral_t get_largest_testpoint(const TaskSet &ts,
@@ -121,9 +123,9 @@ static integral_t get_largest_testpoint(const TaskSet &ts,
 {
 	integral_t point = 0;
 
-        for (unsigned int i = 0; i < ts.get_task_count(); i++)
-        {
-	        unsigned long dl = ts[i].get_deadline();
+	for (unsigned int i = 0; i < ts.get_task_count(); i++)
+	{
+		unsigned long dl = ts[i].get_deadline();
 		if (dl < max_time)
 		{
 			integral_t max_dl = max_deadline(ts[i], max_time);
@@ -135,6 +137,23 @@ static integral_t get_largest_testpoint(const TaskSet &ts,
 	}
 
 	return point;
+}
+
+integral_t QPATest::get_demand(integral_t interval, const TaskSet &ts)
+{
+	integral_t demand;
+	ts.bound_demand(interval, demand);
+	return demand;
+}
+
+integral_t QPATest::get_max_interval(const TaskSet &ts, const fractional_t& util)
+{
+	integral_t max_interval = edf_busy_interval(ts);
+
+	if (util < 1)
+		max_interval = std::min(max_interval, zhang_burns_interval(ts));
+
+	return max_interval;
 }
 
 bool QPATest::is_schedulable(const TaskSet &ts, bool check_preconditions)
@@ -152,11 +171,9 @@ bool QPATest::is_schedulable(const TaskSet &ts, bool check_preconditions)
 	if (util > 1)
 		return false;
 
-	integral_t max_interval = edf_busy_interval(ts);
 	unsigned long min_interval = min_relative_deadline(ts);
 
-	if (util < 1)
-		max_interval = std::min(max_interval, zhang_burns_interval(ts));
+	integral_t max_interval = get_max_interval(ts, util);
 
 	integral_t next = get_largest_testpoint(ts, max_interval);
 	integral_t demand;
@@ -165,7 +182,10 @@ bool QPATest::is_schedulable(const TaskSet &ts, bool check_preconditions)
 	do
 	{
 		interval = next;
-		ts.bound_demand(interval, demand);
+
+
+		demand = get_demand(interval,ts);
+
 		if (demand < interval)
 			next = demand;
 		else

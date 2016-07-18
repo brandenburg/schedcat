@@ -70,6 +70,8 @@ BlockingBounds* ppcp_bounds(
 unsigned long get_EDF_arrival_blocking(const ResourceSharingInfo& info, unsigned int num_cpus,
                                        unsigned long interval_length, unsigned int cpu_id);
 
+bool pedf_msrp_classic_is_schedulable(const ResourceSharingInfo& info, unsigned int num_cpus);
+
 // Still missing:
 // ==============
 

@@ -139,8 +139,9 @@ SYNC_OBJ  = sharedres.o dpcp.o mpcp.o
 SYNC_OBJ += fmlp_plus.o  global-fmlp.o msrp.o
 SYNC_OBJ += global-omlp.o part-omlp.o clust-omlp.o
 SYNC_OBJ += rw-phase-fair.o rw-task-fair.o
-SYNC_OBJ += msrp-holistic.o
+SYNC_OBJ += msrp-holistic.o qpa_msrp.o
 SYNC_OBJ += global-pip.o ppcp.o
+
 
 # #### Targets ####
 
@@ -194,7 +195,7 @@ interface/%_wrap.o: interface/%_wrap.cc
 _sched.so: ${CORE_OBJ} ${EDF_OBJ} ${APA_OBJ} interface/sched_wrap.o
 	$(CXX) $(SOFLAGS) -o $@ $+ $(LDFLAGS) $(PYTHON_LIB)
 
-_locking.so: ${SYNC_OBJ} interface/locking_wrap.o
+_locking.so: ${CORE_OBJ} qpa.o ${SYNC_OBJ} interface/locking_wrap.o
 	$(CXX) $(SOFLAGS) -o $@ $+ $(LDFLAGS) $(PYTHON_LIB)
 
 _sim.so: ${CORE_OBJ} ${SCHED_OBJ} interface/sim_wrap.o
