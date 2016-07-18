@@ -49,11 +49,17 @@ def is_reasonable_priority_assignment(num_cpus, taskset):
     return True
 
 # assumes mutex constraints
-def get_cpp_model(all_tasks, use_task_period=False):
+def get_cpp_model(all_tasks, use_task_period=False, use_task_deadline=False):
     rsi = cpp.ResourceSharingInfo(len(all_tasks))
     for t in all_tasks:
+        if use_task_period:
+            pending_interval = t.period
+        elif use_task_deadline:
+            pending_interval = t.deadline
+        else:
+            pending_interval = t.response_time
         rsi.add_task(t.period,
-                     t.period if use_task_period else t.response_time,
+                     pending_interval,
                      t.partition,
                      t.preemption_level, # mapped to fixed priorities in the C++ code
                      t.cost,
@@ -558,3 +564,28 @@ def apply_no_progress_priority_bounds(all_tasks, num_cpus):
         # solved.
         t.response_time = t.cost + res.get_blocking_term(i)
     return res
+
+def pedf_msrp_is_schedulable(all_tasks):
+    # LP-based schedulability analysis based processor-demand criterion (PDC) for MSRP
+    model = get_cpp_model(all_tasks, use_task_deadline=True)
+    return lp_cpp.lp_pedf_msrp_is_schedulable(model)
+
+def pedf_fifo_preempt_is_schedulable(all_tasks):
+    # LP-based schedulability analysis based processor-demand criterion (PDC) for FIFO preemptive spin locks
+    model = get_cpp_model(all_tasks, use_task_deadline=True)
+    return lp_cpp.lp_pedf_fifo_preempt_is_schedulable(model)
+
+def pedf_lockfree_preempt_is_schedulable(all_tasks):
+    # LP-based schedulability analysis based processor-demand criterion (PDC) for preemptive lock-free
+    model = get_cpp_model(all_tasks, use_task_deadline=True)
+    return lp_cpp.lp_pedf_lockfree_preempt_is_schedulable(model)
+
+def pedf_lockfree_NP_is_schedulable(all_tasks):
+    # LP-based schedulability analysis based processor-demand criterion (PDC) for NP lock-free
+    model = get_cpp_model(all_tasks, use_task_deadline=True)
+    return lp_cpp.lp_pedf_lockfree_NP_is_schedulable(model)
+
+def pedf_msrp_classic_is_schedulable(all_tasks, num_cpus):
+    # MSRP classic analysis based on QPA
+    model = get_cpp_model(all_tasks, use_task_deadline=True)
+    return cpp.pedf_msrp_classic_is_schedulable(model, num_cpus)
