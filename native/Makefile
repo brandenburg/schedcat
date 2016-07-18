@@ -156,6 +156,9 @@ LP_OBJ   += lp_gfmlp.o
 LP_OBJ   += lp_global.o lp_global_pip.o lp_ppcp.o lp_sa_gfmlp.o lp_global_fmlpp.o lp_prsb.o
 LP_OBJ   += lp_no_progress_priority.o lp_no_progress_fifo.o
 LP_OBJ   += lp_global_no.o lp_global_pi.o lp_global_rsb.o lp_global_prio.o lp_global_fifo.o
+LP_OBJ   += lp_pedf_analysis.o
+LP_OBJ	 += lp_pedf_spinlocks_common.o lp_pedf_msrp.o lp_pedf_fifo_preempt.o
+LP_OBJ	 += lp_pedf_lockfree_common.o lp_pedf_lockfree_NP.o lp_pedf_lockfree_preempt.o
 
 APA_OBJ += apa_feas.o varmapperbase.o
 

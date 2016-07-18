@@ -123,4 +123,17 @@ BlockingBounds* lp_no_progress_fifo_bounds(
 BlockingBounds* lp_no_progress_priority_bounds(
 	const ResourceSharingInfo& info,
 	unsigned int number_of_cpus);
+
+/* P-EDF MSRP analysis, using blocking-aware PDC */
+bool lp_pedf_msrp_is_schedulable(const ResourceSharingInfo& info);
+
+/* P-EDF FIFO Preemptive spin locks analysis, using blocking-aware PDC */
+bool lp_pedf_fifo_preempt_is_schedulable(const ResourceSharingInfo& info);
+
+/* P-EDF Lock-Free Synchronization with Preemptive Commit Loops, using blocking aware PDC */
+bool lp_pedf_lockfree_preempt_is_schedulable(const ResourceSharingInfo& info);
+
+/* P-EDF Lock-Free Synchronization with NP Commit Loops, using blocking aware PDC */
+bool lp_pedf_lockfree_NP_is_schedulable(const ResourceSharingInfo& info);
+
 #endif /* LP_ANALYSYS_H_ */
