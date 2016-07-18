@@ -67,6 +67,8 @@ BlockingBounds* ppcp_bounds(
 	unsigned int number_of_cpus,
 	bool reasonable_priority_assignment = false);
 
+unsigned long get_EDF_arrival_blocking(const ResourceSharingInfo& info, unsigned int num_cpus,
+                                       unsigned long interval_length, unsigned int cpu_id);
 
 // Still missing:
 // ==============

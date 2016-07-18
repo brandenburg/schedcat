@@ -8,7 +8,9 @@
 static Interference msrp_local_bound(const TaskInfo* tsk,
 	const Cluster& local,
 	const PriorityCeilings& prio_ceilings,
-	const std::set<unsigned int>& global_resources);
+	const std::set<unsigned int>& global_resources,
+	unsigned long interval_length = 0); // EDF analysis interval length. Default value (=0) copes with FP local blocking
+
 static Interference msrp_remote_bound(const TaskInfo& tsk,
 	Clusters& clusters,
 	const std::set<unsigned int>& global_resources,
@@ -22,7 +24,7 @@ void print_ts(const ResourceSharingInfo& info)
 	{
 		const TaskInfo& tsk = info.get_tasks().at(i);
 		std::cout<<"task "<<tsk.get_id()<<" uses resources: ";
-		for (unsigned int res=0; res < tsk.get_requests().size(); res++)
+		for (unsigned int res = 0; res < tsk.get_requests().size(); res++)
 			std::cout<<tsk.get_requests().at(res).get_resource_id()<<" ";
 		std::cout<<"\n";
 
@@ -83,6 +85,70 @@ BlockingBounds* msrp_bounds(const ResourceSharingInfo& info, unsigned int num_cp
 	return _results;
 }
 
+
+// Follows Baruah RTSS'06 - "Resource sharing in EDF-scheduled systems: a closer look"
+unsigned long get_EDF_arrival_blocking(const ResourceSharingInfo& info, unsigned int num_cpus,
+                                       unsigned long interval_length, unsigned int cpu_id)
+{
+	Clusters clusters;
+	Resources reqs_per_res;
+	split_by_resource(info, reqs_per_res);
+	split_by_cluster(info, clusters, num_cpus);
+	std::set<unsigned int> global_resources = get_global_resources(reqs_per_res);
+	PriorityCeilings prio_ceilings = get_priority_ceilings(info);
+
+	Interference *np_blocking = new Interference[info.get_tasks().size()];
+
+	// determine non-preemptive blocking
+	for (unsigned int i = 0; i < info.get_tasks().size(); i++)
+	{
+		const TaskInfo& tsk  = info.get_tasks()[i];
+		Interference remote;
+		//ignore tasks on virtual partitions
+		if (tsk.get_cluster() < num_cpus)
+			remote = msrp_remote_bound(tsk, clusters, global_resources, num_cpus, np_blocking[i]);
+	}
+
+	unsigned long EDF_blocking = 0;
+	// Determine arrival blocking for each task
+	for (unsigned int i = 0; i < info.get_tasks().size(); i++)
+	{
+		const TaskInfo& tsk  = info.get_tasks()[i];
+		Interference local;
+
+		// Exclude tasks outside the problem window and not related to the
+		// processor under observation
+		if (tsk.get_deadline() > interval_length ||
+		   tsk.get_cluster() != cpu_id )
+		   continue;
+
+		// ignore tasks on virtual partitions
+		if (tsk.get_cluster() < num_cpus)
+		{
+			//find maximal NP-blocking of tasks on the same cluster
+			for (unsigned int j = 0; j < info.get_tasks().size(); j++)
+			{
+				const TaskInfo& tx  = info.get_tasks()[j];     // NP-blocking can be caused by tasks..
+				if (!(tx.get_cluster() != tsk.get_cluster()    // ..on the same partition..
+					|| tx.get_priority() < tsk.get_priority()  // ..with lower priority (preemption level)
+					|| i == j                                  // ..
+					|| tx.get_deadline() <= interval_length)   // ..having relative deadline > t.
+				   )
+
+				   EDF_blocking = std::max(EDF_blocking, np_blocking[j].total_length);
+			}
+			// determine local blocking
+			local = msrp_local_bound(&tsk, clusters[tsk.get_cluster()], prio_ceilings, global_resources,
+									 interval_length);
+		}
+
+		EDF_blocking = std::max(EDF_blocking, local.total_length);
+	}
+
+	return EDF_blocking;
+}
+
+
 // determine all global resource, i.e., resources that
 // are accessed by tasks that are on different clusters
 static const std::set<unsigned int> get_global_resources(const Resources& res)
@@ -116,7 +182,7 @@ static Interference msrp_remote_bound(
 {
 	Interference blocking;
 
-	for (unsigned int res=0; res < tsk.get_requests().size(); res++)
+	for (unsigned int res = 0; res < tsk.get_requests().size(); res++)
 	{
 		unsigned int res_id = tsk.get_requests().at(res).get_resource_id();
 		if (!global_resources.count(res_id)) // ignore non-global resources
@@ -140,6 +206,7 @@ static Interference msrp_remote_bound(
 						}
 					}
 				}
+
 				max_csl_sum += max_csl;
 			}
 		}
@@ -155,7 +222,8 @@ static Interference msrp_local_bound(
 	const TaskInfo* tsk,
 	const Cluster& local,
 	const PriorityCeilings& prio_ceilings,
-	const std::set<unsigned int>& global_resources)
+	const std::set<unsigned int>& global_resources,
+	unsigned long interval_length)
 {
 	Interference blocking;
 
@@ -164,13 +232,15 @@ static Interference msrp_local_bound(
 	for (unsigned int t = 0; t < local.size(); t++)
 	{
 		Requests reqs = local.at(t)->get_requests();
-		for (unsigned int r=0; r<reqs.size(); r++)
+		for (unsigned int r=0; r < reqs.size(); r++)
 		{
 			const RequestBound& req = reqs.at(r);
 			unsigned int res_id = req.get_resource_id();
 			if (req.get_task()->get_priority() <= tsk->get_priority()  // ignore tasks of same and higher prio (including self)
 					|| global_resources.count(res_id) > 0              // ignore global resources
-					|| prio_ceilings.at(res_id) > tsk->get_priority()) // ignore req.s to resources with ceiling too low to block us
+					|| prio_ceilings.at(res_id) > tsk->get_priority()  // ignore req.s to resources with ceiling too low to block us
+					|| req.get_task()->get_deadline() <= interval_length) // ingore requests from tasks that cannot cause EDF arrival blocking
+					                                                      // always false with interval_length=0 (for FP)
 				continue;
 			max_csl = std::max(max_csl, req.get_request_length()); // update max. CSL of request that can block us
 		}
