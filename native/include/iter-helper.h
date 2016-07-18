@@ -76,6 +76,18 @@
 	foreach(tasks, task_iter) \
 	if (task_iter->get_cluster() == (cluster))
 
+#define foreach_task_in_cluster_having_leq_dline(tasks, cluster, delta, task_iter) \
+	foreach(tasks, task_iter) \
+	if (task_iter->get_cluster() == (cluster) && task_iter->get_deadline()<=delta)
+
+#define foreach_task_in_cluster_having_gt_dline(tasks, cluster, delta, task_iter) \
+	foreach(tasks, task_iter) \
+	if (task_iter->get_cluster() == (cluster) && task_iter->get_deadline()>delta)
+
+#define foreach_task_in_cluster_having_lt_dline(tasks, cluster, delta, task_iter) \
+	foreach(tasks, task_iter) \
+	if (task_iter->get_cluster() == (cluster) && task_iter->get_deadline()<delta)
+
 #define foreach_task_not_in_cluster(tasks, cluster, task_iter) \
 	foreach(tasks, task_iter) \
 	if (task_iter->get_cluster() != (cluster))
@@ -98,6 +110,18 @@
 #define foreach_request_for(requests, res_id, req_iter)	\
 	foreach(requests, req_iter)				\
 	if (req_iter->get_resource_id() == res_id)
+
+#define foreach_cluster(info, cluster_id)   \
+    Clusters __clusters;  \
+	split_by_cluster(info, __clusters);   \
+    for (unsigned int cluster_id = 0; cluster_id < __clusters.size(); cluster_id++)  \
+
+#define foreach_cluster_except(info, skipped_cluster, cluster_id)   \
+    Clusters __clusters;  \
+	split_by_cluster(info, __clusters);   \
+    for (unsigned int cluster_id = 0; cluster_id < __clusters.size(); cluster_id++)  \
+    if (cluster_id != (skipped_cluster)) \
+
 
 
 #endif
