@@ -26,6 +26,7 @@ private:
 	bool setup_objective(double lb, double ub);
 	bool add_rows();
 	bool load_coeffs();
+	bool set_column_types();
 
 public:
 	CPXSolution(const LinearProgram &lp, unsigned int max_num_vars,
@@ -87,13 +88,12 @@ void CPXSolution::solve_model(double var_lb, double var_ub)
 	if (!lp)
 		return;
 
-	// crash when we hit an MIP-problem;
-	// this is currently not correctly handled in this code
 	if (linprog.has_integer_variables() ||
 		linprog.has_binary_variables())
-		abort();
+		CPXchgprobtype(env, lp, CPXPROB_MILP);
 
 	if (!setup_objective(var_lb, var_ub) ||
+	    !set_column_types() ||
 	    !add_rows() ||
 	    !load_coeffs())
 		return;
@@ -104,7 +104,7 @@ void CPXSolution::solve_model(double var_lb, double var_ub)
 	solver_costs.start();
 #endif
 
-	err = CPXlpopt(env, lp);
+	err = CPXmipopt(env, lp);
 
 	if (err != 0)
 		return;
@@ -124,18 +124,21 @@ void CPXSolution::solve_model(double var_lb, double var_ub)
 		  << solver_costs << std::endl
 		  << extract_costs << std::endl;
 #endif
+
 }
 
 CPXSolution::~CPXSolution()
 {
 	int status;
 
-	if (lp) {
+	if (lp)
+	{
 		status = CPXfreeprob(env, &lp);
 		assert(status == 0);
 	}
 
-	if (env) {
+	if (env)
+	{
 		status = CPXcloseCPLEX(&env);
 		assert(status == 0);
 	}
@@ -153,6 +156,7 @@ bool CPXSolution::setup_objective(double lb, double ub)
 	double *vals = all;
 	double *lbs  = all + num_cols;
 	double *ubs  = all + 2 * num_cols;
+	char* types = new char[num_cols];
 
 	assert(obj->get_terms().size() <= num_cols);
 
@@ -162,6 +166,10 @@ bool CPXSolution::setup_objective(double lb, double ub)
 		// set default ranges
 		lbs[i]  = lb;
 		ubs[i]  = ub;
+		// Every variable is by default continous (real)
+		// For a MILP it is mandatory to specify the variable types
+		// The type of binary and integer variable will be changed in set_column_types()
+		types[i] = 'C';
 	}
 
 	// set coefficients
@@ -182,11 +190,40 @@ bool CPXSolution::setup_objective(double lb, double ub)
 	}
 
 	CPXchgobjsen(env, lp, CPX_MAX);
-	err = CPXnewcols(env, lp, num_cols, vals, lbs, ubs, NULL, NULL);
+
+	err = CPXnewcols(env, lp, num_cols, vals, lbs, ubs, types, NULL);
 
 	delete [] all;
+	delete [] types;
 
 	return err == 0;
+}
+
+bool CPXSolution::set_column_types()
+{
+	int err;
+
+	const char typeINTEGER = 'I';
+	foreach(linprog.get_integer_variables(), var_id)
+	{
+		const int v = *var_id;
+
+		err = CPXchgctype(env, lp, 1, &v, &typeINTEGER);
+		if (err != 0)
+			return false;
+	}
+
+	const char typeBINARY   = 'B';
+	foreach(linprog.get_binary_variables(), var_id)
+	{
+		const int v = *var_id;
+
+		err = CPXchgctype(env, lp, 1, &v, &typeBINARY);
+		if (err != 0)
+			return false;
+	}
+
+	return true;
 }
 
 bool CPXSolution::add_rows()
@@ -214,7 +251,6 @@ bool CPXSolution::add_rows()
 		num_coeffs += inequ->first->get_terms().size();
 		r++;
 	}
-
 
 	err = CPXnewrows(env, lp, num_rows, bounds, senses, NULL, NULL);
 
