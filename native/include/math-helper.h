@@ -13,8 +13,12 @@ static inline unsigned long divide_with_ceil(unsigned long numer,
 		return (numer / denom) + 1;
 }
 
-
-
+static inline unsigned long divide_with_floor(unsigned long numer,
+					     unsigned long denom)
+{
+	/* integer division computes implicit floor */
+	return (numer / denom);
+}
 
 static inline integral_t divide_with_ceil(const integral_t &numer,
 					  const integral_t &denom)
