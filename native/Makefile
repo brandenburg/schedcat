@@ -88,7 +88,7 @@ endif
 
 # #### Debug support ####
 ifeq ($(DEBUG),y)
-DEFS += -g -DDEBUG -march=native
+DEFS += -g -DDEBUG -march=native -Werror
 else
 DEFS += -O2 -march=native
 endif
@@ -98,7 +98,7 @@ ifeq ($(DEBUG),n)
 DEFS += -DNDEBUG
 endif
 
-CXXFLAGS  = -Wall -Wextra -Werror $(DISABLED_WARNINGS) -fPIC $(INCLUDES) $(DEFS)
+CXXFLAGS  = -Wall -Wextra $(DISABLED_WARNINGS) -fPIC $(INCLUDES) $(DEFS)
 LDFLAGS   = $(LIBS)
 SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude
 
