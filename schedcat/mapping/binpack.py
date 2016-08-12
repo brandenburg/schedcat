@@ -134,7 +134,16 @@ def almost_worst_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
 
 def best_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
              empty_bin=list):
-    sets = [empty_bin()  for _ in xrange(0, bins)]
+    if bins:
+        # non-zero bins means pack into a fixed number of bins
+        create_on_demand = False
+        sets = [empty_bin()  for _ in xrange(0, bins)]
+    else:
+        # zero bins means create new bins as needed
+        create_on_demand = True
+        # so let's start with one
+        sets = [empty_bin()]
+        bins = 1
     sums = [0.0 for _ in xrange(0, bins)]
     for x in items:
         c = weight(x)
@@ -147,7 +156,14 @@ def best_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
                 sums[i] += c
                 break
         else:
-            misfit(x)
+            if create_on_demand:
+                # place into new bin
+                sets.append(empty_bin())
+                sums.append(c)
+                sets[bins] += [x]
+                bins += 1
+            else:
+                misfit(x)
     return sets
 
 def any_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
