@@ -17,6 +17,7 @@ import tests.overheads
 import tests.canbus
 import tests.example_end_to_end
 import tests.apa
+import tests.sched
 
 suite = unittest.TestSuite(
     [unittest.defaultTestLoader.loadTestsFromModule(x) for x in
@@ -34,7 +35,8 @@ suite = unittest.TestSuite(
       tests.overheads,
       tests.canbus,
       tests.apa,
-      tests.example_end_to_end]
+      tests.example_end_to_end,
+      tests.sched]
     ])
 
 def run_all_tests():
