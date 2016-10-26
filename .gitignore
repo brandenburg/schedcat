@@ -27,3 +27,4 @@ schedcat/locking/linprog/_lp_analysis.so
 schedcat/locking/linprog/native.py
 schedcat/cansim/_cansim.so
 schedcat/cansim/native.py
+config.mk

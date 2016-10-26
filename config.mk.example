@@ -1,0 +1,53 @@
+# Example Make configuration file
+# To use, rename this file to config.mk.
+
+############ Dependencies ############
+
+### GMP_PATH ###
+# set GMP_PATH to find dependency in non-standard location
+# Example:
+#
+# GMP_PATH=/usr/local
+
+### SWIG ###
+# set SWIG to find swig binary if not in current $PATH
+# Example:
+#
+# SWIG=/usr/local/latest-swig/bin/swig
+
+### PYTHON_INC and PYTHON_LIB ###
+# Point the Makefile to where the Python headers can be found.
+# Usually, this option is not required, unless you have multiple Python
+# implementations (e.g., on macOS + homebrew).
+# Note: need to include the -I flag for gcc/clang.
+# Example linking against Homebrew Python on macOS Sierra:
+#
+# PYTHON_INC= -I/usr/local/Cellar/python/2.7.11/Frameworks/Python.framework/Headers
+# PYTHON_LIB= -F/usr/local/Cellar/python/2.7.11/Frameworks/ -framework Python
+
+### CPLEX_PATH ###
+# Where to find the local CPLEX installation
+# Note: set to the empty string to prevent linking against CPLEX.
+# Examples:
+#
+# CPLEX_PATH=/opt/ibm/ILOG/CPLEX_Studio1263
+#
+# CPLEX_PATH=  # This disables CPLEX even if it auto-discovered by the Makefile.
+
+### GLPK_PATH ###
+# Where to find the local GLPK installation
+# Note: set to the empty string to prevent linking against GLPK.
+# Examples:
+#
+# GLPK_PATH=/usr/local
+#
+# GLPK_PATH=  # This disables GLPK even if it auto-discovered by the Makefile.
+
+
+
+############ Other Options ############
+
+### DEBUG ###
+# set DEBUG=y to disable optimizations and enable debug info
+# DEBUG=y
+

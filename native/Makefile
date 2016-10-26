@@ -1,7 +1,5 @@
--include .config
-# set DEBUG=y to disable optimizations and enable debug info
-# set GMP_PATH to find dependency in non-standard location
-# set SWIG to find swig binary if not in current $PATH
+-include ../config.mk # preferred Makefile config
+-include .config	  # include dot file for legacy support
 
 # #### Tools and Paths ####
 
