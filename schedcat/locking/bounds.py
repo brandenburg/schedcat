@@ -483,8 +483,8 @@ def apply_pip_bounds(all_tasks, num_cpus):
 
     for i,t in enumerate(all_tasks):
         # Note: this is a response-time bound, not just
-        # blocking. Returns ULONG_MAX if LP could not be 
-        # solved.  
+        # blocking. Returns ULONG_MAX if LP could not be
+        # solved.
         t.response_time = t.cost + res.get_blocking_term(i)
     return res
 
@@ -496,8 +496,8 @@ def apply_ppcp_bounds(all_tasks, num_cpus):
 
     for i,t in enumerate(all_tasks):
         # Note: this is a response-time bound, not just
-        # blocking. Returns ULONG_MAX if LP could not be 
-        # solved. 
+        # blocking. Returns ULONG_MAX if LP could not be
+        # solved.
         t.response_time = t.cost + res.get_blocking_term(i)
     return res
 
@@ -508,8 +508,8 @@ def apply_sa_gfmlp_bounds(all_tasks, num_cpus):
 
     for i,t in enumerate(all_tasks):
         # Note: this is a response-time bound, not just
-        # blocking. Returns ULONG_MAX if LP could not be 
-        # solved. 
+        # blocking. Returns ULONG_MAX if LP could not be
+        # solved.
         t.response_time = t.cost + res.get_blocking_term(i)
     return res
 
@@ -520,8 +520,8 @@ def apply_global_fmlpp_bounds(all_tasks, num_cpus):
 
     for i,t in enumerate(all_tasks):
         # Note: this is a response-time bound, not just
-        # blocking. Returns ULONG_MAX if LP could not be 
-        # solved. 
+        # blocking. Returns ULONG_MAX if LP could not be
+        # solved.
         t.response_time = t.cost + res.get_blocking_term(i)
     return res
 
@@ -532,8 +532,8 @@ def apply_prsb_bounds(all_tasks, num_cpus):
 
     for i,t in enumerate(all_tasks):
         # Note: this is a response-time bound, not just
-        # blocking. Returns ULONG_MAX if LP could not be 
-        # solved. 
+        # blocking. Returns ULONG_MAX if LP could not be
+        # solved.
         t.response_time = t.cost + res.get_blocking_term(i)
     return res
 
@@ -544,8 +544,8 @@ def apply_no_progress_fifo_bounds(all_tasks, num_cpus):
 
     for i,t in enumerate(all_tasks):
         # Note: this is a response-time bound, not just
-        # blocking. Returns ULONG_MAX if LP could not be 
-        # solved. 
+        # blocking. Returns ULONG_MAX if LP could not be
+        # solved.
         t.response_time = t.cost + res.get_blocking_term(i)
     return res
 
@@ -556,7 +556,7 @@ def apply_no_progress_priority_bounds(all_tasks, num_cpus):
 
     for i,t in enumerate(all_tasks):
         # Note: this is a response-time bound, not just
-        # blocking. Returns ULONG_MAX if LP could not be 
-        # solved. 
+        # blocking. Returns ULONG_MAX if LP could not be
+        # solved.
         t.response_time = t.cost + res.get_blocking_term(i)
     return res
