@@ -287,46 +287,23 @@ try:
 except ImportError:
     lp_cpp_available = False
 
-import schedcat.locking.linprog.dflp as dflp
-import schedcat.locking.linprog.dpcp as dpcp
+def apply_lp_dflp_bounds(all_tasks, resource_mapping):
+    model = get_cpp_model(all_tasks)
+    topo  = get_cpp_topology(resource_mapping)
+    res = lp_cpp.lp_dflp_bounds(model, topo)
+    for i, t in enumerate(all_tasks):
+        t.suspended = res.get_remote_blocking(i)
+        t.blocked   = res.get_blocking_term(i)
+    return res
 
-def apply_py_lp_bounds(bounds, all_tasks, resource_mapping, *args):
-    for t in all_tasks:
-        lp = bounds.get_lp_for_task(resource_mapping,
-                                    all_tasks, t, *args)
-
-        lp.kill_non_positive_vars()
-        solution = lp.solve()
-
-        # total blocking
-        t.blocked   = int(solution(lp.objective_function))
-        t.suspended = int(solution(lp.remote_objective))
-
-def apply_lp_dflp_bounds(all_tasks, resource_mapping,
-                         use_py=False):
-    if use_py or not lp_cpp_available:
-        apply_py_lp_bounds(dflp, all_tasks, resource_mapping)
-    else:
-        model = get_cpp_model(all_tasks)
-        topo  = get_cpp_topology(resource_mapping)
-        res = lp_cpp.lp_dflp_bounds(model, topo)
-        for i, t in enumerate(all_tasks):
-            t.suspended = res.get_remote_blocking(i)
-            t.blocked   = res.get_blocking_term(i)
-        return res
-
-def apply_lp_dpcp_bounds(all_tasks, resource_mapping,
-                         use_rta = True, use_py=False):
-    if use_py or not lp_cpp_available:
-        apply_py_lp_bounds(dpcp, all_tasks, resource_mapping, use_rta)
-    else:
-        model = get_cpp_model(all_tasks)
-        topo  = get_cpp_topology(resource_mapping)
-        res = lp_cpp.lp_dpcp_bounds(model, topo, use_rta)
-        for i, t in enumerate(all_tasks):
-            t.suspended = res.get_remote_blocking(i)
-            t.blocked   = res.get_blocking_term(i)
-        return res
+def apply_lp_dpcp_bounds(all_tasks, resource_mapping, use_rta = True):
+    model = get_cpp_model(all_tasks)
+    topo  = get_cpp_topology(resource_mapping)
+    res = lp_cpp.lp_dpcp_bounds(model, topo, use_rta)
+    for i, t in enumerate(all_tasks):
+        t.suspended = res.get_remote_blocking(i)
+        t.blocked   = res.get_blocking_term(i)
+    return res
 
 
 def apply_lp_mpcp_bounds(all_tasks):
