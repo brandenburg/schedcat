@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2015 Bjoern B. Brandenburg <bbb [at] mpi-sws.org>
+# Copyright (c) 2015, 2016 Bjoern B. Brandenburg <bbb [at] mpi-sws.org>
 #
 # All rights reserved.
 #
@@ -27,7 +27,31 @@
 # ARISING IN ANY  WAY OUT OF THE USE  OF THIS SOFTWARE, EVEN IF  ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""
+This module provides EDF-based partitioning and semi-partitioning heuristics
+that are aware of arbitrary processor affinity (APA) constraints. This allows
+each task to be restricted to an arbitrary subset of processors. The placement
+heuristics will respect any such placement constraints.
+
+The main heuristics are first-fit and worst-fit decreasing, optionally in
+combination with the C=D semi-partitioning heuristic due to Burns et al. On top
+of this foundation, several other heuristics and meta-heuristics are provided
+that, together, are higly effective at placing implicit-deadline tasks. See the
+following paper for further details and explanations:
+
+    [RTSS'16] B. Brandenburg and M. Guel, "Global Scheduling Not Required:
+              Simple, Near-Optimal Multiprocessor Real-Time Scheduling with
+              Semi-Partitioned Reservations", Proceedings of the 37th IEEE
+              Real-Time Systems Symposium (RTSS 2016), December 2016.
+"""
+
+
+from __future__ import division
+from math import floor, ceil
+
 from collections import defaultdict
+
+import operator
 
 from schedcat.model.tasks import TaskSystem, SporadicTask
 
@@ -128,7 +152,7 @@ def edf_worst_fit_decreasing_difficulty(tasks, with_splits=False,
                                         split_callback=None,
                                         min_chunk_size=0,
                                         max_chunk_split=False):
-
+    "The main WFD (semi-)partitioning heuristic."
     affinity = {}
     for t in tasks:
         affinity[t.id] = set(t.affinity)
@@ -171,6 +195,7 @@ def edf_first_fit_decreasing_difficulty(tasks, all_cores=None,
                                         pre_assigned=None,
                                         split_callback=None,
                                         min_chunk_size=0):
+    "The main FFD (semi-)partitioning heuristic."
     if all_cores is None:
         all_cores = set()
         for t in tasks:
@@ -221,3 +246,216 @@ def edf_first_fit_decreasing_difficulty(tasks, all_cores=None,
         remove_core_from_affinities(unassigned, affinity, core)
 
     return (unassigned, assignments)
+
+def count_slices(mapping):
+    return reduce(operator.add, (len(ts) for ts in mapping.itervalues()), 0)
+
+def double_wfd_split(*args, **kargs):
+    "The heuristic called 2WFD-C=D in the RTSS'16 paper."
+    kargs['max_chunk_split'] = False
+    (unassigned, mapping) = edf_worst_fit_decreasing_difficulty(*args, **kargs)
+
+    if not 'with_splits' in kargs or not kargs['with_splits']:
+        return (unassigned, mapping)
+
+    kargs['max_chunk_split'] = True
+    (unassigned2, mapping2) = edf_worst_fit_decreasing_difficulty(*args, **kargs)
+
+    if len(unassigned) < len(unassigned2):
+        return (unassigned, mapping)
+    elif len(unassigned) == len(unassigned2):
+        if count_slices(mapping) < count_slices(mapping2):
+            return (unassigned, mapping)
+        else:
+            return (unassigned2, mapping2)
+    else:
+        return (unassigned2, mapping2)
+
+def edf_assign_wfd_wfd_split(taskset, min_chunk_size=0, pre_assign_small=False):
+    "The heuristic called WWFD in the RTSS'16 paper."
+    if min_chunk_size and pre_assign_small:
+        too_small = [t for t in taskset if t.cost < min_chunk_size * 2]
+        rest = set((t for t in taskset if t.cost >= min_chunk_size * 2))
+        if too_small:
+            (unassigned, mapping) = double_wfd_split(
+                                        too_small, with_splits=False)
+            (unassigned, mapping) = double_wfd_split(
+                                        unassigned | rest, pre_assigned=mapping,
+                                        with_splits=False)
+        else:
+            (unassigned, mapping) = double_wfd_split(
+                                        taskset, with_splits=False)
+    else:
+        (unassigned, mapping) = double_wfd_split(
+                                    taskset, with_splits=False)
+    if unassigned:
+        (unassigned, mapping) = double_wfd_split(
+                                unassigned, with_splits=True,
+                                pre_assigned=mapping,
+                                min_chunk_size=min_chunk_size)
+
+    return (unassigned, mapping)
+
+def edf_assign_ffd_wfd_split(taskset, min_chunk_size=0, pre_assign_small=False):
+    "The heuristic called FWFD in the RTSS'16 paper."
+    if min_chunk_size and pre_assign_small:
+        too_small = [t for t in taskset if t.cost < min_chunk_size * 2]
+        rest = set((t for t in taskset if t.cost >= min_chunk_size * 2))
+        if too_small:
+            (unassigned, mapping) = edf_first_fit_decreasing_difficulty(
+                                        too_small, with_splits=False)
+            (unassigned, mapping) = double_wfd_split(
+                                        unassigned | rest, pre_assigned=mapping,
+                                        with_splits=False)
+        else:
+            (unassigned, mapping) = edf_first_fit_decreasing_difficulty(
+                                        taskset, with_splits=False)
+    else:
+        (unassigned, mapping) = edf_first_fit_decreasing_difficulty(
+                                    taskset, with_splits=False)
+    if unassigned:
+        (unassigned, mapping) = double_wfd_split(
+                                unassigned, with_splits=True,
+                                pre_assigned=mapping,
+                                min_chunk_size=min_chunk_size)
+
+    return (unassigned, mapping)
+
+def edf_assign_wfd_ffd_split(taskset, min_chunk_size=0, pre_assign_small=False):
+    "The heuristic called WFFD in the RTSS'16 paper."
+    if min_chunk_size and pre_assign_small:
+        too_small = [t for t in taskset if t.cost < min_chunk_size * 2]
+        rest = set((t for t in taskset if t.cost >= min_chunk_size * 2))
+        if too_small:
+            (unassigned, mapping) = double_wfd_split(
+                                        too_small, with_splits=False)
+            (unassigned, mapping) = double_wfd_split(
+                                        unassigned | rest, pre_assigned=mapping,
+                                        with_splits=False)
+        else:
+            (unassigned, mapping) = double_wfd_split(
+                                        taskset, with_splits=False)
+    else:
+        (unassigned, mapping) = double_wfd_split(
+                                    taskset, with_splits=False)
+    if unassigned:
+        (unassigned, mapping) = edf_first_fit_decreasing_difficulty(
+                                unassigned, with_splits=True,
+                                pre_assigned=mapping,
+                                min_chunk_size=min_chunk_size)
+
+    return (unassigned, mapping)
+
+def edf_assign_ffd_ffd_split(taskset, min_chunk_size=0, pre_assign_small=False):
+    "The heuristic called FFFD in the RTSS'16 paper."
+    if min_chunk_size and pre_assign_small:
+        too_small = [t for t in taskset if t.cost < min_chunk_size * 2]
+        rest = set((t for t in taskset if t.cost >= min_chunk_size * 2))
+        if too_small:
+            (unassigned, mapping) = edf_first_fit_decreasing_difficulty(
+                                        too_small, with_splits=False)
+            (unassigned, mapping) = edf_first_fit_decreasing_difficulty(
+                                        unassigned | rest, pre_assigned=mapping,
+                                        with_splits=False)
+        else:
+            (unassigned, mapping) = edf_first_fit_decreasing_difficulty(
+                                        taskset, with_splits=False)
+    else:
+        (unassigned, mapping) = edf_first_fit_decreasing_difficulty(
+                                    taskset, with_splits=False)
+    if unassigned:
+        (unassigned, mapping) = edf_first_fit_decreasing_difficulty(
+                                unassigned, with_splits=True,
+                                pre_assigned=mapping,
+                                min_chunk_size=min_chunk_size)
+
+    return (unassigned, mapping)
+
+def meta_preassign_failures(preassign_heuristic, regular_heuristic, taskset):
+    "The meta-heuristic called PAF in the RTSS'16 paper."
+    # first try the regular heuristic
+    (unassigned, mapping) = regular_heuristic(taskset)
+    if not unassigned:
+        return (unassigned, mapping)
+
+    # ok, we have some failures
+    all = set(taskset)
+    # get the set of task IDs that we should pre-assign
+    to_pa_idx = set((t.id for t in unassigned))
+
+    while True:
+        to_pa = set((t for t in all if t.id in to_pa_idx))
+        rest = all - to_pa
+        (unassigned, mapping) = preassign_heuristic(to_pa)
+        # if we can't even pre-assign, we give up
+        give_up = unassigned
+
+        # try to fit the rest
+        (unassigned, mapping) = regular_heuristic(rest | unassigned, pre_assigned=mapping)
+        if not unassigned or give_up:
+            # found one that works!
+            return (unassigned, mapping)
+        else:
+            # nope, more problematic ones, try again
+            for t in unassigned:
+                to_pa_idx.add(t.id)
+
+def is_feasible_pt(task, pt):
+    return floor(task.period / pt) >= ceil(task.cost / pt)
+
+def meta_reduce_periods(heuristic, taskset,
+    candidate_periods=None, threshold=0, reduce_all=False):
+    "The meta-heuristic called RP in the RTSS'16 paper."
+
+    if not candidate_periods:
+        # Caller really should provide some reasonable periods,
+        # but we can try to come up with some defaults...
+        candidate_periods = set()
+        for t in taskset:
+            for k in xrange(1, 11):
+                candidate_periods.add(t.period / k)
+        candidate_periods = sorted(candidate_periods)
+
+    ts = taskset.copy()
+    (unassigned, mapping) = heuristic(ts)
+
+    if not unassigned:
+        return (unassigned, mapping)
+
+    if not reduce_all:
+        failed = set((t.id for t in unassigned))
+
+    def transform(limit):
+        options = [p for p in candidate_periods if p < limit and p >= threshold]
+        options.reverse()
+        ts = taskset.copy()
+        for t in ts:
+            if t.period >= limit and (reduce_all or t.id in failed):
+                transformed = False
+                # try periods in the acceptable range
+                for p in options:
+                    pt = t.period // p
+                    if t.period % p == 0 and is_feasible_pt(t, pt):
+                        t.period_transform(pt)
+                        transformed = True
+                        break
+                # try smallest period that works
+                if not transformed:
+                    for p in [p for p in candidate_periods if p >= limit]:
+                        pt = t.period // p
+                        if t.period % p == 0 and is_feasible_pt(t, pt):
+                            t.period_transform(pt)
+                            transformed = True
+                            break
+        return ts
+
+    for limit in reversed([p for p in candidate_periods if p >= threshold]):
+        ts = transform(limit)
+        (unassigned, mapping) = heuristic(ts)
+        if not unassigned:
+            break
+        elif not reduce_all:
+            for t in unassigned:
+                failed.add(t.id)
+
+    return (unassigned, mapping)
