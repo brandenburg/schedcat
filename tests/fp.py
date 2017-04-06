@@ -59,6 +59,20 @@ class UniprocessorSelfSuspensions(unittest.TestCase):
         self.assertEqual(self.ts[0].response_time,  1)
         self.assertEqual(self.ts[1].response_time, 20)
 
+    def test_times_with_legacy_suspension(self):
+        self.ts[1].blocked = 5
+        self.ts[1].suspended = 5
+        self.assertFalse(rta.is_schedulable(1, self.ts))
+        self.assertEqual(self.ts[0].response_time,  1)
+        self.assertEqual(self.ts[1].response_time, 20)
+
+    def test_times_with_legacy_blocked(self):
+        self.ts[0].blocked = 1
+        self.ts[1].blocked = 5
+        self.assertTrue(rta.is_schedulable(1, self.ts))
+        self.assertEqual(self.ts[0].response_time,  2)
+        self.assertEqual(self.ts[1].response_time, 20)
+        self.assertEqual(self.ts[2].response_time, 12)
 
 # TODO: add tests with blocking and self-suspensions
 
