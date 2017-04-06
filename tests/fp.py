@@ -38,6 +38,28 @@ class UniprocessorRTA(unittest.TestCase):
         self.assertEqual(self.ts[3].response_time, 18)
 
 
+class UniprocessorSelfSuspensions(unittest.TestCase):
+    def setUp(self):
+        self.ts = tasks.TaskSystem([
+                tasks.SporadicTask(1,   2),
+                tasks.SporadicTask(5,  20),
+                tasks.SporadicTask(1,  20),
+            ])
+
+    def test_times_no_suspension(self):
+        self.assertTrue(rta.is_schedulable(1, self.ts))
+
+        self.assertEqual(self.ts[0].response_time,  1)
+        self.assertEqual(self.ts[1].response_time, 10)
+        self.assertEqual(self.ts[2].response_time, 12)
+
+    def test_times_with_suspension(self):
+        self.ts[1].suspended = 5
+        self.assertFalse(rta.is_schedulable(1, self.ts))
+        self.assertEqual(self.ts[0].response_time,  1)
+        self.assertEqual(self.ts[1].response_time, 20)
+
+
 # TODO: add tests with blocking and self-suspensions
 
 class MultiprocessorRTA(unittest.TestCase):
