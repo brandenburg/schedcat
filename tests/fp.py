@@ -74,7 +74,50 @@ class UniprocessorSelfSuspensions(unittest.TestCase):
         self.assertEqual(self.ts[1].response_time, 20)
         self.assertEqual(self.ts[2].response_time, 12)
 
-# TODO: add tests with blocking and self-suspensions
+class AudsleyExample(unittest.TestCase):
+    def setUp(self):
+        example_tasks = [
+            (51, 1000, 1000, 0, 0, 51),
+            (3000, 2000000, 5000, 300, 0, 3504),
+            (2000, 25000, 25000, 600, 0, 5906),
+            (5000, 25000, 25000, 900, 0, 11512),
+            (1000, 40000, 40000, 1350, 0, 13064),
+            (3000, 50000, 50000, 1350, 0, 16217),
+            (5000, 50000, 50000, 750, 0, 20821),
+            (8000, 59000, 59000, 750, 0, 36637),
+            (9000, 80000, 80000, 1350, 0, 47798),
+            (2000, 80000, 80000, 450, 0, 48949),
+            (5000, 100000, 100000, 1050, 0, 99150),
+            (1000, 200000, 200000, 450, 1000, 99550),
+            (3000, 200000, 200000, 450, 0, 140641),
+            (1000, 200000, 200000, 450, 0, 141692),
+            (1000, 200000, 200000, 1350, 0, 143694),
+            (3000, 1000000, 1000000, 0, 0, 145446),
+            (1000, 1000000, 1000000, 0, 0, 146497),
+            (1000, 1000000, 1000000, 0, 0, 147548),
+        ]
+        self.ts = tasks.TaskSystem()
+        for (cost, period, deadline, blocking, jitter, expected) in example_tasks:
+            t = tasks.SporadicTask(cost, period, deadline)
+            t.jitter = jitter
+            t.pcp = blocking
+            t.expected = expected + jitter
+            self.ts.append(t)
+
+    def test_times_with_legacy_blocked(self):
+        for t in self.ts:
+            t.blocked = t.pcp
+        self.assertTrue(rta.is_schedulable(1, self.ts))
+        for t in self.ts:
+            self.assertEqual(t.response_time, t.expected)
+
+    def test_times(self):
+        for t in self.ts:
+            t.prio_inversion = t.pcp
+        self.assertTrue(rta.is_schedulable(1, self.ts))
+        for t in self.ts:
+            self.assertEqual(t.response_time, t.expected)
+
 
 class MultiprocessorRTA(unittest.TestCase):
     def setUp(self):
