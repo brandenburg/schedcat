@@ -295,7 +295,7 @@ void add_local_lower_priority_constraints(
 				}
 			}
 		}
-		lp.add_equality(exp, num_arrivals);
+		lp.add_inequality(exp, num_arrivals);
 	}
 }
 
@@ -433,6 +433,6 @@ void add_local_lower_priority_constraints_shm(
 				exp->add_var(var_id);
 			}
 		}
-		lp.add_equality(exp, num_arrivals);
+		lp.add_inequality(exp, num_arrivals);
 	}
 }
