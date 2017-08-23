@@ -77,10 +77,16 @@ class ApplyBounds(unittest.TestCase):
             self.assertEqual(t.cost, t_.cost)
             self.assertEqual(t.period, t_.period)
 
+    def saw_only_local_blocking(self):
+        for t, t_ in zip(self.ts, self.ts_):
+            self.assertEqual(t.suspended, 0)
+            self.assertEqual(t.period, t_.period)
+
     def sob_non_zero_blocking(self):
         for t, t_ in zip(self.ts, self.ts_):
-            self.assertGreater(t.blocked, 0)
+            self.assertGreater(t.sob_blocked, 0)
             self.assertEqual(t.suspended, 0)
+            self.assertEqual(t.blocked, 0)
             self.assertGreater(t.cost, t_.cost)
             self.assertEqual(t.period, t_.period)
 
@@ -103,7 +109,7 @@ class ApplyBounds(unittest.TestCase):
 
     def test_mpcpvs(self):
         lb.apply_mpcp_bounds(self.ts, use_virtual_spin=True)
-        self.sob_non_zero_blocking()
+        self.saw_only_local_blocking()
 
     def test_dpcp(self):
         rmap = lb.get_round_robin_resource_mapping(2, 2)
