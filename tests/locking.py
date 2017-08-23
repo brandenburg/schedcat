@@ -883,6 +883,34 @@ class RTABlockingAccounting(unittest.TestCase):
         lb.assign_fp_preemption_levels(self.ts)
 
 
+    def test_no_double_accounting_spin(self):
+        "test that spin delay and arrival blocking are correctly accounted for"
+        lb.apply_task_fair_mutex_bounds(self.ts, 1, pi_aware=True)
+
+        self.assertTrue(rta.is_schedulable(1, self.p0))
+        self.assertTrue(rta.is_schedulable(1, self.p1))
+
+        # Expected inflated WCET and response times:
+
+        # - for highest-priority task:
+        #   - arrival blocking of up to 2ms
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[0].cost, 10 + 1)
+        self.assertEqual(self.p1[0].cost, 10 + 1)
+
+        self.assertEqual(self.p0[0].response_time, 10 + 2 + 1)
+        self.assertEqual(self.p1[0].response_time, 10 + 2 + 1)
+
+        # - for lower-priority task:
+        #   - no arrival blocking
+        #   - interference of up to 10ms + 1ms
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[1].cost, 10 + 1)
+        self.assertEqual(self.p1[1].cost, 10 + 1)
+
+        self.assertEqual(self.p0[1].response_time, 10 + 10 + 1 + 1)
+        self.assertEqual(self.p1[1].response_time, 10 + 10 + 1 + 1)
+
     def test_no_double_accounting_spin_sob(self):
         "test that s-oblivious spin delay and arrival blocking are correctly accounted for"
         lb.apply_task_fair_mutex_bounds(self.ts, 1)
@@ -910,6 +938,35 @@ class RTABlockingAccounting(unittest.TestCase):
 
         self.assertEqual(self.p0[1].response_time, 10 + 10 + 3 + 1)
         self.assertEqual(self.p1[1].response_time, 10 + 10 + 3 + 1)
+
+    def test_no_double_accounting_spin_phase_fair(self):
+        "test that spin delay and arrival blocking are correctly accounted for"
+        lb.apply_phase_fair_rw_bounds(self.ts, 1, pi_aware=True)
+
+        self.assertTrue(rta.is_schedulable(1, self.p0))
+        self.assertTrue(rta.is_schedulable(1, self.p1))
+
+        # Expected inflated WCET and response times:
+
+        # - for highest-priority task:
+        #   - arrival blocking of up to 2ms
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[0].cost, 10 + 1)
+        self.assertEqual(self.p1[0].cost, 10 + 1)
+
+        self.assertEqual(self.p0[0].response_time, 10 + 2 + 1)
+        self.assertEqual(self.p1[0].response_time, 10 + 2 + 1)
+
+        # - for lower-priority task:
+        #   - no arrival blocking
+        #   - interference of up to 10ms + 1ms
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[1].cost, 10 + 1)
+        self.assertEqual(self.p1[1].cost, 10 + 1)
+
+        self.assertEqual(self.p0[1].response_time, 10 + 10 + 1 + 1)
+        self.assertEqual(self.p1[1].response_time, 10 + 10 + 1 + 1)
+
 
     def test_no_double_accounting_spin_phase_fair_sob(self):
         "test that s-oblivious spin delay and arrival blocking are correctly accounted for"

@@ -239,32 +239,50 @@ def apply_clustered_kx_omlp_bounds(all_tasks, procs_per_cluster,
     apply_suspension_oblivious(all_tasks, res)
     return res
 
-# spinlocks are charged similarly to s-oblivious analysis
+# Spinlocks are either charged as s-oblivious analysis (the default, for legacy
+# reasons), or charged in a way such that local priority inversions are
+# accounted for explicitly (which is preferable for P-FP).
+
+def apply_pi_aware_spin_inflation(all_tasks, res):
+    for i,t in enumerate(all_tasks):
+        t.prio_inversion = res.get_arrival_blocking(i)
+        t.sob_blocked = res.get_blocking_term(i)
+        # PI-aware WCET inflation: charge only spinning as execution cost
+        t.cost += t.sob_blocked - t.prio_inversion
 
 def apply_task_fair_mutex_bounds(all_tasks, procs_per_cluster,
-                                 dedicated_irq=cpp.NO_CPU):
+                                 dedicated_irq=cpp.NO_CPU, pi_aware=False):
     model = get_cpp_model(all_tasks)
     res = cpp.task_fair_mutex_bounds(model, procs_per_cluster, dedicated_irq)
-    apply_suspension_oblivious(all_tasks, res)
+    if pi_aware:
+        apply_pi_aware_spin_inflation(all_tasks, res)
+    else:
+        apply_suspension_oblivious(all_tasks, res)
     return res
 
 def apply_task_fair_rw_bounds(all_tasks, procs_per_cluster,
-                              dedicated_irq=cpp.NO_CPU):
+                              dedicated_irq=cpp.NO_CPU, pi_aware=False):
     model = get_cpp_model_rw(all_tasks)
     # mutex equivalent model
     model_mtx = get_cpp_model(all_tasks)
     res = cpp.task_fair_rw_bounds(model, model_mtx, procs_per_cluster, dedicated_irq)
-    apply_suspension_oblivious(all_tasks, res)
+    if pi_aware:
+        apply_pi_aware_spin_inflation(all_tasks, res)
+    else:
+        apply_suspension_oblivious(all_tasks, res)
     return res
 
 def apply_phase_fair_rw_bounds(all_tasks, procs_per_cluster,
-                                 dedicated_irq=cpp.NO_CPU):
+                                 dedicated_irq=cpp.NO_CPU, pi_aware=False):
     model = get_cpp_model_rw(all_tasks)
     res = cpp.phase_fair_rw_bounds(model, procs_per_cluster, dedicated_irq)
-    apply_suspension_oblivious(all_tasks, res)
+    if pi_aware:
+        apply_pi_aware_spin_inflation(all_tasks, res)
+    else:
+        apply_suspension_oblivious(all_tasks, res)
     return res
 
-### spin lock analysis that assumes s-aware schedulability tests
+### spin lock analysis that assumes priority-inversion-aware schedulability tests
 #   (=> FP response-time analysis in schedcat.sched.fp.rta)
 
 def apply_msrp_bounds_holistic(all_tasks, dedicated_irq=cpp.NO_CPU):
