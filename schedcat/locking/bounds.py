@@ -189,14 +189,15 @@ def apply_classic_ppcp_bounds(all_tasks, num_cpus):
 
 def apply_suspension_oblivious(all_tasks, res):
     for i,t in enumerate(all_tasks):
-        # s-oblivious <=> no suspension
-        t.suspended = 0
         # might be zero
         t.arrival_blocked = res.get_arrival_blocking(i)
         # all blocking, including arrival blocking
-        t.blocked   = res.get_blocking_term(i)
-        # s-oblivious: charge it as execution cost
-        t.cost     += t.blocked
+        t.sob_blocked   = res.get_blocking_term(i)
+        # s-oblivious <=> no suspension, no priority inversion
+        t.suspended = 0
+        t.blocked   = 0
+        # instead, charge it all as execution cost
+        t.cost     += t.sob_blocked
 
 def apply_global_fmlp_sob_bounds(all_tasks):
     model = get_cpp_model(all_tasks)
