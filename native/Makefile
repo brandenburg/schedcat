@@ -23,15 +23,18 @@ OS := $(shell uname)
 
 # How to link Python libraries?
 PYTHON_VER := ${shell ${PYTHON} --version 2>&1}
+# Default:  assume Python is in $PATH and can tell us itself where to find the headers.
+PYTHON_HEADER_DIR ?= ${shell ${PYTHON} -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()" }
+PYTHON_INC ?= -I${PYTHON_HEADER_DIR}
+
 ifeq ($(OS),Darwin)
 # Mac OS X: link against Python Framework
-PYTHON_INC ?= -I/System/Library/Frameworks/Python.framework/Headers/
-PYTHON_LIB ?= -framework Python
+#PYTHON_INC ?= -I/System/Library/Frameworks/Python.framework/Headers/
+PYTHON_FRAMEWORK_DIR ?= ${shell echo ${PYTHON_HEADER_DIR} | sed 's|/Python.framework.*||'}
+PYTHON_LIB ?= -F${PYTHON_FRAMEWORK_DIR} -framework Python
 SOFLAGS     = -dynamiclib
 else
-# Default/Linux: assume Python is in standard library path
-PYTHON_INC ?= -I${shell ${PYTHON} -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()" }
-# No special linking required.
+# Default/Linux: No special linking required.
 PYTHON_LIB ?=
 SOFLAGS     = -shared
 endif
