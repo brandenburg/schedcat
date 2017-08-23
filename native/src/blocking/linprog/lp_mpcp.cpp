@@ -132,7 +132,7 @@ long GcsResponseTimes::bound_remote_delay(const TaskInfo &ti, unsigned int res_i
 	// response-time analysis to find final maximum wait time
 
 	unsigned long next_estimate = delay_by_lower + delay_by_equal;
-	unsigned long estimate = 0;
+	unsigned long estimate = 1;
 
 	while (next_estimate <= ti.get_response() && next_estimate != estimate)
 	{
