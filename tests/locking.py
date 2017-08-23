@@ -841,3 +841,251 @@ class Test_reasonble_priority(unittest.TestCase):
     def test_skip_top_m_tasks(self):
         self.ts[2].deadline = 150
         self.assertTrue(lb.is_reasonable_priority_assignment(2, self.ts))
+
+
+import schedcat.sched.fp.rta as rta
+
+class RTABlockingAccounting(unittest.TestCase):
+    def setUp(self):
+        self.ts = tasks.TaskSystem([
+                tasks.SporadicTask(10,  100),
+                tasks.SporadicTask(10,  100),
+                tasks.SporadicTask(10,  100),
+                tasks.SporadicTask(10,  100),
+            ])
+
+        r.initialize_resource_model(self.ts)
+
+        # dummy response-time guess
+        for t in self.ts:
+            t.response_time = 40
+
+        # every task holds the resource for up to 1ms
+        for t in self.ts:
+            t.resmodel[0].add_request(1)
+
+        # assign tasks to partitions
+        self.ts[0].partition = 0
+        self.ts[1].partition = 0
+        self.ts[2].partition = 1
+        self.ts[3].partition = 1
+
+        self.p0 = tasks.TaskSystem((t for t in self.ts if t.partition == 0))
+        self.p1 = tasks.TaskSystem((t for t in self.ts if t.partition == 1))
+
+        # assign preemption levels
+        lb.assign_fp_preemption_levels(self.ts)
+
+
+    def test_no_double_accounting_spin_sob(self):
+        "test that s-oblivious spin delay and arrival blocking are correctly accounted for"
+        lb.apply_task_fair_mutex_bounds(self.ts, 1)
+
+        self.assertTrue(rta.is_schedulable(1, self.p0))
+        self.assertTrue(rta.is_schedulable(1, self.p1))
+
+        # Expected inflated WCET and response times:
+
+        # - for highest-priority task:
+        #   - arrival blocking of up to 2ms
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[0].cost, 10 + 3)
+        self.assertEqual(self.p1[0].cost, 10 + 3)
+
+        self.assertEqual(self.p0[0].response_time, 10 + 2 + 1)
+        self.assertEqual(self.p1[0].response_time, 10 + 2 + 1)
+
+        # - for lower-priority task:
+        #   - no arrival blocking
+        #   - interference of up to 10ms + 3ms
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[1].cost, 10 + 1)
+        self.assertEqual(self.p1[1].cost, 10 + 1)
+
+        self.assertEqual(self.p0[1].response_time, 10 + 10 + 3 + 1)
+        self.assertEqual(self.p1[1].response_time, 10 + 10 + 3 + 1)
+
+    def test_no_double_accounting_spin_phase_fair_sob(self):
+        "test that s-oblivious spin delay and arrival blocking are correctly accounted for"
+        lb.apply_phase_fair_rw_bounds(self.ts, 1)
+
+        self.assertTrue(rta.is_schedulable(1, self.p0))
+        self.assertTrue(rta.is_schedulable(1, self.p1))
+
+        # Expected inflated WCET and response times:
+
+        # - for highest-priority task:
+        #   - arrival blocking of up to 2ms
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[0].cost, 10 + 3)
+        self.assertEqual(self.p1[0].cost, 10 + 3)
+
+        self.assertEqual(self.p0[0].response_time, 10 + 2 + 1)
+        self.assertEqual(self.p1[0].response_time, 10 + 2 + 1)
+
+        # - for lower-priority task:
+        #   - no arrival blocking
+        #   - interference of up to 10ms + 3ms
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[1].cost, 10 + 1)
+        self.assertEqual(self.p1[1].cost, 10 + 1)
+
+        self.assertEqual(self.p0[1].response_time, 10 + 10 + 3 + 1)
+        self.assertEqual(self.p1[1].response_time, 10 + 10 + 3 + 1)
+
+    def test_no_double_accounting_spin_msrp(self):
+        "test that spin delay and arrival blocking are correctly accounted for"
+        lb.apply_msrp_bounds_holistic(self.ts)
+
+        self.assertTrue(rta.is_schedulable(1, self.p0))
+        self.assertTrue(rta.is_schedulable(1, self.p1))
+
+        # Expected inflated WCET and response times:
+
+        # - for highest-priority task:
+        #   - arrival blocking of up to 2ms
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[0].cost, 10 + 1)
+        self.assertEqual(self.p1[0].cost, 10 + 1)
+
+        self.assertEqual(self.p0[0].response_time, 10 + 2 + 1)
+        self.assertEqual(self.p1[0].response_time, 10 + 2 + 1)
+
+        # - for lower-priority task:
+        #   - no arrival blocking
+        #   - interference of up to 10ms + 1ms
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[1].cost, 10 + 1)
+        self.assertEqual(self.p1[1].cost, 10 + 1)
+
+        self.assertEqual(self.p0[1].response_time, 10 + 10 + 1 + 1)
+        self.assertEqual(self.p1[1].response_time, 10 + 10 + 1 + 1)
+
+    def test_no_double_accounting_sob(self):
+        "test that suspension-oblivious analysis is correctly accounted for"
+        lb.apply_clustered_omlp_bounds(self.ts, 1)
+
+        self.assertTrue(rta.is_schedulable(1, self.p0))
+        self.assertTrue(rta.is_schedulable(1, self.p1))
+
+        # Expected inflated WCET and response times:
+
+        # - for highest-priority task:
+        #   - arrival sob pi-blocking of up to 2ms
+        #   - sob pi-blocking of up to 1ms
+        self.assertEqual(self.p0[0].cost, 10 + 2 + 1)
+        self.assertEqual(self.p1[0].cost, 10 + 2 + 1)
+
+        self.assertEqual(self.p0[0].response_time, 10 + 2 + 1)
+        self.assertEqual(self.p1[0].response_time, 10 + 2 + 1)
+
+        # - for lower-priority task:
+        #   - no arrival blocking
+        #   - interference of up to 10ms + 3ms (sob inflation)
+        #   - spin blocking of up to 1ms
+        self.assertEqual(self.p0[1].cost, 10 + 1)
+        self.assertEqual(self.p1[1].cost, 10 + 1)
+
+        self.assertEqual(self.p0[1].response_time, 10 + 13 + 1)
+        self.assertEqual(self.p1[1].response_time, 10 + 13 + 1)
+
+
+    def test_no_double_accounting_saw(self):
+        "test that suspension-aware analysis is correctly accounted for"
+        lb.apply_part_fmlp_bounds(self.ts)
+
+        self.assertTrue(rta.is_schedulable(1, self.p0))
+        self.assertTrue(rta.is_schedulable(1, self.p1))
+
+        # Expected inflated WCET and response times:
+
+        # - for highest-priority task:
+        #   - no WCET inflation
+        #   - local pi-blocking of up to 1ms
+        #   - remote pi-blocking of up to (1 + 1) ms
+        self.assertEqual(self.p0[0].cost, 10)
+        self.assertEqual(self.p1[0].cost, 10)
+
+        self.assertEqual(self.p0[0].response_time, 10 + 1 + 2)
+        self.assertEqual(self.p1[0].response_time, 10 + 1 + 2)
+
+        # - for lower-priority task:
+        #   - no WCET inflation
+        #   - no arrival blocking
+        #   - interference of up to 10ms (no inflation)
+        #   - remote pi-blocking of up to (1 + 1) ms
+        self.assertEqual(self.p0[1].cost, 10)
+        self.assertEqual(self.p1[1].cost, 10)
+
+        self.assertEqual(self.p0[1].response_time, 10 + 10 + 2)
+        self.assertEqual(self.p1[1].response_time, 10 + 10 + 2)
+
+    @unittest.skipIf(not lb.lp_cpp_available, "no native LP solver available")
+    def test_no_double_accounting_saw_lp(self):
+        "test that LP-based s-aware analysis is correctly accounted for"
+        lb.apply_lp_part_fmlp_bounds(self.ts)
+
+        self.assertTrue(rta.is_schedulable(1, self.p0))
+        self.assertTrue(rta.is_schedulable(1, self.p1))
+
+        # Expected inflated WCET and response times:
+
+        # - for highest-priority task:
+        #   - no WCET inflation
+        #   - local pi-blocking of up to 1ms
+        #   - remote pi-blocking of up to (1 + 1) ms
+        self.assertEqual(self.p0[0].cost, 10)
+        self.assertEqual(self.p1[0].cost, 10)
+
+        self.assertEqual(self.p0[0].response_time, 10 + 1 + 2)
+        self.assertEqual(self.p1[0].response_time, 10 + 1 + 2)
+
+        # - for lower-priority task:
+        #   - no WCET inflation
+        #   - no arrival blocking
+        #   - interference of up to 10ms (no inflation)
+        #   - remote pi-blocking of up to (1 + 1) ms
+        self.assertEqual(self.p0[1].cost, 10)
+        self.assertEqual(self.p1[1].cost, 10)
+
+        self.assertEqual(self.p0[1].response_time, 10 + 10 + 2)
+        self.assertEqual(self.p1[1].response_time, 10 + 10 + 2)
+
+
+    @unittest.skipIf(not lb.lp_cpp_available, "no native LP solver available")
+    def test_no_double_accounting_mpcp(self):
+        "test that s-aware MPCP analysis is correctly accounted for"
+        lb.apply_lp_mpcp_bounds(self.ts)
+
+        self.assertTrue(rta.is_schedulable(1, self.p0))
+        self.assertTrue(rta.is_schedulable(1, self.p1))
+
+        for t in self.ts:
+            print t.partition, t.preemption_level, t.blocked, t.suspended, t.response_time, t
+
+        # Expected inflated WCET and response times:
+
+        # - for highest-priority task:
+        #   - no WCET inflation
+        #   - local pi-blocking of up to 1ms
+        #   - remote pi-blocking of up to 1 ms // one lower-prio remote CS
+        self.assertEqual(self.p0[0].cost, 10)
+        self.assertEqual(self.p0[0].response_time, 10 + 1 + 1)
+
+        # on other core, can be blocked by multiple remote tasks due to lower
+        # priority => up to 2ms remote, 1ms local
+        self.assertEqual(self.p1[0].cost, 10)
+        self.assertEqual(self.p1[0].response_time, 10 + 1 + 2)
+
+        # - for lower-priority task on P0:
+        #   - no WCET inflation
+        #   - no arrival blocking
+        #   - interference of up to 10ms (no inflation)
+        #   - remote pi-blocking of up to up to 1 ms // one lower-prio remote CS
+        self.assertEqual(self.p0[1].cost, 10)
+        self.assertEqual(self.p0[1].response_time, 10 + 10 + 1)
+
+        # on other core, repeated blocking is again possible
+        self.assertEqual(self.p1[1].cost, 10)
+        self.assertEqual(self.p1[1].response_time, 10 + 10 + 2)
+

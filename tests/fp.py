@@ -247,3 +247,5 @@ class BertognaRTA(unittest.TestCase):
         self.assertEqual(self.ts[1].response_time,  1)
         self.assertEqual(self.ts[2].response_time,  3)
         self.assertEqual(self.ts[3].response_time, 18)
+
+
