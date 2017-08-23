@@ -92,7 +92,9 @@ def apply_mpcp_bounds(all_tasks, use_virtual_spin=False):
             # no suspension time
             t.suspended = 0
             # all blocking, including arrival blocking
-            t.blocked = res.get_blocking_term(i)
+            t.sob_blocked = res.get_blocking_term(i)
+            # arrival blocking only
+            t.blocked = res.get_local_blocking(i)
             # remote blocking increases CPU demand (s-oblivious)
             t.cost += res.get_remote_blocking(i)
     else:
