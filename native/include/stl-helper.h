@@ -1,14 +1,13 @@
 #ifndef STL_HELPER_H
 #define STL_HELPER_H
 
-// typeof() is a g++ extension
 #define foreach(collection, it)						\
-	for (typeof(collection.begin()) it = (collection).begin();	\
+	for (auto it = (collection).begin();	\
 	     it != (collection).end();					\
 		     it++)
 
 #define enumerate(collection, it, i)					\
-	for (typeof(collection.begin()) it = ({i = 0; (collection).begin();}); \
+	for (auto it = ({i = 0; (collection).begin();}); \
 	     it != (collection).end();					\
 	     it++, i++)
 

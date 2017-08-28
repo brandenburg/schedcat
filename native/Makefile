@@ -103,7 +103,7 @@ ifeq ($(DEBUG),n)
 DEFS += -DNDEBUG
 endif
 
-CXXFLAGS  = -Wall -Wextra $(DISABLED_WARNINGS) -fPIC $(INCLUDES) $(DEFS)
+CXXFLAGS  = --std=c++14 -Wall -Wextra $(DISABLED_WARNINGS) -fPIC $(INCLUDES) $(DEFS)
 LDFLAGS   = $(LIBS)
 SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude ${SWIG_DEFS}
 
@@ -171,7 +171,7 @@ interface/%_wrap.cc: interface/%.i
 	$(SWIG) $(SWIGFLAGS) -o $@ $<
 
 interface/%_wrap.o: interface/%_wrap.cc
-	$(CXX) $(DEFS) -fPIC $(PYTHON_INC) -c -o $@ $+ $(INCLUDES)
+	$(CXX) $(CXXFLAGS) $(DEFS) -fPIC $(PYTHON_INC) -c -o $@ $+ $(INCLUDES)
 
 _sched.so: ${CORE_OBJ} ${EDF_OBJ} ${APA_OBJ} interface/sched_wrap.o
 	$(CXX) $(SOFLAGS) $(PYTHON_LIB) -o $@ $+ $(LDFLAGS)
