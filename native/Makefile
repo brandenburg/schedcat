@@ -13,7 +13,6 @@ GMP_PATH ?= /usr
 # #### Flags ####
 
 DISABLED_WARNINGS  = -Wno-unused-parameter # Too much noise.
-DISABLED_WARNINGS += -Wno-deprecated       # We still use ext::hash_map<>.
 
 INCLUDES = -Iinclude -I${GMP_PATH}/include
 LIBS     = -L${GMP_PATH}/lib -lgmp -lgmpxx
