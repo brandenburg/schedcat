@@ -296,10 +296,7 @@ void add_common_conflict_set_constraints(
 		unsigned int var_id = vars.lookup_arrival_enabled(*resource);
 		exp->add_var(var_id);
 	}
-	if (exp->has_terms())
-		lp.add_equality(exp, 0);
-	else
-		delete exp;
+	lp.add_equality(exp, 0);
 }
 
 
@@ -358,10 +355,7 @@ void add_common_no_arrival_blocking_constraints(
 		if (local_lower_prio_reqs == 0)
 			exp->add_var(var_id);
 	}
-	if (exp->has_terms())
-		lp.add_inequality(exp, 0);
-	else
-		delete exp;
+	lp.add_inequality(exp, 0);
 }
 
 // Constraint 5: Disallow arrival blocking due to requests from local
@@ -390,10 +384,7 @@ void add_common_no_local_higher_priority_arrival_constraints(
 					exp->add_var(var_id);
 				}
 			}
-			if (exp->has_terms())
-				lp.add_inequality(exp, 0);
-			else
-				delete exp;
+			lp.add_inequality(exp, 0);
 		}
 
 	}
@@ -424,10 +415,7 @@ void add_common_local_direct_blocking_constraints(
 					exp->add_var(var_id);
 				}
 			}
-			if (exp->has_terms())
-				lp.add_inequality(exp, 0);
-			else
-				delete exp;
+			lp.add_inequality(exp, 0);
 		}
 	}
 }
@@ -470,10 +458,8 @@ void add_common_atmostonce_local_arrival_constraints(
 		{
 			unsigned int var_id = vars.lookup_arrival_enabled(*resource);
 			exp_per_res->sub_var(var_id);
-			lp.add_inequality(exp_per_res, 0);
 		}
-		else
-			delete exp_per_res;
+		lp.add_inequality(exp_per_res, 0);
 	}
 }
 
@@ -504,10 +490,7 @@ void add_common_preemptive_no_remote_arrival_blocking_constraints(
 					}
 				}
 			}
-			if (exp->has_terms())
-				lp.add_inequality(exp, 0);
-			else
-				delete exp;
+			lp.add_inequality(exp, 0);
 		}
 	}
 }

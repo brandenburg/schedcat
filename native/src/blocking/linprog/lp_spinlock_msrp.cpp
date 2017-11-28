@@ -36,10 +36,7 @@ void add_preemptive_fifo_max_preempt_constraints(
 		}
 	}
 	unsigned int max_preempt = max_preemptions(info, ti);
-	if (exp->has_terms()) // Constraint 21
-		lp.add_inequality(exp, max_preempt);
-	else
-		delete exp;
+	lp.add_inequality(exp, max_preempt); // Constraint 21
 }
 
 // Constraint 8: limit direct blocking for each resource per processor to the number
@@ -79,18 +76,12 @@ void add_msrp_max_direct_blocking_constraints(
 					}
 				}
 			}
-			if (exp->has_terms())
+			if (exp->has_terms() && preemptive)
 			{
-				if (preemptive)
-				{
-					unsigned int var_id = vars.lookup_max_preemptions(*resource);
-					exp->sub_var(var_id);
-				}
-				lp.add_inequality(exp, niql);
+				unsigned int var_id = vars.lookup_max_preemptions(*resource);
+				exp->sub_var(var_id);
 			}
-			else
-				delete exp;
-
+			lp.add_inequality(exp, niql);
 		}
 	}
 }
@@ -134,10 +125,8 @@ void add_msrp_atmostonce_remote_arrival_constraints(
 				unsigned int var_id = vars.lookup_arrival_enabled(*resource);
 				exp->sub_var(var_id);
 				lp.declare_variable_binary(var_id);
-				lp.add_inequality(exp, 0);
 			}
-			else
-				delete exp;
+			lp.add_inequality(exp, 0);
 		}
 	}
 }

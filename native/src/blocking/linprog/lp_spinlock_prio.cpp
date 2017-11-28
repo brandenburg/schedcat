@@ -282,10 +282,7 @@ bool add_prio_direct_blocking_HP_constraints(
 					}
 				}
 
-				if (exp->has_terms())
-					lp.add_inequality(exp, max_num_reqs * ncs);
-				else
-					delete exp;
+				lp.add_inequality(exp, max_num_reqs * ncs);
 			}
 		}
 	}
@@ -417,10 +414,8 @@ bool add_prio_arrival_blocking_HP_constraints(
 				{
 					unsigned int var_id = vars.lookup_arrival_enabled(*resource);
 					exp->sub_term(max_num_reqs, var_id);
-					lp.add_inequality(exp, 0);
 				}
-				else
-					delete exp;
+				lp.add_inequality(exp, 0);
 			}
 		}
 	}

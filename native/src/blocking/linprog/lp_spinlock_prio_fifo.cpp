@@ -574,10 +574,7 @@ bool add_prio_fifo_direct_blocking_HP_constraints(
 						}
 					}
 
-					if (exp->has_terms())
-						lp.add_inequality(exp, max_num_reqs * ncs);
-					else
-						delete exp;
+					lp.add_inequality(exp, max_num_reqs * ncs);
 				}
 			}
 		}
@@ -629,17 +626,12 @@ void add_prio_fifo_max_direct_blocking_constraints(
 					}
 				}
 
-				if (exp->has_terms())
+				if (exp->has_terms() && preemptive)
 				{
-					if (preemptive)
-					{
-						unsigned int var_id = vars.lookup_max_preemptions(*resource);
-						exp->sub_var(var_id);
-					}
-					lp.add_inequality(exp, niql);
+					unsigned int var_id = vars.lookup_max_preemptions(*resource);
+					exp->sub_var(var_id);
 				}
-				else
-					delete exp;
+				lp.add_inequality(exp, niql);
 			}
 		}
 	}
@@ -694,10 +686,8 @@ bool add_prio_fifo_arrival_blocking_HP_constraints(
 					{
 						unsigned int var_id = vars.lookup_arrival_enabled(*resource);
 						exp->sub_term(max_num_reqs * ncs, var_id);
-						lp.add_inequality(exp, 0);
 					}
-					else
-						delete exp;
+					lp.add_inequality(exp, 0);
 				}
 			}
 		}
@@ -746,10 +736,8 @@ void add_prio_fifo_atmostonce_remote_arrival_constraints(
 					unsigned int var_id = vars.lookup_arrival_enabled(*resource);
 					exp->sub_var(var_id);
 					lp.declare_variable_binary(var_id);
-					lp.add_inequality(exp, 0);
 				}
-				else
-					delete exp;
+				lp.add_inequality(exp, 0);
 			}
 		}
 	}
