@@ -127,3 +127,16 @@ void dump_lp_solution(
 	}
 }
 
+void explain_objective_value(
+	hashmap<unsigned int, std::string> &vnames,
+	const LinearProgram &lp,
+	const Solution& sol,
+	std::ostream& out)
+{
+	for (auto term : lp.get_objective()->get_terms()) {
+		auto v = term.second;
+		out << vnames[v] << " = " << sol.get_value(v)
+		    << " --> " << (term.first * sol.get_value(v))
+		    << std::endl;
+	}
+}

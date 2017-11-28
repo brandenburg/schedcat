@@ -25,7 +25,14 @@ void dump_lp_solution(
 	const ResourceSharingInfo& info,
 	const TaskInfo& ti,
 	const Solution& solution,
-	std::ostream& out,
+	std::ostream& out = std::cout,
 	bool show_zeros = false);
+
+void explain_objective_value(
+	hashmap<unsigned int, std::string> &var_names,
+	const LinearProgram &lp,
+	const Solution& solution,
+	std::ostream& out = std::cout);
+
 
 #endif
