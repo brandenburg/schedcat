@@ -412,8 +412,8 @@ void add_common_local_direct_blocking_constraints(
 	// for all local tasks..
 	foreach(clusters[ti.get_cluster()], task)
 	{
-		// skip ti and higher-priority tasks
-		if ((*task)->get_priority() > ti.get_priority())
+		// skip the task under analysis
+		if ((*task)->get_id() != ti.get_id())
 		{
 			LinearExpression *exp = new LinearExpression();
 			foreach((*task)->get_requests(), request)
