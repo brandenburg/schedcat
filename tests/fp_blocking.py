@@ -66,7 +66,7 @@ def pfp_sched_test_msrp_ilp(taskset_in):
     return (True, ts)
 
 
-class PFPSpinlockInflationVsILP(unittest.TestCase):
+class PFPSpinlockInflationVsILP1(unittest.TestCase):
     def setUp(self):
         mscale = 100
         self.ts = tasks.TaskSystem([
@@ -105,4 +105,57 @@ class PFPSpinlockInflationVsILP(unittest.TestCase):
         self.assertEqual(ts_inf[0].response_time, 2000)
         self.assertEqual(ts_inf[1].response_time, 6800)
         self.assertEqual(ts_inf[2].response_time, 4600)
+
+
+class PFPSpinlockInflationVsILP2(unittest.TestCase):
+    def setUp(self):
+        mscale = 100
+        self.ts = tasks.TaskSystem([
+                tasks.SporadicTask( 17 * mscale,  100 * mscale),
+                tasks.SporadicTask( 64 * mscale,  132 * mscale),
+                tasks.SporadicTask( 67 * mscale,  340 * mscale),
+                tasks.SporadicTask( 74 * mscale,  137 * mscale),
+                tasks.SporadicTask( 31 * mscale,  249 * mscale),
+                tasks.SporadicTask( 47 * mscale,  115 * mscale),
+                tasks.SporadicTask( 27 * mscale,  150 * mscale),
+                tasks.SporadicTask( 53 * mscale,  424 * mscale),
+                tasks.SporadicTask(192 * mscale,  884 * mscale),
+            ])
+
+        self.ts[0].partition = 0
+        self.ts[1].partition = 1
+        self.ts[2].partition = 2
+        self.ts[3].partition = 3
+        self.ts[4].partition = 4
+
+        self.ts[5].partition = 0
+        self.ts[6].partition = 0
+
+        self.ts[7].partition = 2
+        self.ts[8].partition = 4
+        self.ts.assign_ids()
+
+        r.initialize_resource_model(self.ts)
+        lb.assign_fp_preemption_levels(self.ts)
+
+        self.ts[0].resmodel[0].add_read_request(1 * mscale)
+        self.ts[1].resmodel[0].add_read_request(1 * mscale)
+        self.ts[2].resmodel[0].add_read_request(1 * mscale)
+        self.ts[3].resmodel[0].add_read_request(1 * mscale)
+        self.ts[4].resmodel[0].add_read_request(1 * mscale)
+
+        self.ts[6].resmodel[0].add_write_request(1 * mscale)
+        self.ts[7].resmodel[0].add_write_request(1 * mscale)
+        self.ts[8].resmodel[0].add_write_request(1 * mscale)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_ilp_dominance(self):
+        "check that the ILP analysis is at least as accurate as inflation"
+        (res_inf, ts_inf) = pfp_sched_test_msrp_inflate(self.ts)
+        (res_ilp, ts_ilp) = pfp_sched_test_msrp_ilp(self.ts)
+
+        self.assertTrue(res_inf)
+        self.assertTrue(res_ilp)
+        for i in range(len(self.ts)):
+            self.assertGreaterEqual(ts_inf[i].response_time, ts_ilp[i].response_time)
 
