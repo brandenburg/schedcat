@@ -206,7 +206,12 @@ unsigned int count_local_hp_reqs(
 			{
 				if ((*request).get_resource_id() == res_id)
 				{
-					num_requests += (*request).get_max_num_requests(ti.get_response());
+					// Since these a local tasks and we are
+					// analyzing a fixed-priority schedule,
+					// it's sufficient to consider only jobs
+					// in the same busy window (without having
+					// to worry about a carry-in job).
+					num_requests += (*request).get_max_num_requests_in_busy_window(ti.get_response());
 				}
 			}
 		}
