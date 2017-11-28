@@ -15,7 +15,9 @@ void set_msrp_blocking_objective(
 
 // LP-based analysis of spinlock based protocols
 // Based on the paper:
-// \tbw
+// "On Spin Locks in AUTOSAR: Blocking Analysis of FIFO, Unordered,
+//  and Priority-Ordered Spin Locks" (RTSS'13)
+// https://people.mpi-sws.org/~bbb/papers/pdf/rtss13a-extended.pdf
 
 
 // return the minimum locking priority of any request Ti issues for
@@ -272,7 +274,7 @@ void add_common_mutex_constraints(
 	}
 }
 
-// Constraint 2: non-conflicting local resources cannot cause arrival blocking
+// Constraint 4: non-conflicting local resources cannot cause arrival blocking
 void add_common_conflict_set_constraints(
 		VarMapperSpinlocks& vars,
 		const ResourceSharingInfo& info,
@@ -302,7 +304,7 @@ void add_common_conflict_set_constraints(
 
 
 
-// Constraint 3: At most one resource can cause arrival blocking
+// Constraint 2: At most one resource can cause arrival blocking
 void add_common_atmostone_arrival_blocking_res_constraints(
 		VarMapperSpinlocks& vars,
 		const ResourceSharingInfo& info,
@@ -323,7 +325,7 @@ void add_common_atmostone_arrival_blocking_res_constraints(
 }
 
 
-// Constraint 4: disallow arrival blocking for resources that are not accessed by Ti or other
+// Constraint 3: disallow arrival blocking for resources that are not accessed by
 // local lower-priority tasks.
 void add_common_no_arrival_blocking_constraints(
 		VarMapperSpinlocks& vars,
@@ -397,7 +399,7 @@ void add_common_no_local_higher_priority_arrival_constraints(
 	}
 }
 
-// Constraint 6: disallow direct blocking by local low-priority tasks.
+// Constraint 7: disallow direct blocking by local tasks.
 void add_common_local_direct_blocking_constraints(
 		VarMapperSpinlocks& vars,
 		const ResourceSharingInfo& info,
@@ -430,7 +432,7 @@ void add_common_local_direct_blocking_constraints(
 	}
 }
 
-// Constraint 7: limit arrival blocking to at most one
+// Constraint 6: limit arrival blocking to at most one
 // over all requests from local low-priority tasks.
 void add_common_atmostonce_local_arrival_constraints(
 		VarMapperSpinlocks& vars,
@@ -475,8 +477,7 @@ void add_common_atmostonce_local_arrival_constraints(
 	}
 }
 
-
-// Constraint 20: disallow remote arrival blocking.
+// Constraint 10: disallow remote arrival blocking.
 void add_common_preemptive_no_remote_arrival_blocking_constraints(
 		VarMapperSpinlocks& vars,
 		const ResourceSharingInfo& info,
@@ -521,22 +522,22 @@ void add_common_spinlock_constraints(
 	// Constraint 1
 	add_common_mutex_constraints(vars, info, ti, lp);
 
-	// Constraint 2
+	// Constraint 4
 	add_common_conflict_set_constraints(vars, info, ti, lp);
 
-	// Constraint 3
+	// Constraint 2
 	add_common_atmostone_arrival_blocking_res_constraints(vars, info, ti, lp);
 
-	// Constraint 4
+	// Constraint 3
 	add_common_no_arrival_blocking_constraints(vars, info, ti, lp);
 
 	// Constraint 5
 	add_common_no_local_higher_priority_arrival_constraints(vars, info, ti, lp);
 
-	// Constraint 6
+	// Constraint 7
 	add_common_local_direct_blocking_constraints(vars, info, ti, lp);
 
-	// Constraint 7
+	// Constraint 6
 	add_common_atmostonce_local_arrival_constraints(vars, info, ti, lp);
 }
 
@@ -547,7 +548,7 @@ void add_common_preemptive_spinlock_constraints(
 		const TaskInfo& ti,
 		LinearProgram& lp)
 {
-	// Constraint XXX - no remote arrival blocking
+	// Constraint 10 - no remote arrival blocking
 	add_common_preemptive_no_remote_arrival_blocking_constraints(vars, info, ti, lp);
 }
 
