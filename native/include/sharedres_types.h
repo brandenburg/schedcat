@@ -44,7 +44,11 @@ public:
 		  request_priority(priority)
 	{}
 
+	// general case, valid in all cases, including across CPUs etc.
 	unsigned int get_max_num_requests(unsigned long interval) const;
+	// Local case under fixed-priority scheduling => no carry-in job
+	// into busy-window, so less pessimistic than above general bound.
+	unsigned int get_max_num_requests_in_busy_window(unsigned long length) const;
 
 	unsigned int get_resource_id() const { return resource_id; }
 	unsigned int get_num_requests() const { return num_requests; }

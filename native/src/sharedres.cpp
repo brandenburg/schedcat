@@ -77,6 +77,13 @@ unsigned int RequestBound::get_max_num_requests(unsigned long interval) const
 	return (unsigned int) (task->get_max_num_jobs(interval) * num_requests);
 }
 
+unsigned int RequestBound::get_max_num_requests_in_busy_window(
+	unsigned long length) const
+{
+	return (unsigned int) (task->uni_fp_local_get_max_num_jobs(length)
+	                       * num_requests);
+}
+
 
 // ****** non-exported helpers *******
 
