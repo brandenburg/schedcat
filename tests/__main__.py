@@ -9,6 +9,7 @@ import tests.quanta
 import tests.pfair
 import tests.edf
 import tests.fp
+import tests.fp_blocking
 import tests.binpack
 import tests.locking
 import tests.global_locking_analysis
@@ -28,6 +29,7 @@ suite = unittest.TestSuite(
       tests.pfair,
       tests.edf,
       tests.fp,
+      tests.fp_blocking,
       tests.binpack,
       tests.locking,
       tests.global_locking_analysis,
