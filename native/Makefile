@@ -55,14 +55,22 @@ ifneq ($(CPLEX),)
 # The CPLEX variable now contains the canonicalized path to the cplex
 # binary. From this, we can extract the include and library paths.
 CPLEX_DIR := ${realpath ${dir $(CPLEX)}/../..}
+# For at least the CPLEX studio 12.7.1 distribution, "concert" resides outside
+# the cplex root directory
+CONCERT_DIR := ${realpath ${dir $(CPLEX)}/../../../concert}
 CPLEX_PATH ?= $(CPLEX_DIR)
+CONCERT_PATH ?= $(CONCERT_DIR)
 endif
 
 ifneq ($(CPLEX_PATH),)
 ${info Linking with CPLEX installation in $(CPLEX_DIR).}
+ifneq ($(CONCERT_PATH),)
+${info Linking with CPLEX concert installation in $(CONCERT_DIR).}
+LIBS     += -L$(CONCERT_PATH)/lib/x86-64_linux/static_pic/
+endif
 # Add headers, libraries, and definitions.
 INCLUDES += -I$(CPLEX_PATH)/include/
-LIBS     += -lilocplex -lcplex -lconcert -lpthread
+LIBS     += -L$(CPLEX_PATH)/lib/x86-64_linux/static_pic/ -lilocplex -lcplex -lconcert -lpthread
 DEFS     += -DCONFIG_HAVE_CPLEX -DCONFIG_HAVE_LP
 endif
 
