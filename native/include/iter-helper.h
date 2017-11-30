@@ -107,6 +107,13 @@
 	    task_iter->get_id() != (local_task).get_id() && \
 	    task_iter->get_priority() >= (local_task).get_priority())
 
+#define foreach_local_highereq_priority_task_except(tasks, local_task, task_iter)	\
+	foreach(tasks, task_iter)				\
+	if (task_iter->get_cluster() == (local_task).get_cluster() && \
+	    task_iter->get_id() != (local_task).get_id() && \
+	    task_iter->get_priority() <= (local_task).get_priority())
+
+
 #define foreach_request_for(requests, res_id, req_iter)	\
 	foreach(requests, req_iter)				\
 	if (req_iter->get_resource_id() == res_id)
