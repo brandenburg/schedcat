@@ -1,6 +1,7 @@
 from __future__ import division
 
 import unittest
+import random
 import copy
 import StringIO
 
@@ -18,6 +19,10 @@ import schedcat.locking.native as cpp
 import schedcat.locking.partition as lp
 
 import schedcat.util.linprog
+
+import schedcat.generator.generator_emstada as emstada
+
+from schedcat.mapping.binpack import worst_fit_decreasing
 
 
 def response_times_consistent(tasks):
@@ -294,3 +299,68 @@ class PFPSpinlockInflationVsILP3(unittest.TestCase):
         self.assertTrue(res_ilp)
         for i in range(len(self.ts)):
             self.assertGreaterEqual(ts_inf[i].response_time, ts_ilp[i].response_time)
+
+
+
+def generate_taskset(num_cpus=4, util_per_cpu=0.5, tasks_per_cpu=3, req_prob=0.5,
+                     min_req_len=50, max_req_len=250):
+    ts = emstada.gen_taskset('uni-broad', 'logunif', num_cpus * tasks_per_cpu,
+                             num_cpus * util_per_cpu)
+
+    ts.sort_by_period()
+    ts.assign_ids()
+    r.initialize_resource_model(ts)
+    lb.assign_fp_preemption_levels(ts)
+
+    for t in ts:
+        # randomly partition
+#         t.partition = random.randint(0, num_cpus - 1)
+        # randomly assign requests
+        if random.random() < req_prob:
+            t.resmodel[0].add_write_request(random.randint(min_req_len, max_req_len))
+
+    bins = worst_fit_decreasing(ts, num_cpus, weight=lambda t: t.utilization())
+    for cpu, tasks in enumerate(bins):
+        for t in tasks:
+            t.partition = cpu
+
+    return ts
+
+ts_count = 0
+schedulable_count = 0
+
+def generate_and_compare(*args, **kargs):
+    ts = generate_taskset(*args, **kargs)
+    (res_inf, ts_inf) = pfp_sched_test_msrp_inflate(ts)
+    (res_ilp, ts_ilp) = pfp_sched_test_msrp_ilp(ts)
+
+    global ts_count, schedulable_count
+
+    ts_count += 1
+    if res_ilp:
+        schedulable_count +=1
+
+    keep = False
+    if not res_ilp and res_inf:
+        # ILP should not say 'no' when inflation-based analysis says 'yes'
+        print 'TS%d - FAIL: ILP -> no, but INF -> yes' % ts_count
+        keep = True
+
+    if res_ilp and res_inf:
+        for i in range(len(ts)):
+            if ts_inf[i].response_time < ts_ilp[i].response_time:
+                # ILP should not never be more pessimistic
+                print 'TS%d T%d: ILP -> %d, but INF -> %d' % \
+                    (ts_count, i + 1, ts_inf[i].response_time, ts_ilp[i].response_time)
+                keep = True
+
+    if keep:
+        ser.write(ts, "ts-%07d.xml" % ts_count)
+
+
+
+if __name__ == '__main__':
+    while True:
+        generate_and_compare(4, 0.3, 4, 0.5)
+        if ts_count % 100 == 0:
+            print "C: %6d S: %6d -> %5.2f" % (ts_count, schedulable_count, (schedulable_count / ts_count) * 100)
