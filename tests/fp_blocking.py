@@ -2,9 +2,11 @@ from __future__ import division
 
 import unittest
 import copy
+import StringIO
 
 import schedcat.model.tasks as tasks
 import schedcat.model.resources as r
+import schedcat.model.serialize as ser
 
 import schedcat.sched.fp.rta as rta
 import schedcat.sched.fp as fp
@@ -159,3 +161,136 @@ class PFPSpinlockInflationVsILP2(unittest.TestCase):
         for i in range(len(self.ts)):
             self.assertGreaterEqual(ts_inf[i].response_time, ts_ilp[i].response_time)
 
+
+TASKSET = """
+<taskset>
+	<task id="1" partition="8" period="18870" wcet="1538">
+		<resources>
+			<requirement max_read_length="100" max_reads="1" max_write_length="0" max_writes="0" res_id="0" />
+		</resources>
+	</task>
+	<task id="2" partition="4" period="19800" wcet="4057">
+		<resources>
+			<requirement max_read_length="100" max_reads="1" max_write_length="100" max_writes="1" res_id="0" />
+		</resources>
+	</task>
+	<task id="3" partition="3" period="21900" wcet="5711">
+		<resources>
+			<requirement max_read_length="100" max_reads="1" max_write_length="0" max_writes="0" res_id="0" />
+		</resources>
+	</task>
+	<task id="4" partition="7" period="22270" wcet="9085">
+		<resources>
+			<requirement max_read_length="100" max_reads="1" max_write_length="0" max_writes="0" res_id="0" />
+		</resources>
+	</task>
+	<task id="5" partition="6" period="29430" wcet="105">
+		<resources>
+			<requirement max_read_length="100" max_reads="1" max_write_length="100" max_writes="1" res_id="0" />
+		</resources>
+	</task>
+	<task id="6" partition="1" period="31140" wcet="7775">
+		<resources>
+			<requirement max_read_length="100" max_reads="1" max_write_length="100" max_writes="1" res_id="0" />
+		</resources>
+	</task>
+	<task id="7" partition="1" period="32520" wcet="3933">
+		<resources />
+	</task>
+	<task id="8" partition="0" period="33920" wcet="7297">
+		<resources>
+			<requirement max_read_length="100" max_reads="1" max_write_length="0" max_writes="0" res_id="0" />
+		</resources>
+	</task>
+	<task id="9" partition="6" period="36940" wcet="3804">
+		<resources />
+	</task>
+	<task id="10" partition="5" period="41490" wcet="1963">
+		<resources>
+			<requirement max_read_length="100" max_reads="1" max_write_length="0" max_writes="0" res_id="0" />
+		</resources>
+	</task>
+	<task id="11" partition="9" period="45280" wcet="6320">
+		<resources>
+			<requirement max_read_length="100" max_reads="1" max_write_length="100" max_writes="1" res_id="0" />
+		</resources>
+	</task>
+	<task id="12" partition="9" period="47090" wcet="21474">
+		<resources />
+	</task>
+	<task id="13" partition="3" period="48600" wcet="22421">
+		<resources />
+	</task>
+	<task id="14" partition="2" period="48800" wcet="1432">
+		<resources>
+			<requirement max_read_length="100" max_reads="1" max_write_length="100" max_writes="1" res_id="0" />
+		</resources>
+	</task>
+	<task id="15" partition="3" period="48960" wcet="1367">
+		<resources />
+	</task>
+	<task id="16" partition="5" period="49050" wcet="6393">
+		<resources />
+	</task>
+	<task id="17" partition="0" period="52930" wcet="15045">
+		<resources />
+	</task>
+	<task id="18" partition="2" period="55990" wcet="21411">
+		<resources />
+	</task>
+	<task id="19" partition="9" period="61520" wcet="9501">
+		<resources />
+	</task>
+	<task id="20" partition="1" period="65040" wcet="24677">
+		<resources />
+	</task>
+	<task id="21" partition="2" period="68950" wcet="23324">
+		<resources />
+	</task>
+	<task id="22" partition="7" period="73340" wcet="4522">
+		<resources />
+	</task>
+	<task id="23" partition="5" period="77760" wcet="44509">
+		<resources />
+	</task>
+	<task id="24" partition="7" period="80440" wcet="22556">
+		<resources />
+	</task>
+	<task id="25" partition="4" period="81930" wcet="4770">
+		<resources />
+	</task>
+	<task id="26" partition="4" period="86190" wcet="41966">
+		<resources />
+	</task>
+	<task id="27" partition="8" period="89250" wcet="46161">
+		<resources />
+	</task>
+	<task id="28" partition="0" period="91590" wcet="22959">
+		<resources />
+	</task>
+	<task id="29" partition="6" period="93240" wcet="59997">
+		<resources />
+	</task>
+	<task id="30" partition="8" period="94300" wcet="14271">
+		<resources />
+	</task>
+</taskset>
+"""
+
+class PFPSpinlockInflationVsILP3(unittest.TestCase):
+    def setUp(self):
+        xml = StringIO.StringIO(TASKSET)
+        self.ts = ser.load(xml)
+
+        lb.assign_fp_preemption_levels(self.ts)
+
+    @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
+    def test_ilp_dominance(self):
+        "check that the ILP analysis is at least as accurate as inflation"
+        (res_inf, ts_inf) = pfp_sched_test_msrp_inflate(self.ts)
+        (res_ilp, ts_ilp) = pfp_sched_test_msrp_ilp(self.ts)
+
+        self.assertTrue(res_inf)
+        self.assertTrue(res_ilp)
+        for i in range(len(self.ts)):
+            self.assertGreaterEqual(ts_inf[i].response_time, ts_ilp[i].response_time)
