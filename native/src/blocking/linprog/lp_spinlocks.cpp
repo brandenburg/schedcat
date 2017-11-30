@@ -504,6 +504,79 @@ void add_common_preemptive_no_remote_arrival_blocking_constraints(
 }
 
 
+static unsigned long count_requests_in_contention_windows(
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti, const TaskInfo& tx,
+	unsigned int resource)
+{
+	unsigned long job_count = 0;
+	unsigned long reqs_per_job = tx.get_num_requests(resource);
+
+	if (!reqs_per_job)
+		return 0;
+
+	foreach_local_highereq_priority_task_except(info.get_tasks(), ti, th)
+	{
+		if (th->get_num_requests(resource)) {
+			unsigned int num_jobs_of_th =
+				th->uni_fp_local_get_max_num_jobs(ti.get_response());
+			unsigned int overlapping_jobs_of_tx =
+				tx.get_max_num_jobs(th->get_response());
+			job_count += num_jobs_of_th * overlapping_jobs_of_tx;
+		}
+	}
+	return job_count * reqs_per_job;
+}
+
+static void add_contention_window_constraints_for_resource(
+	VarMapperSpinlocks& vars,
+	const ResourceSharingInfo& info,
+	const TaskInfo& ti, LinearProgram& lp,
+	unsigned int resource)
+{
+	foreach_remote_task(info.get_tasks(), ti, tx)
+	{
+		LinearExpression *exp = new LinearExpression();
+
+		unsigned int t = tx->get_id();
+		foreach(tx->get_requests(), request)
+		{
+			unsigned int q = request->get_resource_id();
+			if (q == resource)
+			{
+				foreach_request_instance(*request, ti, v)
+				{
+					unsigned int var_id;
+					var_id = vars.lookup(t, q, v, BLOCKING_DIRECT);
+					exp->add_var(var_id);
+				}
+			}
+		}
+		unsigned long max_reqs = 0;
+
+		max_reqs = count_requests_in_contention_windows(info, ti, *tx, resource);
+
+		lp.add_inequality(exp, max_reqs);
+	}
+}
+
+void add_common_transitive_contention_window_constraints(
+		VarMapperSpinlocks& vars,
+		const ResourceSharingInfo& info,
+		const TaskInfo& ti,  LinearProgram& lp)
+{
+	std::set<unsigned int> all_resources = get_all_resources(info);
+
+	foreach(all_resources, resource)
+	{
+		// skip any resources that Ti accesses itself
+		if (ti.get_num_requests(*resource) == 0)
+			add_contention_window_constraints_for_resource(
+				vars, info, ti, lp, *resource);
+	}
+}
+
+
 void add_common_spinlock_constraints(
 		VarMapperSpinlocks& vars,
 		const ResourceSharingInfo& info,
@@ -530,6 +603,8 @@ void add_common_spinlock_constraints(
 
 	// Constraint 6
 	add_common_atmostonce_local_arrival_constraints(vars, info, ti, lp);
+
+	add_common_transitive_contention_window_constraints(vars, info, ti, lp);
 }
 
 
