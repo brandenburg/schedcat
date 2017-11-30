@@ -405,24 +405,27 @@ void add_common_local_direct_blocking_constraints(
 	Clusters clusters;
 	split_by_cluster(info, clusters);
 
+	LinearExpression *exp = new LinearExpression();
+
 	// for all local tasks..
 	foreach(clusters[ti.get_cluster()], task)
 	{
 		// skip the task under analysis
 		if ((*task)->get_id() != ti.get_id())
 		{
-			LinearExpression *exp = new LinearExpression();
+			unsigned int t = (*task)->get_id();
 			foreach((*task)->get_requests(), request)
 			{
 				foreach_request_instance(*request, ti, v)
 				{
-					unsigned int var_id = vars.lookup((*task)->get_id(), (*request).get_resource_id(), v, BLOCKING_DIRECT);
+					unsigned int q = (*request).get_resource_id();
+					unsigned int var_id = vars.lookup(t, q, v, BLOCKING_DIRECT);
 					exp->add_var(var_id);
 				}
 			}
-			lp.add_inequality(exp, 0);
 		}
 	}
+	lp.add_equality(exp, 0);
 }
 
 // Constraint 6: limit arrival blocking to at most one
