@@ -38,13 +38,13 @@ test:
 # Emacs Tags
 TAGS:
 	find . -type f -and  -iname '*.py' | xargs ${ETAGS}
-	find cpp/include -type f -and  -iname '*.h' | xargs ${ETAGS} -a
-	find cpp/src -type f -and  -iname '*.cpp' | xargs ${ETAGS} -a
+	find native/include -type f -and  -iname '*.h' | xargs ${ETAGS} -a
+	find native/src -type f -and  -iname '*.cpp' | xargs ${ETAGS} -a
 	${ETAGS} -l python -a run_exp
 
 # Vim Tags
 tags:
 	find . -type f -and  -iname '*.py' | xargs ctags
-	find cpp/include -type f -and  -iname '*.h' | xargs ctags -a
-	find cpp/src -type f -and  -iname '*.cpp' | xargs ctags -a
+	find native/include -type f -and  -iname '*.h' | xargs ctags -a
+	find native/src -type f -and  -iname '*.cpp' | xargs ctags -a
 	ctags --language-force=Python -a run_exp
