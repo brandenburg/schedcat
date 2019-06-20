@@ -3,8 +3,6 @@ from __future__ import division
 from math    import floor
 from fractions import Fraction
 
-from schedcat.util.quantor import forall
-
 ONE = Fraction(1)
 
 def N(t_k, t_i):
@@ -27,4 +25,4 @@ def task_schedulable(T, t_k, m):
         (beta_sum == cap and any([0 < b <= ONE - l_k for b in all_beta]))
 
 def is_schedulable(no_cpus, tasks):
-    return forall(tasks)(lambda t_k: task_schedulable(tasks, t_k, no_cpus))
+    return all(task_schedulable(tasks, t_k, no_cpus) for t_k in tasks)

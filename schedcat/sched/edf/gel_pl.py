@@ -13,8 +13,6 @@ from math import ceil
 
 from fractions import Fraction
 
-from schedcat.util.quantor import forall
-
 import schedcat.sched
 if schedcat.sched.using_native:
     import schedcat.sched.native as native
@@ -54,7 +52,7 @@ def compute_gedf_response_details(no_cpus, tasks, rounds):
     return compute_response_details(no_cpus, tasks, rounds)
 
 def compute_response_details(no_cpus, tasks, rounds):
-    if (no_cpus == 1) and forall(tasks)(lambda t: t.prio_pt == t.period):
+    if (no_cpus == 1) and all(t.prio_pt == t.period for t in tasks):
         details = AnalysisDetails(tasks)
         details.bounds = [task.period for task in tasks]
         details.S_i = [0.0 for task in tasks]
@@ -210,7 +208,7 @@ def compute_binsearch_s(no_cpus, tasks, util_ceil, S, Y_ints, utilizations,
 
 def has_bounded_tardiness(no_cpus, tasks):
     return tasks.utilization() <= no_cpus and \
-        forall(tasks)(lambda t: t.period >= t.cost)
+        all(t.period >= t.cost for t in tasks)
 
 def bound_gedf_response_times(no_cpus, tasks, rounds):
     response_details = compute_gedf_response_details(no_cpus, tasks, rounds)

@@ -16,8 +16,6 @@ from .ffdbf import is_schedulable as ffdbf_test
 from .da import bound_response_times as da_tardiness_bounds
 from .rta import bound_response_times as rta_response_times
 
-from schedcat.util.quantor import forall
-
 # hard real-time tests
 HRT_TESTS = {
     'GFB'    : gfb_test,
@@ -52,7 +50,7 @@ def is_schedulable_py(no_cpus, tasks,
                       want_ffdbf=False,
                       want_load=False):
     if tasks.utilization() > no_cpus or \
-        not forall(tasks)(lambda t: t.period >= t.cost):
+        not all(t.period >= t.cost for t in tasks):
         # trivially infeasible
         return False
     else:

@@ -8,7 +8,6 @@ from heapq import merge
 
 from math   import floor, ceil, sqrt
 from schedcat.util.math    import lcm
-from schedcat.util.quantor import forall
 
 from fractions import Fraction
 
@@ -126,10 +125,10 @@ class TaskSystem(list):
         return "TaskSystem([" + ", ".join([repr(t) for t in self]) + "])"
 
     def only_implicit_deadlines(self):
-        return forall(self)(lambda t: t.implicit_deadline())
+        return all(t.implicit_deadline() for t in self)
 
     def only_constrained_deadlines(self):
-        return forall(self)(lambda t: t.constrained_deadline())
+        return all(t.constrained_deadline() for t in self)
 
     def assign_ids(self):
         for i, t in enumerate(self):

@@ -11,7 +11,6 @@ from __future__ import division
 
 from math      import floor, ceil
 from itertools import izip
-from schedcat.util.quantor   import forall
 from schedcat.util.math      import topsum
 
 # The definition of I1() and I2() diverge from the one given in the
@@ -65,7 +64,7 @@ def ak_bounds(all_tsks, m):
 
 def is_schedulable(m, tasks):
     """Are the given tasks schedulable on m processors?"""
-    if tasks.utilization() >= m or not forall(tasks)(lambda t: t.constrained_deadline()):
+    if tasks.utilization() >= m or not all(t.constrained_deadline() for t in tasks):
         return False
     for (tsk_k, a_k_bound) in izip(tasks, ak_bounds(tasks, m)):
         for a_k in tasks.dbf_points_of_change(a_k_bound, offset=tsk_k.deadline):

@@ -1,19 +1,17 @@
-from schedcat.util.quantor import forall
-
 def is_schedulable(no_cpus, tasks):
     """Simple utilization bound: tasks.utilization() <= no_cpus.
     Assumption: all parameters are quantum multiples and deadlines
     are not constrained.
     """
     return tasks.utilization() <= no_cpus and \
-        forall(tasks)(lambda t: t.deadline >= t.period >= t.cost)
+        all(t.deadline >= t.period >= t.cost for t in tasks)
 
 def has_bounded_tardiness(no_cpus, tasks):
     """Simple utilization bound: tasks.utilization() <= no_cpus.
     This is also true for constrained-deadline tasks.
     """
     return tasks.utilization() <= no_cpus and \
-        forall(tasks)(lambda t: t.period >= t.cost)
+        all(t.period >= t.cost for t in tasks)
 
 def bound_response_times(no_cpus, tasks):
     """Upper bound the response time of each task.

@@ -5,8 +5,6 @@ from __future__ import division
 
 from math import ceil
 
-from schedcat.util.quantor import forall
-
 def tardiness_x(no_cpus, tasks):
     """This function computes the X part of Uma Devi's G-EDF tardiness bound, as
        given in Corollary 4.11 on page 109 of Uma's thesis..
@@ -79,11 +77,11 @@ def task_tardiness_bound(no_cpus, tasks, preemptive=True):
 
 def has_bounded_tardiness(no_cpus, tasks):
     return tasks.utilization() <= no_cpus and \
-        forall(tasks)(lambda t: t.period >= t.cost)
+        all(t.period >= t.cost for t in tasks)
 
 def bound_response_times(no_cpus, tasks, preemptive=True):
     # DA's work applies to implicit-deadline tasks
-    assert forall(tasks)(lambda t: t.implicit_deadline())
+    assert all(t.implicit_deadline() for t in tasks)
 
     x = task_tardiness_bound(no_cpus, tasks, preemptive)
     if x is None:
