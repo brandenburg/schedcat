@@ -12,10 +12,8 @@ from __future__ import division
 from math import ceil, floor
 from itertools import izip
 
-from schedcat.util.quantor import forall
-
 def is_schedulable(num_cpus, tasks):
-    return forall(xrange(len(tasks)))(lambda k: rta_schedulable_guan(k, tasks, num_cpus))
+    return all(rta_schedulable_guan(k, tasks, num_cpus) for k in xrange(len(tasks)))
 
 bound_response_times = is_schedulable
 

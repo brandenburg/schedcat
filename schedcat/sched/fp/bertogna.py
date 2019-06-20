@@ -9,10 +9,9 @@ Fixed-Priority Preemptive Multiprocessor Scheduling", RTSS'09.
 from __future__ import division
 
 from math import floor
-from schedcat.util.quantor import forall
 
 def is_schedulable(num_cpus, tasks, **kargs):
-    return forall(xrange(len(tasks)))(lambda k: rta_schedulable(k, tasks, num_cpus, **kargs))
+    return all(rta_schedulable(k, tasks, num_cpus, **kargs) for k in xrange(len(tasks)))
 
 bound_response_times = is_schedulable
 

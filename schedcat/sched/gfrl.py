@@ -8,8 +8,6 @@ from math import ceil
 
 from fractions import Fraction
 
-from schedcat.util.quantor import forall
-
 import schedcat.sched
 if schedcat.sched.using_native:
     import schedcat.sched.native as native
@@ -392,7 +390,7 @@ def compute_response_bounds(no_cpus, tasks):
 
 def has_bounded_tardiness(no_cpus, tasks):
     return tasks.utilization() <= no_cpus and \
-        forall(tasks)(lambda t: t.period >= t.cost)
+        all(t.period >= t.cost for t in tasks)
 
 
 def bound_response_times(no_cpus, tasks):

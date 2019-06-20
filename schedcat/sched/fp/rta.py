@@ -2,8 +2,6 @@ from __future__ import division
 
 from math import ceil
 
-from schedcat.util.quantor import forall
-
 # task.prio_inversion => LOCAL blocking (think PCP or SRP)
 # task.suspended => self-suspensions, e.g. as caused by REMOTE blocking
 # task.jitter    => delay between arrival and release of job
