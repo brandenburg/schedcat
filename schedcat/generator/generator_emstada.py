@@ -44,9 +44,11 @@ import numpy
 import optparse
 import sys
 import textwrap
+
 from schedcat.model.tasks import TaskSystem
 import schedcat.model.tasks as tasks
 from schedcat.model.tasks import SporadicTask
+from schedcat.util.math import lcm
 from schedcat.util.time import ms2us
 from schedcat.overheads.jlfp import quantize_params
 
@@ -191,16 +193,6 @@ def gen_tasksets(options):
 
 #    print ts
     return ts
-
-def gcd(a, b): # From http://stackoverflow.com/a/147539
-    """Return greatest common divisor using Euclid's Algorithm."""
-    while b:
-        a, b = b, a % b
-    return a
-
-def lcm(a, b): # From http://stackoverflow.com/a/147539
-    """Return lowest common multiple."""
-    return a * b // gcd(a, b)
 
 def print_taskset(taskset, format):
     util = .0 # Total utilization
