@@ -1,14 +1,10 @@
 from __future__ import division
 
 from bisect import bisect_left as find_index
+from fractions import gcd
 
 def is_integral(x):
     return type(x) == int or type(x) == long
-
-def gcd(a,b):
-    if a == 0:
-        return b
-    return abs(gcd(b % a, a))
 
 def lcm(*args):
     if not args:

@@ -49,19 +49,6 @@ class Math(unittest.TestCase):
         self.assertFalse(m.is_integral(20 / 1))
         self.assertFalse(m.is_integral(Fraction(100, 10)))
 
-    def test_gcd(self):
-        self.assertEqual(m.gcd(10, 3), 1)
-        self.assertEqual(m.gcd(10, 2), 2)
-        self.assertEqual(m.gcd(15, 27), 3)
-        self.assertEqual(m.gcd(-10, 2), 2)
-        self.assertEqual(m.gcd(-20, -1930), 10)
-        self.assertEqual(m.gcd(10, 0), 10)
-        self.assertEqual(m.gcd(0, 10), 10)
-        self.assertEqual(m.gcd(10, 20), 10)
-        self.assertEqual(m.gcd(113, 17), 1)
-        self.assertEqual(m.gcd(-23, 17), 1)
-        self.assertEqual(m.gcd(-23, -54), 1)
-
     def test_lcm(self):
         self.assertEqual(m.lcm(), 0)
         self.assertEqual(m.lcm(99), 99)
