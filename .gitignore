@@ -21,6 +21,8 @@ schedcat/sched/_sched.so
 schedcat/sched/native.py
 schedcat/sim/_sim.so
 schedcat/sim/native.py
+schedcat/cansim/native.py
+schedcat/cansim/_cansim.so
 tmp/
 TAGS
 schedcat/locking/linprog/_lp_analysis.so
