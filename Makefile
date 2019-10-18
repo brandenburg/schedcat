@@ -1,6 +1,6 @@
 
 # default tools
-PYTHON ?= python
+PYTHON ?= python2.7
 SCONS  ?= scons
 ETAGS  ?= etags
 

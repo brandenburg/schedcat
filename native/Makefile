@@ -6,7 +6,7 @@
 # default: swig binary available in $PATH.
 SWIG     ?= swig
 # default: standard python in $PATH.
-PYTHON   ?= python
+PYTHON   ?= python2.7
 # default: assume GMP is installed in standard location.
 GMP_PATH ?= /usr
 
