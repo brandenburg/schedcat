@@ -9,6 +9,8 @@ ts
 *.sedbak*
 *.o
 *.os
+*.egg-info
+*.vscode
 .coverage
 native/testmain
 native/interface/*_wrap.cc
