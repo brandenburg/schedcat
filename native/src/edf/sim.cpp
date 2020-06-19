@@ -16,7 +16,7 @@ class DeadlineMissSearch : public GedfSim
     simtime_t when_missed;
     simtime_t when_completed;
 
-    DeadlineMissSearch(int m) : GedfSim(m), dmissed(false) {};
+    DeadlineMissSearch(int m, bool preemptive) : GedfSim(m, preemptive), dmissed(false) {};
 
     virtual void job_completed(int proc, Job *job)
     {
@@ -40,7 +40,7 @@ class Tardiness : public GedfSim
   public:
     Stats stats;
 
-    Tardiness(int m) : GedfSim(m)
+    Tardiness(int m, bool preemptive) : GedfSim(m, preemptive)
     {
         stats.num_tardy_jobs = 0;
         stats.num_ok_jobs = 0;
@@ -68,9 +68,10 @@ class Tardiness : public GedfSim
 
 unsigned long edf_first_violation(unsigned int num_procs,
                                   TaskSet &ts,
-                                  unsigned long end_of_simulation)
+                                  unsigned long end_of_simulation,
+                                  bool preemptive)
 {
-    DeadlineMissSearch sim(num_procs);
+    DeadlineMissSearch sim(num_procs, preemptive);
 
     run_periodic_simulation(sim, ts, end_of_simulation);
     if (sim.deadline_was_missed())
@@ -81,9 +82,10 @@ unsigned long edf_first_violation(unsigned int num_procs,
 
 bool edf_misses_deadline(unsigned int num_procs,
                          TaskSet &ts,
-                         unsigned long end_of_simulation)
+                         unsigned long end_of_simulation,
+                         bool preemptive)
 {
-    DeadlineMissSearch sim(num_procs);
+    DeadlineMissSearch sim(num_procs, preemptive);
 
     run_periodic_simulation(sim, ts, end_of_simulation);
     return sim.deadline_was_missed();
@@ -92,9 +94,10 @@ bool edf_misses_deadline(unsigned int num_procs,
 
 Stats edf_observe_tardiness(unsigned int num_procs,
                             TaskSet &ts,
-                            unsigned long end_of_simulation)
+                            unsigned long end_of_simulation,
+                            bool preemptive)
 {
-    Tardiness sim(num_procs);
+    Tardiness sim(num_procs, preemptive);
 
     run_periodic_simulation(sim, ts, end_of_simulation);
 

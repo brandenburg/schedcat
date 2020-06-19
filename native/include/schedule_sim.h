@@ -178,6 +178,7 @@ class GlobalScheduler : public ScheduleSimulation
 
     Processor* processors;
     int num_procs;
+    bool preemptive;
 
     JobPriority                   lower_prio;
     PreemptionOrderTemplate<JobPriority, Processor>  first_to_preempt;
@@ -234,7 +235,8 @@ class GlobalScheduler : public ScheduleSimulation
                                                 first_to_preempt);
             Job* scheduled = lowest_prio_proc->get_scheduled();
 
-            if (lower_prio(scheduled, highest_prio))
+            if ((!scheduled || preemptive) // don't preempt a running job if !preemptive
+                && lower_prio(scheduled, highest_prio))
             {
                 // do a preemption
                 pending.pop();
@@ -263,11 +265,12 @@ class GlobalScheduler : public ScheduleSimulation
     }
 
   public:
-    GlobalScheduler(int num_procs)
+    GlobalScheduler(int num_procs, bool preemptive = true)
     {
         aborted = false;
         current_time = 0;
         this->num_procs = num_procs;
+        this->preemptive = preemptive;
         processors = new Processor[num_procs];
     }
 

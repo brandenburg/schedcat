@@ -12,14 +12,17 @@ struct Stats
 
 bool edf_misses_deadline(unsigned int num_procs,
                          TaskSet &ts,
-                         unsigned long end_of_simulation);
+                         unsigned long end_of_simulation,
+                         bool preemptive = true);
 
 unsigned long edf_first_violation(unsigned int num_procs,
                                   TaskSet &ts,
-                                  unsigned long end_of_simulation);
+                                  unsigned long end_of_simulation,
+                                  bool preemptive = true);
 
 Stats edf_observe_tardiness(unsigned int num_procs,
                             TaskSet &ts,
-                            unsigned long end_of_simulation);
+                            unsigned long end_of_simulation,
+                            bool preemptive = true);
 
 #endif
