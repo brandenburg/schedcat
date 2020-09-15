@@ -5,6 +5,8 @@
 #include <utility>
 #include <set>
 
+#include <sstream>
+
 #include "stl-helper.h"
 
 typedef std::pair<double, unsigned int> Term;
@@ -14,6 +16,10 @@ class LinearExpression
 {
 private:
 	Terms terms;
+
+#ifdef DEBUG
+	std::ostringstream desc; // human-readable description
+#endif
 
 public:
 	void add_term(double coefficient, unsigned int variable_index)
@@ -46,6 +52,18 @@ public:
 	{
 		return !terms.empty();
 	}
+
+#ifdef DEBUG
+	std::ostream& debug_ostr()
+	{
+		return desc;
+	}
+
+	const std::string get_debug_description() const
+	{
+		return desc.str();
+	}
+#endif
 };
 
 struct VariableRange {
@@ -53,6 +71,13 @@ struct VariableRange {
 	bool has_upper, has_lower;
 	double upper_bound, lower_bound;
 };
+
+#ifdef DEBUG
+#define LINEX_TAG(exp, tag) (exp)->debug_ostr() << tag
+#else
+#define LINEX_TAG(exp, tag)
+#endif
+
 
 typedef std::pair<LinearExpression *, double> Constraint;
 typedef std::vector<Constraint> Constraints;

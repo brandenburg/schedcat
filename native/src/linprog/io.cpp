@@ -13,6 +13,13 @@ std::ostream& pretty_print_linear_expression(
 	bool skip_zero_vars)
 {
 	bool first = true;
+
+#ifdef DEBUG
+	std::string desc = exp.get_debug_description();
+	if (!desc.empty())
+		os << desc << ": ";
+#endif
+
 	foreach (exp.get_terms(), term)
 	{
 		if (skip_zero_vars && solution && !solution->get_value(term->second))
