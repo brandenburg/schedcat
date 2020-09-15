@@ -118,7 +118,7 @@ ifeq ($(DEBUG),n)
 DEFS += -DNDEBUG
 endif
 
-CXXFLAGS  = --std=c++14 -Wall -Wextra $(DISABLED_WARNINGS) $(PIC_FLAG)  $(INCLUDES) $(DEFS)
+CXXFLAGS  = --std=gnu++14 -Wall -Wextra $(DISABLED_WARNINGS) $(PIC_FLAG) $(INCLUDES) $(DEFS)
 LDFLAGS   = $(LIBS)
 SWIGFLAGS = -python -c++ -outdir . -includeall -Iinclude $(INCLUDES) ${SWIG_DEFS}
 
