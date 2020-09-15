@@ -30,14 +30,11 @@ PYTHON_INC ?= -I${PYTHON_HEADER_DIR}
 
 ifeq ($(OS),Darwin)
 # Mac OS X: link against Python Framework
-#PYTHON_INC ?= -I/System/Library/Frameworks/Python.framework/Headers/
-PYTHON_FRAMEWORK_DIR ?= ${shell echo ${PYTHON_HEADER_DIR} | sed 's|/Python.framework.*||'}
-PYTHON_LIB ?= -F${PYTHON_FRAMEWORK_DIR} -framework Python
+PYTHON_LIB ?= -framework Python
 SOFLAGS     = -dynamiclib
 PIC_FLAG    = -fPIC
 else ifneq (,$(findstring CYGWIN,$(OS)))
 # Cygwin
-PYTHON_INC ?= -I${shell ${PYTHON} -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()" }
 PYTHON_LIB ?= -lpython2.7
 SOFLAGS     = -shared
 PIC_FLAG    =
