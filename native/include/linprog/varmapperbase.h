@@ -2,6 +2,7 @@
 #define VARMAPPERBASE_H
 
 #include <stdint.h>
+#include <string>
 
 #include "stl-helper.h"
 #include "stl-hashmap.h"
