@@ -118,7 +118,7 @@ def StaffordRandFixedSum(n, u, nsets):
 
     #iterated in fixed dimension order but needs to be randomised
     #permute x row order within each column
-    for i in xrange(0,m):
+    for i in range(0,m):
         x[...,i] = x[numpy.random.permutation(n),i]
 
     return numpy.transpose(x);
@@ -133,7 +133,7 @@ def gen_periods(n, nsets, min, max, gran, dist):
         # Interpret as set of pre-defined periods to choose from.
         assert nsets == 1
         # avoid numpy.random.choice() because we need to be compatible with 1.6.X
-        periods = [random.choice(dist) for _ in xrange(n)]
+        periods = [random.choice(dist) for _ in range(n)]
         # wrap in numpy types
         periods = numpy.array(periods)
         periods.shape = (1, n)
@@ -191,7 +191,7 @@ def gen_tasksets(options):
     for t in range(numpy.size(taskset,0)):
         ts.append(SporadicTask(taskset[t][3], taskset[t][2]))
 
-#    print ts
+#    print(ts)
     return ts
 
 def print_taskset(taskset, format):
@@ -201,13 +201,13 @@ def print_taskset(taskset, format):
         util += taskset[t][1]
         hp = lcm(hp, taskset[t][2])
 
-    print "<taskset>"
-    print "<properties hyperperiod=\"%d\" utilization=\"%.10f\" />" % (hp, util)
+    print("<taskset>")
+    print("<properties hyperperiod=\"%d\" utilization=\"%.10f\" />" % (hp, util))
     for t in range(numpy.size(taskset,0)):
         #data = { 'Ugen' : taskset[t][0], 'U' : taskset[t][1], 'T' : taskset[t][2], 'C' : taskset[t][3] }
-        print "<task wcet=\"%.10f\" period=\"%d\" utilization=\"%.10f\"/>" % (taskset[t][3], taskset[t][2], taskset[t][1])
+        print("<task wcet=\"%.10f\" period=\"%d\" utilization=\"%.10f\"/>" % (taskset[t][3], taskset[t][2], taskset[t][1]))
 
-    print "</taskset>"
+    print("</taskset>")
 
 def main():
 
@@ -280,7 +280,7 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.about:
-        print __doc__
+        print(__doc__)
         return 0
 
     if options.help:
@@ -288,24 +288,24 @@ def main():
         return 0
 
     if options.n < 1:
-        print >>sys.stderr, "Minimum number of tasks is 1"
+        print("Minimum number of tasks is 1", file=sys.stderr)
         return 1
 
     if options.util > options.n:
-        print >>sys.stderr, "Taskset utilisation must be less than or equal to number of tasks"
+        print("Taskset utilisation must be less than or equal to number of tasks", file=sys.stderr)
         return 1
 
     if options.nsets < 1:
-        print >>sys.stderr, "Minimum number of tasksets is 1"
+        print("Minimum number of tasksets is 1", file=sys.stderr)
         return 1
 
     known_perdists = ["unif", "logunif"]
     if options.perdist not in known_perdists:
-        print >>sys.stderr, "Period distribution must be one of " + str(known_perdists)
+        print("Period distribution must be one of " + str(known_perdists), file=sys.stderr)
         return 1
 
     if options.permin <= 0:
-        print >>sys.stderr, "Period minimum must be greater than 0"
+        print("Period minimum must be greater than 0", file=sys.stderr)
         return 1
 
     #permax = None is default.  Set to permin in this case
@@ -313,7 +313,7 @@ def main():
         options.permax = options.permin
 
     if options.permin > options.permax:
-        print >>sys.stderr, "Period maximum must be greater than or equal to minimum"
+        print("Period maximum must be greater than or equal to minimum", file=sys.stderr)
         return 1
 
     #pergran = None is default.  Set to permin in this case
@@ -321,15 +321,15 @@ def main():
         options.pergran = options.permin
 
     if options.pergran < 1:
-        print >>sys.stderr, "Period granularity must be an integer greater than equal to 1"
+        print("Period granularity must be an integer greater than equal to 1", file=sys.stderr)
         return 1
 
     if (options.permax % options.pergran) != 0:
-        print >>sys.stderr, "Period maximum must be a integer multiple of period granularity"
+        print("Period maximum must be a integer multiple of period granularity", file=sys.stderr)
         return 1
 
     if (options.permin % options.pergran) != 0:
-        print >>sys.stderr, "Period minimum must be a integer multiple of period granularity"
+        print("Period minimum must be a integer multiple of period granularity", file=sys.stderr)
         return 1
 
     options.format = options.format.replace("\\n", "\n")
@@ -341,24 +341,24 @@ def main():
 def print_help(parser):
     parser.print_help();
 
-    print ""
+    print("")
 
     example_desc = \
             "Generate 5 tasksets of 10 tasks with loguniform periods " +\
             "between 1000 and 100000.  Round execution times and output "+\
             "a table of execution times and periods."
-    print textwrap.fill(example_desc, 75)
-    print "    " +parser.get_prog_name() + " -s 5 -n 10 -p 1000 -q 100000 -d logunif --round-C -f \"%(C)d %(T)d\\n\""
+    print(textwrap.fill(example_desc, 75))
+    print("    " +parser.get_prog_name() + " -s 5 -n 10 -p 1000 -q 100000 -d logunif --round-C -f \"%(C)d %(T)d\\n\"")
 
-    print ""
+    print("")
 
     example_desc = \
             "Print utilisation values from Stafford's randfixedsum " +\
             "for 20 tasksets of 8 tasks, with one line per taskset, " +\
             "rounded to 3 decimal places:"
 
-    print textwrap.fill(example_desc, 75)
-    print "    " + parser.get_prog_name() + " -s 20 -n 8 -f \"%(Ugen).3f\""
+    print(textwrap.fill(example_desc, 75))
+    print("    " + parser.get_prog_name() + " -s 20 -n 8 -f \"%(Ugen).3f\"")
 
 if __name__ == "__main__":
     sys.exit(main())

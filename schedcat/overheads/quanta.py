@@ -5,10 +5,10 @@ from __future__ import division
 from math      import ceil, floor
 
 def is_quantum_multiple(qlen, value):
-    return value % qlen is 0
+    return value % qlen == 0
 
 def has_integral_period(qlen):
-    return lambda t: t.period % qlen is 0
+    return lambda t: t.period % qlen == 0
 
 def quantize_wcet(qlen, tasks, effective_qlen=None):
     """Round up execution cost to account for partially used quanta.

@@ -13,6 +13,9 @@ class PrioObj(object):
     def __le__(self, other):
         return self.le(self.val, other.val)
 
+    def __lt__(self, other):
+        return self.le(self.val, other.val) and not self.le(other.val, self.val)
+
 
 def imerge(le, *iters):
     nxtheap = []
@@ -20,7 +23,7 @@ def imerge(le, *iters):
     for i in iters:
         try:
             it = iter(i)
-            nxtheap.append(PrioObj((it.next(), it), _le))
+            nxtheap.append(PrioObj((next(it), it), _le))
         except StopIteration:
             pass
     heapify(nxtheap)
@@ -29,14 +32,17 @@ def imerge(le, *iters):
         x, it = wrapper.val
         yield x
         try:
-            wrapper.val = (it.next(), it)
+            wrapper.val = (next(it), it)
             heappush(nxtheap, wrapper)
         except StopIteration:
             pass
 
 def uniq(seq):
     it = iter(seq)
-    last = it.next()
+    try:
+        last = next(it)
+    except StopIteration:
+        return
     yield last
     for x in it:
         if x != last:

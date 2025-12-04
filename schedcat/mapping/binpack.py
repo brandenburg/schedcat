@@ -64,7 +64,7 @@ def value(sets, weight=id):
 
 def next_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
              empty_bin=list):
-    sets = [empty_bin() for _ in xrange(0, bins)]
+    sets = [empty_bin() for _ in range(0, bins)]
     cur  = 0
     sum  = 0.0
     for x in items:
@@ -81,11 +81,11 @@ def next_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
 
 def first_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
               empty_bin=list):
-    sets = [empty_bin() for _ in xrange(0, bins)]
-    sums = [0.0 for _ in xrange(0, bins)]
+    sets = [empty_bin() for _ in range(0, bins)]
+    sums = [0.0 for _ in range(0, bins)]
     for x in items:
         c = weight(x)
-        for i in xrange(0, bins):
+        for i in range(0, bins):
             if sums[i] + c <= capacity:
                 sets[i] += [x]
                 sums[i] += c
@@ -97,8 +97,8 @@ def first_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
 
 def worst_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
               empty_bin=list):
-    sets = [empty_bin() for _ in xrange(0, bins)]
-    sums = [0.0 for _ in xrange(0, bins)]
+    sets = [empty_bin() for _ in range(0, bins)]
+    sums = [0.0 for _ in range(0, bins)]
     for x in items:
         c = weight(x)
         # pick the bin where the item will leave the most space
@@ -115,8 +115,8 @@ def worst_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
 
 def almost_worst_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
               empty_bin=list):
-    sets = [empty_bin() for _ in xrange(0, bins)]
-    sums = [0.0 for _ in xrange(0, bins)]
+    sets = [empty_bin() for _ in range(0, bins)]
+    sums = [0.0 for _ in range(0, bins)]
     for x in items:
         c = weight(x)
         # pick the bin where the item will leave almost the most space
@@ -137,18 +137,18 @@ def best_fit(items, bins, capacity=1.0, weight=id, misfit=ignore,
     if bins:
         # non-zero bins means pack into a fixed number of bins
         create_on_demand = False
-        sets = [empty_bin()  for _ in xrange(0, bins)]
+        sets = [empty_bin()  for _ in range(0, bins)]
     else:
         # zero bins means create new bins as needed
         create_on_demand = True
         # so let's start with one
         sets = [empty_bin()]
         bins = 1
-    sums = [0.0 for _ in xrange(0, bins)]
+    sums = [0.0 for _ in range(0, bins)]
     for x in items:
         c = weight(x)
         # find the first bin that is sufficiently large
-        idxs = range(0, bins)
+        idxs = list(range(0, bins))
         idxs.sort(key=lambda i: sums[i], reverse=True)
         for i in idxs:
             if sums[i] + c <= capacity:

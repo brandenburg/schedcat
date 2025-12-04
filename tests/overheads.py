@@ -1,7 +1,7 @@
 from __future__ import division
 
 import unittest
-import StringIO
+import io
 from math import ceil
 
 import schedcat.overheads.model as m
@@ -23,7 +23,7 @@ class Model(unittest.TestCase):
                     40   , 17
                     50   , 40
 """
-        self.sched_file = StringIO.StringIO(s)
+        self.sched_file = io.StringIO(s)
 
         s = """WSS, MEM, L3
 1024,   100, 50
@@ -31,7 +31,7 @@ class Model(unittest.TestCase):
 4096,   400, 400
 16384, 1600, 17000
 """
-        self.cpmd_file = StringIO.StringIO(s)
+        self.cpmd_file = io.StringIO(s)
 
     def test_init(self):
         o = m.Overheads()

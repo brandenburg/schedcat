@@ -11,7 +11,7 @@ from __future__ import division
 from math import floor
 
 def is_schedulable(num_cpus, tasks, **kargs):
-    return all(rta_schedulable(k, tasks, num_cpus, **kargs) for k in xrange(len(tasks)))
+    return all(rta_schedulable(k, tasks, num_cpus, **kargs) for k in range(len(tasks)))
 
 bound_response_times = is_schedulable
 

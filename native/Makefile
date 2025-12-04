@@ -6,9 +6,10 @@
 # default: swig binary available in $PATH.
 SWIG     ?= swig
 # default: standard python in $PATH.
-PYTHON   ?= python2.7
+PYTHON   ?= python3
 # default: assume GMP is installed in standard location.
-GMP_PATH ?= /usr
+# Try brew (macOS), then pkg-config (Linux/Unix), then fallback to /usr
+GMP_PATH ?= $(shell brew --prefix gmp 2>/dev/null || pkg-config --variable=prefix gmp 2>/dev/null || echo /usr)
 
 # #### Flags ####
 
@@ -25,17 +26,17 @@ OS := $(shell uname)
 # How to link Python libraries?
 PYTHON_VER := ${shell ${PYTHON} --version 2>&1}
 # Default:  assume Python is in $PATH and can tell us itself where to find the headers.
-PYTHON_HEADER_DIR ?= ${shell ${PYTHON} -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()" }
+PYTHON_HEADER_DIR ?= ${shell ${PYTHON} -c "import sysconfig; print(sysconfig.get_path('include'))" }
 PYTHON_INC ?= -I${PYTHON_HEADER_DIR}
 
 ifeq ($(OS),Darwin)
 # Mac OS X: link against Python Framework
-PYTHON_LIB ?= -framework Python
+PYTHON_LIB ?= $(shell python3-config --ldflags --embed)
 SOFLAGS     = -dynamiclib
 PIC_FLAG    = -fPIC
 else ifneq (,$(findstring CYGWIN,$(OS)))
 # Cygwin
-PYTHON_LIB ?= -lpython2.7
+PYTHON_LIB ?= $(shell python3-config --libs)
 SOFLAGS     = -shared
 PIC_FLAG    =
 else

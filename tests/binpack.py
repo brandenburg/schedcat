@@ -10,7 +10,7 @@ import schedcat.mapping.rollback as rb
 class TooLarge(unittest.TestCase):
     def setUp(self):
         self.cap   = 10
-        self.items = range(100, 1000)
+        self.items = list(range(100, 1000))
         self.bins  = 9
         self.empty = [[]] * self.bins
 
@@ -48,7 +48,7 @@ class TooLarge(unittest.TestCase):
 
 class NotLossy(unittest.TestCase):
     def setUp(self):
-        self.items = range(100, 1000)
+        self.items = list(range(100, 1000))
         self.bins  = 1
         self.cap   = sum(self.items)
         self.expected = [self.items]

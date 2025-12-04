@@ -10,10 +10,10 @@ Note: this implementation covers only the constrained-deadline case.
 from __future__ import division
 
 from math import ceil, floor
-from itertools import izip
+
 
 def is_schedulable(num_cpus, tasks):
-    return all(rta_schedulable_guan(k, tasks, num_cpus) for k in xrange(len(tasks)))
+    return all(rta_schedulable_guan(k, tasks, num_cpus) for k in range(len(tasks)))
 
 bound_response_times = is_schedulable
 
@@ -99,7 +99,7 @@ def total_interference(k, taskset, num_cpus, time):
     # calculate the difference of carry-in interference and non-carry-in interference
     # corresponds to Eq. 6 in Baruah's RTSS'07 paper
     idiff = [interference_with_carry_in(ti, tk, time) - inc
-             for (ti, inc) in izip(higher_prio, interf_nc)]
+             for (ti, inc) in zip(higher_prio, interf_nc)]
 
     # All HP tasks are partitioned into tau_NC and tau_CI for use
     # in Eq. 9 in Guan's RTSS'09 paper. For tau_CI, we select the m-1

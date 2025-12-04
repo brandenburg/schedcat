@@ -59,8 +59,8 @@ def generate_random_lock_sets():
 
 def print_bounds(results_list):
     for task_file, clusts in results_list:
-        print "Processed {}".format(task_file)
+        print("Processed {}".format(task_file))
         if clusts is not None:
             for clust in clusts:
                 for task in clust:
-                    print task.response_time - task.deadline
+                    print(task.response_time - task.deadline)

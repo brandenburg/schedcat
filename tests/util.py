@@ -9,11 +9,11 @@ import schedcat.util.math as m
 
 class Iters(unittest.TestCase):
     def setUp(self):
-        self.s1 = xrange(1, 1000, 3)
-        self.s2 = xrange(4, 1000, 5)
+        self.s1 = range(1, 1000, 3)
+        self.s2 = range(4, 1000, 5)
         self.s3 = [-3, 6000]
-        self.s1b = xrange(1, 1000, 3)
-        self.s1c = xrange(1, 1000, 3)
+        self.s1b = range(1, 1000, 3)
+        self.s1c = range(1, 1000, 3)
 
     def test_imerge(self):
         s = iter.imerge(lambda x, y: x < y, self.s1, self.s2, self.s3)
@@ -21,9 +21,9 @@ class Iters(unittest.TestCase):
             [-3, 1, 4, 4, 7, 9, 10, 13, 14, 16])
 
     def test_imerge2(self):
-        a = range(10)
-        b = range(1, 6)
-        c = range(3, 14)
+        a = list(range(10))
+        b = list(range(1, 6))
+        c = list(range(3, 14))
         a.reverse()
         b.reverse()
         c.reverse()
@@ -43,7 +43,7 @@ class Iters(unittest.TestCase):
 class Math(unittest.TestCase):
     def test_integral(self):
         self.assertTrue(m.is_integral(int(1)))
-        self.assertTrue(m.is_integral(long(1)))
+        self.assertTrue(m.is_integral(int(1)))
         self.assertFalse(m.is_integral("foo"))
         self.assertFalse(m.is_integral(1.0))
         self.assertFalse(m.is_integral(20 / 1))
@@ -70,18 +70,18 @@ class LinEqs(unittest.TestCase):
         self.pwlin = m.monotonic_pwlin([(0, 1), (1, 0), (1, 4), (2, 5)])
 
     def test_const(self):
-        for x in xrange(1000):
+        for x in range(1000):
             self.assertAlmostEqual(self.c(x), 123)
 
     def test_lin(self):
-        for x in xrange(1000):
+        for x in range(1000):
             self.assertAlmostEqual(self.f(x), 1 + x * 3.0)
 
     def test_pwlin(self):
-        for x in xrange(1000):
+        for x in range(1000):
             self.assertAlmostEqual(self.pwlin(-x), 1)
         self.assertAlmostEqual(self.pwlin(1), 1)
-        for x in xrange(1000):
+        for x in range(1000):
             x = x + 2
             self.assertAlmostEqual(self.pwlin(x), x + 3)
 

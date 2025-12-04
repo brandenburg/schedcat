@@ -46,7 +46,7 @@ class Overheads(object):
 
         data = load_column_csv(fname, convert=float)
         if not 'TASK-COUNT' in data.by_name:
-            raise IOError, "TASK-COUNT column is missing"
+            raise IOError("TASK-COUNT column is missing")
 
         # initialize custom fields, if any
         for (name, field) in custom_fields:
@@ -107,7 +107,7 @@ class CacheDelay(object):
     def from_file(fname, non_decreasing=True):
         data = load_column_csv(fname, convert=float)
         if not 'WSS' in data.by_name:
-            raise IOError, 'WSS column is missing'
+            raise IOError('WSS column is missing')
 
         o = CacheDelay()
 

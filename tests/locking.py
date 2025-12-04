@@ -834,7 +834,7 @@ class Test_reasonble_priority(unittest.TestCase):
 
     def setUp(self):
         self.ts = tasks.TaskSystem([
-            tasks.SporadicTask(x * 10, x * 100) for x in xrange(1, 10)
+            tasks.SporadicTask(x * 10, x * 100) for x in range(1, 10)
             ])
 
     def test_is_reasonable_priority_assignment(self):
@@ -1717,7 +1717,7 @@ class Test_cpp_nested_analysis_max_number_nested(unittest.TestCase):
     def setUp(self):
         self.n = 8
         self.ts = tasks.TaskSystem(
-            [tasks.SporadicTask(10, 100) for i in xrange(self.n)])
+            [tasks.SporadicTask(10, 100) for i in range(self.n)])
         r.initialize_nested_resource_model(self.ts)
 
         for i, t in enumerate(self.ts):
@@ -1756,7 +1756,7 @@ class Test_cpp_np_fifo_no_loop_back(unittest.TestCase):
     def setUp(self):
         self.n = 8
         self.ts = tasks.TaskSystem(
-            [tasks.SporadicTask(10, 100) for i in xrange(self.n)])
+            [tasks.SporadicTask(10, 100) for i in range(self.n)])
         r.initialize_nested_resource_model(self.ts)
 
         for i, t in enumerate(self.ts):
@@ -1772,7 +1772,7 @@ class Test_cpp_np_fifo_no_loop_back(unittest.TestCase):
 
         for i, t in enumerate(self.ts):
             self.assertEqual(t.remote_blocking,\
-                             sum([j + 1 for j in xrange(self.n) if j != i]))
+                             sum([j + 1 for j in range(self.n) if j != i]))
 
 
     @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
@@ -1782,7 +1782,7 @@ class Test_cpp_np_fifo_no_loop_back(unittest.TestCase):
 
         for i, t in enumerate(self.ts):
             self.assertEqual(t.blocked,\
-                             sum([j + 1 for j in xrange(self.n) if j != i]))
+                             sum([j + 1 for j in range(self.n) if j != i]))
 
     @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_fifo(self):
@@ -1790,7 +1790,7 @@ class Test_cpp_np_fifo_no_loop_back(unittest.TestCase):
 
         for i, t in enumerate(self.ts):
             self.assertEqual(t.blocked,\
-                             sum([j + 1 for j in xrange(self.n) if j != i]))
+                             sum([j + 1 for j in range(self.n) if j != i]))
 
 
 class Test_cpp_fifo_spin_locks_pcp(unittest.TestCase):

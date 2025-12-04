@@ -74,21 +74,21 @@ class PEDF_Spinlocks(unittest.TestCase):
     @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_MSRP(self):
         if lb.pedf_msrp_is_schedulable(self.trivial_ts):
-            print "[MSRP] SCHEDULABLE";
+            print("[MSRP] SCHEDULABLE");
         else:
-            print "[MSRP] NOT SCHEDULABLE";
+            print("[MSRP] NOT SCHEDULABLE");
 
     @unittest.skipIf(not schedcat.locking.bounds.lp_cpp_available, "no native LP solver available")
     def test_FIFO_preempt(self):
         if lb.pedf_fifo_preempt_is_schedulable(self.trivial_ts):
-            print "[FIFO Preemptive] SCHEDULABLE";
+            print("[FIFO Preemptive] SCHEDULABLE");
         else:
-            print "[FIFO Preemptive] NOT SCHEDULABLE";
+            print("[FIFO Preemptive] NOT SCHEDULABLE");
 
     def test_MSRP_classic(self):
         if lb.pedf_msrp_classic_is_schedulable(self.trivial_ts, self.trivial_num_cpus):
-            print "[MSRP Classic] SCHEDULABLE";
+            print("[MSRP Classic] SCHEDULABLE");
         else:
-            print "[MSRP Classic] NOT SCHEDULABLE";
+            print("[MSRP Classic] NOT SCHEDULABLE");
 
         #self.assertEqual(self.trivial_ts[0].response_time, self.trivial_ts[0].cost + 75)

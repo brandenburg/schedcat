@@ -11,7 +11,7 @@ def partition_tasks(cluster_size, clusters, dedicated_irq,
                     capacity=first_cap)
     other_bins = [Bin(size=SporadicTask.utilization,
                       capacity=cluster_size)
-                  for _ in xrange(1, clusters)]
+                  for _ in range(1, clusters)]
     heuristic = WorstFit(initial_bins=[first_bin] + other_bins)
     heuristic.binpack(taskset)
     if not (heuristic.misfits):

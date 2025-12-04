@@ -1,4 +1,4 @@
-from itertools import izip
+
 
 import schedcat.locking.native as cpp
 
@@ -43,7 +43,7 @@ def is_reasonable_priority_assignment(num_cpus, taskset):
     # Look for any two 'neighboring' tasks that do not satisfy the
     # "reasonable order". Ignore the m highest-priority tasks.
     relevant_tasks = taskset[num_cpus:]
-    for (ti, tj) in izip(relevant_tasks, relevant_tasks[1:]):
+    for (ti, tj) in zip(relevant_tasks, relevant_tasks[1:]):
         if ti.deadline > tj.deadline:
             return False
     return True
@@ -119,7 +119,7 @@ def get_round_robin_resource_mapping(num_resources, num_cpus,
                                      dedicated_irq=cpp.NO_CPU):
     "Default resource assignment: just assign resources to CPUs in index order."
     loc   = {}
-    for res_id in xrange(num_resources):
+    for res_id in range(num_resources):
         cpu = res_id % num_cpus
         if cpu == dedicated_irq:
             cpu = (cpu + 1) % num_cpus

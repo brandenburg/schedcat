@@ -52,6 +52,7 @@ from math import floor, ceil
 from collections import defaultdict
 
 import operator
+from functools import reduce
 
 from schedcat.model.tasks import TaskSystem, SporadicTask
 
@@ -248,7 +249,7 @@ def edf_first_fit_decreasing_difficulty(tasks, all_cores=None,
     return (unassigned, assignments)
 
 def count_slices(mapping):
-    return reduce(operator.add, (len(ts) for ts in mapping.itervalues()), 0)
+    return reduce(operator.add, (len(ts) for ts in mapping.values()), 0)
 
 def double_wfd_split(*args, **kargs):
     "The heuristic called 2WFD-C=D in the RTSS'16 paper."
@@ -412,7 +413,7 @@ def meta_reduce_periods(heuristic, taskset,
         # but we can try to come up with some defaults...
         candidate_periods = set()
         for t in taskset:
-            for k in xrange(1, 11):
+            for k in range(1, 11):
                 candidate_periods.add(t.period / k)
         candidate_periods = sorted(candidate_periods)
 
