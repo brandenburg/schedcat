@@ -73,7 +73,7 @@ def approx_wcrt(tskset,
         except IndexError:
             pass
         s[i] = min(s[i], delta - sbf_pseudo_inverse(tskset.dbf(delta)))
-    for i in xrange(len(tskset)-1, -1, -1):
+    for i in range(len(tskset)-1, -1, -1):
         tskset[i].response_time = tskset[i].deadline - s[i]
         if i == 0: break
         s[i-1] = min(s[i], s[i-1])
@@ -121,7 +121,7 @@ def exact_wcrt(tskset,
                 gamma_old = gamma_new
                 gamma_new = sbf_pseudo_inverse(mbf(tskset, delta, gamma_old))
             s[i] = min(s[i], delta - gamma_new)
-    for i in xrange(len(tskset)-1, -1, -1):
+    for i in range(len(tskset)-1, -1, -1):
         tskset[i].response_time = tskset[i].deadline - s[i]
         if i == 0: break
         s[i-1] = min(s[i], s[i-1])

@@ -1,10 +1,10 @@
-from StringIO import StringIO
+from io import StringIO
 from collections import defaultdict
 
 
 try:
     import cplex
-    from itertools import izip
+
     from tempfile import NamedTemporaryFile as TmpFile
 
     cplex_available = True
@@ -30,7 +30,7 @@ def write_cplex_sum(file, sum, per_line=None):
         write_cplex_terms(file, sum[1:])
     else:
         write_cplex_terms(file, sum[1:per_line])
-        for i in xrange(per_line, len(sum), per_line):
+        for i in range(per_line, len(sum), per_line):
             file.write('\n  ')
             write_cplex_terms(file, sum[i:i+per_line])
 
@@ -207,7 +207,7 @@ class LinearProgram(object):
             # Extract the variables that we care about.
             variables = [var for (coeff, var) in self.objective_function]
             values = model.solution.get_values(variables)
-            for (var, val) in izip(variables, values):
+            for (var, val) in zip(variables, values):
                 solution[var] = val
 
             return solution
@@ -226,7 +226,7 @@ def example():
     x.inequality(10, 'x1', at_most=100)
     x.inequality(-9, 'x1', 10, 'x2', at_most=99)
     x.equality(10, 'x2', equal_to=0)
-    print x
+    print(x)
 
     x.inequality(0, 'x3', at_most=1)
     x.equality(0, 'x10', equal_to=0)

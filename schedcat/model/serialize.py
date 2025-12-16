@@ -92,7 +92,7 @@ def task(t):
         for cs in t.critical_sections:
             nested_res_requirement(cs, nested_rmodel)
 
-    tag.task = t
+    # tag.task = t
     task.xml = tag
     return tag
 
@@ -182,7 +182,7 @@ def parse_task(node):
         t.affinity = affinity
 
     t.xml = node
-    node.task = t
+    # node.task = t
     return t
 
 def taskset(ts):

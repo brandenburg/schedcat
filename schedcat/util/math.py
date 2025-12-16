@@ -1,10 +1,10 @@
 from __future__ import division
 
 from bisect import bisect_left as find_index
-from fractions import gcd
+from math import gcd
 
 def is_integral(x):
-    return type(x) == int or type(x) == long
+    return isinstance(x, int)
 
 def lcm(*args):
     if not args:
@@ -13,15 +13,18 @@ def lcm(*args):
     for b in args[1:]:
         if not is_integral(a) or not is_integral(b):
             # only well-defined for integers
-            raise Exception, \
+            raise Exception(
                 "LCM is only well-defined for integers (got: %s, %s)" \
-                % (type(a), type(b))
+                % (type(a), type(b)))
         a = (a // gcd(a,b)) * b
     return a
 
 def topsum(lst, fun, n):
     """return the sum of the top n items of map(fun, lst)"""
-    x = map(fun, lst)
+    if fun is None:
+        x = list(lst)
+    else:
+        x = list(map(fun, lst))
     x.sort(reverse=True)
     return sum(x[0:n])
 
@@ -74,8 +77,8 @@ class PieceWiseLinearEqu(object):
             return y - dy
 
         self.segments = [LinearEqu(yintercept(i), slope(i))
-                         for i in xrange(len(points) - 1)]
-        self.lookup = [points[i+1][0] for i in xrange(len(points) - 1)]
+                         for i in range(len(points) - 1)]
+        self.lookup = [points[i+1][0] for i in range(len(points) - 1)]
         self.hi     = len(self.lookup) - 1
 
     def __call__(self, x):
@@ -130,6 +133,7 @@ def is_monotonic(points):
     return True
 
 def monotonic_pwlin(points):
+    points = list(points)
     ascending = make_monotonic(points)
     if len(ascending) > 1:
         return piece_wise_linear(ascending)

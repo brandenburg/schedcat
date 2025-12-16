@@ -3,7 +3,7 @@ from __future__ import division
 import unittest
 import random
 import copy
-import StringIO
+import io
 
 import schedcat.model.tasks as tasks
 import schedcat.model.resources as r
@@ -284,7 +284,7 @@ TASKSET = """
 
 class PFPSpinlockInflationVsILP3(unittest.TestCase):
     def setUp(self):
-        xml = StringIO.StringIO(TASKSET)
+        xml = io.StringIO(TASKSET)
         self.ts = ser.load(xml)
 
         lb.assign_fp_preemption_levels(self.ts)
@@ -343,15 +343,15 @@ def generate_and_compare(*args, **kargs):
     keep = False
     if not res_ilp and res_inf:
         # ILP should not say 'no' when inflation-based analysis says 'yes'
-        print 'TS%d - FAIL: ILP -> no, but INF -> yes' % ts_count
+        print('TS%d - FAIL: ILP -> no, but INF -> yes' % ts_count)
         keep = True
 
     if res_ilp and res_inf:
         for i in range(len(ts)):
             if ts_inf[i].response_time < ts_ilp[i].response_time:
                 # ILP should not never be more pessimistic
-                print 'TS%d T%d: ILP -> %d, but INF -> %d' % \
-                    (ts_count, i + 1, ts_inf[i].response_time, ts_ilp[i].response_time)
+                print('TS%d T%d: ILP -> %d, but INF -> %d' % \
+                    (ts_count, i + 1, ts_inf[i].response_time, ts_ilp[i].response_time))
                 keep = True
 
     if keep:
@@ -363,4 +363,4 @@ if __name__ == '__main__':
     while True:
         generate_and_compare(4, 0.3, 4, 0.5)
         if ts_count % 100 == 0:
-            print "C: %6d S: %6d -> %5.2f" % (ts_count, schedulable_count, (schedulable_count / ts_count) * 100)
+            print("C: %6d S: %6d -> %5.2f" % (ts_count, schedulable_count, (schedulable_count / ts_count) * 100))
